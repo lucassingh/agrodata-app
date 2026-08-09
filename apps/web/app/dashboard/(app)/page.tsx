@@ -21,7 +21,7 @@ export default async function DashboardHomePage() {
           potreros, tareas, gastos e insumos se migran en la Fase 2.
         </p>
       </div>
-      <Card>
+      <Card className="rounded-2xl shadow-soft">
         <CardHeader>
           <CardTitle>Tu sesión</CardTitle>
           <CardDescription>Datos resueltos por Auth.js desde la base.</CardDescription>

@@ -40,8 +40,8 @@ export function SignInForm() {
           {errorMessage}
         </p>
       ) : null}
-      <Button type="submit" className="w-full" disabled={isPending}>
-        {isPending ? "Ingresando..." : "Ingresar"}
+      <Button type="submit" size="lg" className="w-full" disabled={isPending}>
+        {isPending ? "Entrando..." : "Entrar"}
       </Button>
     </form>
   );

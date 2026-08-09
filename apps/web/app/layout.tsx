@@ -1,9 +1,19 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Poppins, Work_Sans } from "next/font/google";
 import { cn } from "@/lib/utils";
 
-const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-sans",
+});
+
+const workSans = Work_Sans({
+  subsets: ["latin"],
+  weight: ["600", "700", "800"],
+  variable: "--font-heading",
+});
 
 export const metadata: Metadata = {
   title: "AgroData — Todo tu campo, ordenado por WhatsApp",
@@ -20,7 +30,7 @@ export default function RootLayout({
     <html
       lang="es"
       suppressHydrationWarning
-      className={cn("font-sans", geist.variable)}
+      className={cn("font-sans", poppins.variable, workSans.variable)}
     >
       <body className="antialiased">{children}</body>
     </html>

@@ -14,11 +14,13 @@ export const metadata: Metadata = {
 
 export default function SignInPage() {
   return (
-    <Card className="w-full max-w-sm">
+    <Card className="w-full max-w-[490px] rounded-2xl border-border shadow-medium">
       <CardHeader>
-        <CardTitle className="text-xl">Ingresá a tu campo</CardTitle>
+        <CardTitle className="font-heading text-xl">
+          Iniciar sesión
+        </CardTitle>
         <CardDescription>
-          Usá el email y la contraseña de tu cuenta admin.
+          Accedé a tu panel para administrar tus campos y tambos.
         </CardDescription>
       </CardHeader>
       <CardContent>
