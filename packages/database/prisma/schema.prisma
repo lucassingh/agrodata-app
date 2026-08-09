@@ -1,0 +1,495 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum PlatformRole {
+  OWNER
+  FARM_MANAGER
+  OPERATOR
+}
+
+enum SystemRole {
+  ADMIN
+  USER_GENERAL
+}
+
+enum ProfileType {
+  AGRONOMO
+  VETERINARIO
+  PRODUCTOR
+  ADMINISTRATIVO
+  OTRO
+}
+
+enum TenantCategory {
+  FIELD_AGRICOLA
+  GANADERO
+  TAMBO
+  MIXTO
+}
+
+enum MembershipStatus {
+  INVITED
+  ACTIVE
+  DISABLED
+}
+
+enum RecordType {
+  SEEDING
+  ANIMAL_BIRTH
+  POTRERO_CHANGE
+  PURCHASE
+  SALE
+  FUMIGATION
+  FUEL_USAGE
+  EXPENSE_INVOICE
+  TASK_COMPLETED
+}
+
+enum TaskType {
+  TRATAMIENTO_SANITARIO
+  ORDEN_SIEMBRA
+  PULVERIZACION
+  FERTILIZACION
+}
+
+enum TaskStatus {
+  PENDING
+  COMPLETED
+}
+
+enum SupplyCategoryType {
+  ALIMENTO
+  SANIDAD
+  INSUMOS_AGRICOLAS
+  FERTILIZANTES
+}
+
+enum CurrencyType {
+  ARS
+  USD
+}
+
+// ─── Tenant ──────────────────────────────────────────────
+
+model Tenant {
+  id           String               @id @default(cuid())
+  name         String
+  timezone     String               @default("America/Argentina/Buenos_Aires")
+  baseCurrency String               @default("ARS")
+  category     TenantCategory       @default(MIXTO)
+  location     String?
+  totalHa      Float?
+  mapFileUrl   String?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  memberships       UserTenantMembership[]
+  pendingInvites    TenantPendingInvite[]
+  records           Record[]
+  pastures          Pasture[]
+  tasks             Task[]
+  expenseCategories ExpenseCategory[]
+  expenses          Expense[]
+  supplies          Supply[]
+  supplyCategories  SupplyCategory[]
+  animalCategories  AnimalCategory[]
+  rodeos            Rodeo[]
+  cropConfigs       CropConfig[]
+  supplyConfigs     SupplyConfig[]
+  expenseConfigs    ExpenseConfig[]
+
+  @@map("tenants")
+}
+
+// ─── User ────────────────────────────────────────────────
+
+model User {
+  id             String               @id @default(cuid())
+  name           String
+  lastname       String
+  email          String?              @unique
+  wNumber        String?              @unique
+  passwordHash   String?
+  profileType    ProfileType          @default(OTRO)
+  /// Acceso global a la plataforma (configuración, soporte, etc.)
+  isSuperAdmin   Boolean              @default(false)
+  platformRole   PlatformRole         @default(OPERATOR)
+  status         UserStatus           @default(ACTIVE)
+  activeTenantId String?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  memberships           UserTenantMembership[]
+  verificationCodes     VerificationCode[]
+  assignedTasks         Task[]                 @relation("TaskResponsible")
+  tenantInvitesCreated  TenantPendingInvite[] @relation("TenantInviteInvitedBy")
+
+  @@map("users")
+}
+
+/// Invitación a un campo antes de que exista el usuario (mismo email o WhatsApp al registrarse).
+model TenantPendingInvite {
+  id              String    @id @default(cuid())
+  tenantId        String
+  role            SystemRole
+  invitedByUserId String
+  email           String?
+  wNumber         String?
+  createdAt       DateTime  @default(now())
+  consumedAt      DateTime?
+  consumedUserId  String?
+
+  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  invitedBy User   @relation("TenantInviteInvitedBy", fields: [invitedByUserId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([email])
+  @@index([wNumber])
+  @@map("tenant_pending_invites")
+}
+
+model VerificationCode {
+  id        String   @id @default(cuid())
+  userId    String
+  code      String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, code])
+  @@map("verification_codes")
+}
+
+// ─── Membership ──────────────────────────────────────────
+
+model UserTenantMembership {
+  id         String           @id @default(cuid())
+  userId     String
+  tenantId   String
+  role       SystemRole
+  status     MembershipStatus @default(INVITED)
+  specialty  String?
+  invitedAt  DateTime         @default(now())
+  acceptedAt DateTime?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tenantId])
+  @@index([tenantId, role])
+  @@map("user_tenant_memberships")
+}
+
+// ─── Records ─────────────────────────────────────────────
+
+model Record {
+  id         String     @id @default(cuid())
+  tenantId   String
+  type       RecordType
+  occurredAt DateTime
+  data       Json
+  source     String
+  confidence Float?
+  rawMessage String?
+  userId     String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, type, occurredAt])
+  @@map("records")
+}
+
+// ─── Pastures (Potreros) ─────────────────────────────────
+
+model Pasture {
+  id       String @id @default(cuid())
+  tenantId String
+  name     String
+  hectares Float?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant  Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  crops   PastureCrop[]
+  animals PastureAnimal[]
+  taskPastures TaskPasture[]
+
+  @@index([tenantId])
+  @@map("pastures")
+}
+
+model PastureCrop {
+  id        String    @id @default(cuid())
+  pastureId String
+  crop      String
+  hectares  Float?
+  startDate DateTime?
+
+  pasture Pasture @relation(fields: [pastureId], references: [id], onDelete: Cascade)
+
+  @@map("pasture_crops")
+}
+
+model PastureAnimal {
+  id            String  @id @default(cuid())
+  pastureId     String
+  quantity      Int
+  animalType    String
+  averageWeight Float?
+
+  pasture Pasture @relation(fields: [pastureId], references: [id], onDelete: Cascade)
+
+  @@map("pasture_animals")
+}
+
+// ─── Tasks (Tareas) ──────────────────────────────────────
+
+model Task {
+  id            String     @id @default(cuid())
+  tenantId      String
+  type          TaskType
+  status        TaskStatus @default(PENDING)
+  deadline      DateTime
+  treatment     String?
+  crop          String?
+  genetic       String?
+  spacing       String?
+  density       String?
+  densityUnit   String?
+  contractor    String?
+  description   String?
+  responsibleId String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  tenant      Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  responsible User?           @relation("TaskResponsible", fields: [responsibleId], references: [id])
+  products    TaskProduct[]
+  pastures    TaskPasture[]
+  animals     TaskAnimal[]
+  fertilizers TaskFertilizer[]
+
+  @@index([tenantId, status])
+  @@index([tenantId, type])
+  @@map("tasks")
+}
+
+model TaskProduct {
+  id          String  @id @default(cuid())
+  taskId      String
+  productName String
+  dosis       String?
+  unit        String?
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@map("task_products")
+}
+
+model TaskPasture {
+  id        String  @id @default(cuid())
+  taskId    String
+  pastureId String
+  hectares  String?
+
+  task    Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  pasture Pasture @relation(fields: [pastureId], references: [id], onDelete: Cascade)
+
+  @@map("task_pastures")
+}
+
+model TaskAnimal {
+  id         String @id @default(cuid())
+  taskId     String
+  quantity   Int
+  animalType String
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@map("task_animals")
+}
+
+model TaskFertilizer {
+  id     String  @id @default(cuid())
+  taskId String
+  source String
+  dosis  String?
+  unit   String?
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@map("task_fertilizers")
+}
+
+// ─── Expenses (Gastos) ───────────────────────────────────
+
+model ExpenseCategory {
+  id       String @id @default(cuid())
+  tenantId String
+  name     String
+  color    String @default("#3F8C3C")
+  createdAt DateTime @default(now())
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  expenses Expense[]
+
+  @@unique([tenantId, name])
+  @@map("expense_categories")
+}
+
+model Expense {
+  id          String       @id @default(cuid())
+  tenantId    String
+  categoryId  String
+  amount      Float
+  currency    CurrencyType @default(ARS)
+  date        DateTime
+  description String?
+  withIva     Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  tenant   Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  category ExpenseCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, date])
+  @@map("expenses")
+}
+
+// ─── Supplies (Insumos) ──────────────────────────────────
+
+model SupplyCategory {
+  id        String   @id @default(cuid())
+  tenantId  String
+  name      String
+  code      String?
+  color     String?
+  createdAt DateTime @default(now())
+
+  tenant   Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  supplies Supply[]
+  configs  SupplyConfig[]
+
+  @@unique([tenantId, name])
+  @@map("supply_categories")
+}
+
+model Supply {
+  id          String   @id @default(cuid())
+  tenantId    String
+  categoryId  String
+  name        String
+  quantity    Float    @default(0)
+  unit        String?
+  cost        Float?
+  currency    CurrencyType @default(ARS)
+  supplier    String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant   Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  category SupplyCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId, categoryId])
+  @@map("supplies")
+}
+
+// ─── Preferences / Config ────────────────────────────────
+
+model AnimalCategory {
+  id       String @id @default(cuid())
+  tenantId String
+  name     String
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, name])
+  @@map("animal_categories")
+}
+
+model Rodeo {
+  id       String @id @default(cuid())
+  tenantId String
+  name     String
+  description String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, name])
+  @@map("rodeos")
+}
+
+model CropConfig {
+  id       String @id @default(cuid())
+  tenantId String
+  name     String
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, name])
+  @@map("crop_configs")
+}
+
+model SupplyConfig {
+  id         String   @id @default(cuid())
+  tenantId   String
+  name       String
+  categoryId String
+  createdAt  DateTime @default(now())
+
+  tenant   Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  category SupplyCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  @@unique([tenantId, name])
+  @@map("supply_configs")
+}
+
+model ExpenseConfig {
+  id       String @id @default(cuid())
+  tenantId String
+  name     String
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, name])
+  @@map("expense_configs")
+}
+
+// ─── Webhook Events ──────────────────────────────────────
+
+model WebhookEvent {
+  id        String   @id @default(cuid())
+  channel   String
+  eventType String
+  tenantId  String?
+  payload   Json
+  createdAt DateTime @default(now())
+
+  @@index([channel, createdAt])
+  @@map("webhook_events")
+}
