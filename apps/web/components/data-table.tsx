@@ -24,11 +24,7 @@ interface DataTableProps<T> {
 
 /** Puerto directo de frontend/src/components/shared/DataTable.tsx — sin paginación,
  *  sorting ni filtros integrados; eso lo compone cada página por afuera. */
-export function DataTable<T extends Record<string, unknown>>({
-  rows,
-  columns,
-  className,
-}: DataTableProps<T>) {
+export function DataTable<T extends object>({ rows, columns, className }: DataTableProps<T>) {
   return (
     <div className={cn("overflow-x-auto rounded-2xl border border-border shadow-soft", className)}>
       <Table>
@@ -54,7 +50,7 @@ export function DataTable<T extends Record<string, unknown>>({
                 <TableCell key={column.key} className={column.className}>
                   {column.render
                     ? column.render(row)
-                    : String(row[column.key] ?? "-")}
+                    : String((row as Record<string, unknown>)[column.key] ?? "-")}
                 </TableCell>
               ))}
             </TableRow>
