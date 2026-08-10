@@ -1,12 +1,15 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { authenticate } from "./actions";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { authenticate, requestWhatsappLoginCode } from "./actions";
 
-export function SignInForm() {
+function EmailTab() {
   const [errorMessage, formAction, isPending] = useActionState(
     authenticate,
     undefined,
@@ -44,5 +47,79 @@ export function SignInForm() {
         {isPending ? "Entrando..." : "Entrar"}
       </Button>
     </form>
+  );
+}
+
+function WhatsappTab() {
+  const router = useRouter();
+  const [wNumber, setWNumber] = useState("+54");
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  const onSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    setError(null);
+    startTransition(async () => {
+      const result = await requestWhatsappLoginCode(wNumber);
+      if (!result.success) {
+        setError(result.error);
+        return;
+      }
+      const params = new URLSearchParams({ wNumber });
+      if (result.mockCode) params.set("mockCode", result.mockCode);
+      router.push(`/dashboard/verify?${params.toString()}`);
+    });
+  };
+
+  return (
+    <form onSubmit={onSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="wNumber">Número de WhatsApp</Label>
+        <Input
+          id="wNumber"
+          value={wNumber}
+          onChange={(e) => setWNumber(e.target.value)}
+          placeholder="+54XXXXXXXXXX"
+          required
+        />
+      </div>
+      {error ? (
+        <p className="text-sm text-destructive" role="alert">
+          {error}
+        </p>
+      ) : null}
+      <Button type="submit" size="lg" className="w-full" disabled={isPending}>
+        {isPending ? "Enviando..." : "Enviar código"}
+      </Button>
+    </form>
+  );
+}
+
+export function SignInForm() {
+  return (
+    <div className="space-y-4">
+      <Tabs defaultValue="email">
+        <TabsList className="mb-2 w-full">
+          <TabsTrigger value="email" className="flex-1">
+            Email
+          </TabsTrigger>
+          <TabsTrigger value="whatsapp" className="flex-1">
+            WhatsApp
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="email">
+          <EmailTab />
+        </TabsContent>
+        <TabsContent value="whatsapp">
+          <WhatsappTab />
+        </TabsContent>
+      </Tabs>
+      <p className="text-center text-sm text-muted-foreground">
+        No tenés cuenta?{" "}
+        <Link href="/dashboard/register" className="font-medium text-primary">
+          Registrate
+        </Link>
+      </p>
+    </div>
   );
 }

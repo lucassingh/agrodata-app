@@ -1,6 +1,5 @@
 import type { DefaultSession } from "next-auth";
-
-type PlatformRole = "OWNER" | "FARM_MANAGER" | "OPERATOR";
+import type { Capabilities, PlatformRole } from "@repo/core";
 
 declare module "next-auth" {
   interface User {
@@ -13,13 +12,8 @@ declare module "next-auth" {
       id: string;
       platformRole: PlatformRole;
       isSuperAdmin: boolean;
+      activeTenantId: string | null;
+      capabilities: Capabilities;
     } & DefaultSession["user"];
-  }
-}
-
-declare module "next-auth/jwt" {
-  interface JWT {
-    platformRole?: PlatformRole;
-    isSuperAdmin?: boolean;
   }
 }

@@ -2,6 +2,17 @@
 
 import { AuthError } from "next-auth";
 import { signIn } from "@/auth";
+import { requestWhatsappCode, AppError } from "@repo/core";
+
+export async function requestWhatsappLoginCode(wNumber: string) {
+  try {
+    const result = await requestWhatsappCode(wNumber);
+    return { success: true as const, mockCode: result.mockCode };
+  } catch (error) {
+    if (error instanceof AppError) return { success: false as const, error: error.message };
+    throw error;
+  }
+}
 
 export async function authenticate(
   _prevState: string | undefined,

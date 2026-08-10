@@ -16,10 +16,14 @@ export const authConfig = {
   callbacks: {
     authorized({ auth, request }) {
       const isLoggedIn = !!auth?.user;
-      const isOnDashboard = request.nextUrl.pathname.startsWith("/dashboard");
-      const isOnSignIn = request.nextUrl.pathname === "/dashboard/sign-in";
+      const { pathname } = request.nextUrl;
+      const isOnDashboard = pathname.startsWith("/dashboard");
+      const isPublicAuthPage =
+        pathname === "/dashboard/sign-in" ||
+        pathname === "/dashboard/register" ||
+        pathname === "/dashboard/verify";
 
-      if (isOnSignIn) {
+      if (isPublicAuthPage) {
         return !isLoggedIn || Response.redirect(new URL("/dashboard", request.nextUrl));
       }
       if (isOnDashboard) {
