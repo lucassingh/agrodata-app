@@ -96,6 +96,7 @@ export function CreateTenantDialog({ open, onClose, onCreated }: CreateTenantDia
             <div className="space-y-2">
               <Label>Rubro</Label>
               <Select
+                items={Object.entries(TENANT_CATEGORY_LABELS).map(([value, label]) => ({ value, label }))}
                 value={values.category}
                 onValueChange={(v: string | null) =>
                   v &&
@@ -118,6 +119,7 @@ export function CreateTenantDialog({ open, onClose, onCreated }: CreateTenantDia
             <div className="space-y-2">
               <Label>Zona horaria</Label>
               <Select
+                items={TENANT_TIMEZONES}
                 value={values.timezone}
                 onValueChange={(v: string | null) => v && setValues((p) => ({ ...p, timezone: v }))}
               >
@@ -137,6 +139,7 @@ export function CreateTenantDialog({ open, onClose, onCreated }: CreateTenantDia
             <div className="space-y-2">
               <Label>Moneda base</Label>
               <Select
+                items={BASE_CURRENCIES}
                 value={values.baseCurrency}
                 onValueChange={(v: string | null) =>
                   v && setValues((p) => ({ ...p, baseCurrency: v }))

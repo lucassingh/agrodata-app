@@ -115,6 +115,7 @@ function TenantConfigForm({
         <div className="space-y-2">
           <Label>Rubro</Label>
           <Select
+            items={Object.entries(TENANT_CATEGORY_LABELS).map(([value, label]) => ({ value, label }))}
             value={values.category}
             disabled={readOnly}
             onValueChange={(v: string | null) => v && setValues((p) => ({ ...p, category: v }))}
@@ -134,6 +135,7 @@ function TenantConfigForm({
         <div className="space-y-2">
           <Label>Zona horaria</Label>
           <Select
+            items={TENANT_TIMEZONES}
             value={values.timezone}
             disabled={readOnly}
             onValueChange={(v: string | null) => v && setValues((p) => ({ ...p, timezone: v }))}
@@ -153,6 +155,7 @@ function TenantConfigForm({
         <div className="space-y-2">
           <Label>Moneda base</Label>
           <Select
+            items={BASE_CURRENCIES}
             value={values.baseCurrency}
             disabled={readOnly}
             onValueChange={(v: string | null) =>

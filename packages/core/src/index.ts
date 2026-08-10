@@ -17,3 +17,7 @@ export * from "./preferences/preferences.service";
 export * from "./expenses/expense-categories.service";
 export * from "./pastures/pastures.schema";
 export * from "./pastures/pastures.service";
+export * from "./records/records.schema";
+export * from "./records/records.service";
+export * from "./supplies/supplies.schema";
+export * from "./supplies/supplies.service";
