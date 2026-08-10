@@ -4,6 +4,7 @@ export * from "./auth/types";
 export * from "./auth/register.schema";
 export * from "./auth/auth.service";
 export * from "./memberships/memberships.service";
+export * from "./memberships/memberships.schema";
 export * from "./users/users.service";
 export * from "./tenants/tenant-labels";
 export * from "./tenants/tenants.schema";
