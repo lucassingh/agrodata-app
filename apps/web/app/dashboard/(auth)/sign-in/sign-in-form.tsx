@@ -9,6 +9,12 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { authenticate, requestWhatsappLoginCode } from "./actions";
 
+// Solo en desarrollo: precarga el usuario demo del seed para no tener que
+// tipearlo en cada reinicio del server. Nunca se incluye en producción.
+const isDev = process.env.NODE_ENV !== "production";
+const DEV_EMAIL = isDev ? "owner@agrodata.dev" : "";
+const DEV_PASSWORD = isDev ? "AgroData123!" : "";
+
 function EmailTab() {
   const [errorMessage, formAction, isPending] = useActionState(
     authenticate,
@@ -25,6 +31,7 @@ function EmailTab() {
           type="email"
           autoComplete="email"
           placeholder="vos@tucampo.com"
+          defaultValue={DEV_EMAIL}
           required
         />
       </div>
@@ -35,6 +42,7 @@ function EmailTab() {
           name="password"
           type="password"
           autoComplete="current-password"
+          defaultValue={DEV_PASSWORD}
           required
         />
       </div>
