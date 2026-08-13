@@ -15,6 +15,8 @@ export * from "./preferences/rodeos.service";
 export * from "./preferences/supply-categories.service";
 export * from "./preferences/preferences.service";
 export * from "./expenses/expense-categories.service";
+export * from "./expenses/expenses.schema";
+export * from "./expenses/expenses.service";
 export * from "./pastures/pastures.schema";
 export * from "./pastures/pastures.service";
 export * from "./records/records.schema";
