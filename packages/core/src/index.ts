@@ -23,3 +23,5 @@ export * from "./records/records.schema";
 export * from "./records/records.service";
 export * from "./supplies/supplies.schema";
 export * from "./supplies/supplies.service";
+export * from "./tasks/tasks.schema";
+export * from "./tasks/tasks.service";

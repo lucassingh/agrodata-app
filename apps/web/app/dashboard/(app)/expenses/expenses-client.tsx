@@ -34,6 +34,7 @@ import { TablePagination } from "@/components/table-pagination";
 import type { Expense, ExpenseCategoryRef, ExpenseDashboard } from "./types";
 import { deleteExpenseAction } from "./actions";
 import { formatExpenseAmount } from "./expense-format";
+import { formatDateOnly } from "@/lib/format-date-only";
 import { ExpenseFormDialog } from "./expense-form-dialog";
 import { ExpenseCategoryDialog } from "./expense-category-dialog";
 
@@ -160,7 +161,7 @@ export function ExpensesClient({
     {
       key: "date",
       label: "Fecha",
-      render: (e) => e.date.toLocaleDateString("es-AR"),
+      render: (e) => formatDateOnly(e.date),
     },
     {
       key: "currency",
