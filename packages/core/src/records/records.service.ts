@@ -14,3 +14,14 @@ export function createRecord(tenantId: string, input: CreateRecordInput) {
     },
   });
 }
+
+/** Puerto directo de `findByTenantForUser` del legacy: `take: 100`, sin cursor ni
+ *  total -- si el tenant tiene más de 100 registros, el resto queda invisible sin
+ *  ningún indicador en la UI. Gap real del legacy, replicado a propósito. */
+export function listRecordsForUser(tenantId: string) {
+  return prisma.record.findMany({
+    where: { tenantId },
+    orderBy: { occurredAt: "desc" },
+    take: 100,
+  });
+}

@@ -56,11 +56,14 @@ function statusChip(status: string): string {
   return status;
 }
 
+/** `timeZone` fijo para evitar hydration mismatch entre el huso horario
+ *  ambiente del servidor y el del navegador (ver nota igual en data-client.tsx). */
 function formatDate(date: Date): string {
   return new Date(date).toLocaleDateString("es-AR", {
     day: "2-digit",
     month: "short",
     year: "numeric",
+    timeZone: "America/Argentina/Buenos_Aires",
   });
 }
 
