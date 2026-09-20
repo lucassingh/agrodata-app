@@ -46,13 +46,28 @@ export async function createPastureAction(
   }
 }
 
+/** También la usa Cómo empezar (import Excel/KMZ de la Slice 9) para crear
+ *  potreros en lote -- por eso revalida las dos rutas. Valida cada fila con el
+ *  mismo schema del alta individual antes de crear nada: replica el
+ *  `ParseArrayPipe` todo-o-nada del legacy (si una fila es inválida, no se crea
+ *  ninguna), a diferencia del loop secuencial de `createPasturesBulk`, que sí
+ *  puede fallar parcial a mitad de camino si Prisma rechaza una fila ya
+ *  validada -- eso sí se replica tal cual, es el gap real documentado en
+ *  pastures.service.ts. */
 export async function createPasturesBulkAction(
   items: CreatePastureInput[],
 ): Promise<ActionResult<{ count: number }>> {
+  const parsedItems: CreatePastureInput[] = [];
+  for (const item of items) {
+    const parsed = createPastureSchema.safeParse(item);
+    if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Datos inválidos.");
+    parsedItems.push(parsed.data);
+  }
   try {
     const tenantId = await requireActiveTenantId();
-    const created = await createPasturesBulk(tenantId, items);
+    const created = await createPasturesBulk(tenantId, parsedItems);
     revalidatePath("/dashboard/pastures");
+    revalidatePath("/dashboard/how-start");
     return ok({ count: created.length });
   } catch (error) {
     if (error instanceof AppError) return fail(error.message);
