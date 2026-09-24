@@ -137,3 +137,98 @@
 .animate-field-zoom {
   animation: field-zoom 16s ease-in-out infinite alternate;
 }
+
+/**
+ * Landing comercial (app/(marketing)). Tokens scopeados a `.landing` para que
+ * el dashboard no cambie. Neutros teñidos hacia el verde de marca (hue ~160),
+ * un solo acento (ámbar trigo, derivado de --warning). Ver docs/08_ui-landing.md.
+ */
+.landing {
+  --l-bg: oklch(0.986 0.004 160);
+  --l-surface: oklch(0.965 0.009 160);
+  --l-surface-2: oklch(0.935 0.014 160);
+  --l-line: oklch(0.895 0.012 160);
+  --l-ink: oklch(0.235 0.035 162);
+  --l-ink-soft: oklch(0.43 0.025 162);
+  --l-brand: #2d6a4f;
+  --l-brand-dark: #1b4332;
+  --l-brand-light: #52b788;
+  --l-brand-tint: oklch(0.94 0.035 158);
+  --l-accent: oklch(0.72 0.15 75);
+  --l-accent-strong: oklch(0.6 0.14 70);
+  --l-accent-tint: oklch(0.95 0.05 85);
+  --l-wa-bg: #efeae2;
+  --l-wa-out: #d9fdd3;
+  --l-shadow: 0 1px 2px oklch(0.235 0.035 162 / 0.07), 0 4px 8px -2px oklch(0.235 0.035 162 / 0.1);
+  --l-shadow-lg: 0 2px 4px oklch(0.235 0.035 162 / 0.05), 0 24px 48px -16px oklch(0.235 0.035 162 / 0.22);
+  background: var(--l-bg);
+  color: var(--l-ink);
+}
+
+@theme inline {
+  --color-l-bg: var(--l-bg);
+  --color-l-surface: var(--l-surface);
+  --color-l-surface-2: var(--l-surface-2);
+  --color-l-line: var(--l-line);
+  --color-l-ink: var(--l-ink);
+  --color-l-ink-soft: var(--l-ink-soft);
+  --color-l-brand: var(--l-brand);
+  --color-l-brand-dark: var(--l-brand-dark);
+  --color-l-brand-light: var(--l-brand-light);
+  --color-l-brand-tint: var(--l-brand-tint);
+  --color-l-accent: var(--l-accent);
+  --color-l-accent-strong: var(--l-accent-strong);
+  --color-l-accent-tint: var(--l-accent-tint);
+  --color-l-wa-bg: var(--l-wa-bg);
+  --color-l-wa-out: var(--l-wa-out);
+  --shadow-l: var(--l-shadow);
+  --shadow-l-lg: var(--l-shadow-lg);
+}
+
+.landing h1,
+.landing h2,
+.landing h3 {
+  text-wrap: balance;
+}
+
+.landing p {
+  text-wrap: pretty;
+}
+
+@keyframes landing-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.landing-marquee-track {
+  animation: landing-marquee 48s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-marquee-track {
+    animation: none;
+  }
+}
+
+/* Reveal al scrollear sin JS: el contenido es visible por defecto y la
+   animación solo se agrega donde hay scroll-driven animations y motion permitido. */
+@keyframes landing-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .landing-reveal {
+      animation: landing-reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 22%;
+    }
+  }
+}

@@ -30,7 +30,7 @@ export default function RootLayout({
 }) {
   return (
     <html
-      lang="es"
+      lang="es-AR"
       suppressHydrationWarning
       className={cn("font-sans", poppins.variable, workSans.variable)}
     >
