@@ -199,7 +199,7 @@ export function AppShell({ user, memberships, children, signOutAction }: AppShel
             alt="AgroData"
             width={collapsed ? 38 : 136}
             height={collapsed ? 38 : 30}
-            className="h-auto w-auto"
+            className={cn("h-auto object-contain", collapsed ? "w-[38px]" : "w-[136px]")}
           />
         </div>
 
