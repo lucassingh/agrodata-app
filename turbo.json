@@ -6,10 +6,12 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": ["dist/**", ".next/**", "!.next/cache/**", "!.next/dev/**"]
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**", "!.next/dev/**"],
+      "env": ["WHATSAPP_WEBHOOK_VERIFY_TOKEN"]
     },
     "lint": {
-      "dependsOn": ["^lint"]
+      "dependsOn": ["^lint"],
+      "env": ["WHATSAPP_WEBHOOK_VERIFY_TOKEN"]
     },
     "check-types": {
       "dependsOn": ["^check-types"]

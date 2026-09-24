@@ -483,12 +483,16 @@ model ExpenseConfig {
 // ─── Webhook Events ──────────────────────────────────────
 
 model WebhookEvent {
-  id        String   @id @default(cuid())
-  channel   String
-  eventType String
-  tenantId  String?
-  payload   Json
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  channel    String
+  eventType  String
+  tenantId   String?
+  /// ID único del proveedor (ej. wamid de WhatsApp) para deduplicar reintentos
+  /// de entrega a nivel de constraint de DB -- evita la condición de carrera
+  /// de un "buscar y después insertar" bajo entregas concurrentes.
+  externalId String?  @unique
+  payload    Json
+  createdAt  DateTime @default(now())
 
   @@index([channel, createdAt])
   @@map("webhook_events")

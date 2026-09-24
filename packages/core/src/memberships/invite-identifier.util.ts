@@ -11,6 +11,10 @@ export function normalizeArgWNumber(raw: string): string {
   if (digits.length === 10) return `+54${digits}`;
   if (digits.length === 12 && digits.startsWith("54")) return `+${digits}`;
   if (digits.length === 11 && digits.startsWith("9")) return `+54${digits.slice(1)}`;
+  // Formato real que manda WhatsApp Cloud API para celulares argentinos
+  // (`wa_id`): "549" + 10 dígitos -- ej. "5493462565888". Sin esta rama,
+  // ningún wa_id real de un celular argentino normaliza nunca.
+  if (digits.length === 13 && digits.startsWith("549")) return `+54${digits.slice(3)}`;
   badRequest(
     "El número debe ser un WhatsApp válido: +54 seguido de 10 dígitos (ej. +542611234567).",
   );

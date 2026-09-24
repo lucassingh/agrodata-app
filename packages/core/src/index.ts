@@ -26,3 +26,8 @@ export * from "./supplies/supplies.schema";
 export * from "./supplies/supplies.service";
 export * from "./tasks/tasks.schema";
 export * from "./tasks/tasks.service";
+export * from "./whatsapp/whatsapp.schema";
+export * from "./whatsapp/whatsapp-client";
+export * from "./whatsapp/webhook-signature";
+export * from "./whatsapp/resolve-sender";
+export * from "./whatsapp/webhook-events.service";
