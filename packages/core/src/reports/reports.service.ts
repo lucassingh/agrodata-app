@@ -1,17 +1,25 @@
 import "server-only";
 import { prisma } from "@repo/database";
+import { dateRangeFilter, type DateRange } from "./date-range";
 
 const LOW_STOCK_THRESHOLD = 5;
 
 /** Puerto directo de `ReportsService.dashboard()` del legacy: 15 queries en
  *  paralelo + 1 secuencial (categorías de gasto, para resolver nombre/color).
- *  Sin filtro de fecha en ninguna -- es una foto acumulada de todo el historial,
- *  igual que el legacy (no existe "este mes" ni rango en esta pantalla). No
+ *  Acepta un período (ver `dateRange`); sin período es la foto acumulada de todo
+ *  el historial, como el legacy. No
  *  reusa `getExpenseDashboard` de Gastos a propósito: acá `expensesByCategory`
  *  se arma con un `groupBy` de Prisma que omite categorías en $0, mientras que
  *  el dashboard de Gastos sí las incluye -- son dos formas reales distintas en
  *  el legacy, no conviene unificarlas. */
-export async function getDashboardSummary(tenantId: string) {
+export async function getDashboardSummary(tenantId: string, range: DateRange = {}) {
+  // Lo que ocurre en el tiempo (registros, gastos, mortandad) respeta el período;
+  // lo que es estado actual (animales, potreros, stock) no.
+  const period = dateRangeFilter(range);
+  const records = { tenantId, ...(period ? { occurredAt: period } : {}) };
+  const expenses = { tenantId, ...(period ? { date: period } : {}) };
+  const deaths = { tenantId, type: "DEATH" as const, ...(period ? { date: period } : {}) };
+
   const [
     totalRecords,
     totalUsers,
@@ -32,17 +40,17 @@ export async function getDashboardSummary(tenantId: string) {
     deathsAgg,
     usdExpensesAgg,
   ] = await Promise.all([
-    prisma.record.count({ where: { tenantId } }),
+    prisma.record.count({ where: records }),
     prisma.userTenantMembership.count({ where: { tenantId, status: "ACTIVE" } }),
-    prisma.record.groupBy({ by: ["type"], where: { tenantId }, _count: true }),
+    prisma.record.groupBy({ by: ["type"], where: records, _count: true }),
     prisma.pasture.count({ where: { tenantId } }),
     prisma.task.count({ where: { tenantId } }),
     prisma.task.count({ where: { tenantId, status: "PENDING" } }),
     // Pesos y dólares no se suman (todavía no hay tipo de cambio): el total y la
     // torta van en pesos y los dólares se informan aparte.
-    prisma.expense.aggregate({ where: { tenantId, currency: "ARS" }, _sum: { amount: true } }),
+    prisma.expense.aggregate({ where: { ...expenses, currency: "ARS" }, _sum: { amount: true } }),
     prisma.supply.count({ where: { tenantId } }),
-    prisma.record.findMany({ where: { tenantId }, orderBy: { createdAt: "desc" }, take: 10 }),
+    prisma.record.findMany({ where: records, orderBy: { createdAt: "desc" }, take: 10 }),
     prisma.pasture.aggregate({ where: { tenantId }, _sum: { hectares: true } }),
     prisma.pastureAnimal.aggregate({ where: { pasture: { tenantId } }, _sum: { quantity: true } }),
     prisma.pastureAnimal.groupBy({
@@ -51,7 +59,7 @@ export async function getDashboardSummary(tenantId: string) {
       _sum: { quantity: true },
     }),
     prisma.pastureCrop.groupBy({ by: ["crop"], where: { pasture: { tenantId } }, _count: true }),
-    prisma.expense.groupBy({ by: ["categoryId"], where: { tenantId, currency: "ARS" }, _sum: { amount: true }, _count: true }),
+    prisma.expense.groupBy({ by: ["categoryId"], where: { ...expenses, currency: "ARS" }, _sum: { amount: true }, _count: true }),
     prisma.supply.findMany({
       where: { tenantId, quantity: { lte: LOW_STOCK_THRESHOLD } },
       include: { category: true },
@@ -59,8 +67,8 @@ export async function getDashboardSummary(tenantId: string) {
       orderBy: { quantity: "asc" },
     }),
     prisma.expenseCategory.findMany({ where: { tenantId } }),
-    prisma.livestockEvent.aggregate({ where: { tenantId, type: "DEATH" }, _sum: { quantity: true } }),
-    prisma.expense.aggregate({ where: { tenantId, currency: "USD" }, _sum: { amount: true } }),
+    prisma.livestockEvent.aggregate({ where: deaths, _sum: { quantity: true } }),
+    prisma.expense.aggregate({ where: { ...expenses, currency: "USD" }, _sum: { amount: true } }),
   ]);
 
   const categoryMap = new Map(expenseCategories.map((c) => [c.id, c]));

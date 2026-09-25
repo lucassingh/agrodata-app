@@ -31,6 +31,7 @@ import { getRecordConfig } from "../data/record-constants";
 import { formatRecordDescription, formatRecordSource } from "../data/record-format";
 import { formatRelativeDate, formatArs } from "./summary-format";
 import type { DashboardSummaryData } from "./types";
+import { PeriodFilter } from "./period-filter";
 
 const PIE_COLORS = ["#2D6A4F", "#D97706", "#3B7DC4", "#C4453A", "#7C3AED", "#0F766E", "#D4930D", "#10B981"];
 
@@ -46,9 +47,11 @@ const KPI_DEFS: { key: keyof DashboardSummaryData["kpis"]; label: string }[] = [
 interface SummaryClientProps {
   dashboard: DashboardSummaryData;
   hasActiveTenant: boolean;
+  from: string;
+  to: string;
 }
 
-export function SummaryClient({ dashboard, hasActiveTenant }: SummaryClientProps) {
+export function SummaryClient({ dashboard, hasActiveTenant, from, to }: SummaryClientProps) {
   const router = useRouter();
 
   if (!hasActiveTenant) {
@@ -83,7 +86,9 @@ export function SummaryClient({ dashboard, hasActiveTenant }: SummaryClientProps
         subtitle="Indicadores según tus registros, actividad reciente y estado operativo."
       />
 
-      {dashboard.kpis.datosIngresados === 0 ? (
+      <PeriodFilter from={from} to={to} />
+
+      {dashboard.kpis.datosIngresados === 0 && !from && !to ? (
         <div className="rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-primary">
           Campo nuevo: los números de arriba son reales (hoy en cero). Cargá datos desde Potreros, Tareas o Datos.
         </div>

@@ -8,12 +8,19 @@ export const metadata: Metadata = {
   title: "Resumen — AgroData",
 };
 
-export default async function SummaryPage() {
+interface SummaryPageProps {
+  searchParams: Promise<{ from?: string; to?: string }>;
+}
+
+export default async function SummaryPage({ searchParams }: SummaryPageProps) {
   const user = await requireUser();
+  const { from = "", to = "" } = await searchParams;
 
   const dashboard = user.activeTenantId
-    ? await getDashboardSummary(user.activeTenantId)
+    ? await getDashboardSummary(user.activeTenantId, { from, to })
     : ZERO_DASHBOARD;
 
-  return <SummaryClient dashboard={dashboard} hasActiveTenant={Boolean(user.activeTenantId)} />;
+  return (
+    <SummaryClient dashboard={dashboard} hasActiveTenant={Boolean(user.activeTenantId)} from={from} to={to} />
+  );
 }
