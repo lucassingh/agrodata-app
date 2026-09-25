@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dateRangeFilter } from "./date-range";
+import { dateOnlyRangeFilter, dateRangeFilter } from "./date-range";
 
 describe("dateRangeFilter", () => {
   it("sin rango no filtra", () => {
@@ -18,5 +18,14 @@ describe("dateRangeFilter", () => {
     expect(dateRangeFilter({ from: "01/09/2026", to: "2026-09-30" })).toEqual({
       lte: new Date("2026-10-01T02:59:59.999Z"),
     });
+  });
+});
+
+describe("dateOnlyRangeFilter", () => {
+  it("compara días UTC: un gasto del 1 a medianoche UTC entra en el mes", () => {
+    const filter = dateOnlyRangeFilter({ from: "2026-09-01", to: "2026-09-30" });
+    const expenseDate = new Date("2026-09-01T00:00:00Z");
+    expect(expenseDate >= filter!.gte! && expenseDate <= filter!.lte!).toBe(true);
+    expect(filter?.lte?.toISOString()).toBe("2026-09-30T23:59:59.999Z");
   });
 });

@@ -1,6 +1,6 @@
 import "server-only";
 import { prisma } from "@repo/database";
-import { dateRangeFilter, type DateRange } from "./date-range";
+import { dateOnlyRangeFilter, dateRangeFilter, type DateRange } from "./date-range";
 
 const LOW_STOCK_THRESHOLD = 5;
 
@@ -17,7 +17,8 @@ export async function getDashboardSummary(tenantId: string, range: DateRange = {
   // lo que es estado actual (animales, potreros, stock) no.
   const period = dateRangeFilter(range);
   const records = { tenantId, ...(period ? { occurredAt: period } : {}) };
-  const expenses = { tenantId, ...(period ? { date: period } : {}) };
+  const expensePeriod = dateOnlyRangeFilter(range);
+  const expenses = { tenantId, ...(expensePeriod ? { date: expensePeriod } : {}) };
   const deaths = { tenantId, type: "DEATH" as const, ...(period ? { date: period } : {}) };
 
   const [
