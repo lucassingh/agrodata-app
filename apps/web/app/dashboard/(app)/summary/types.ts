@@ -50,7 +50,9 @@ export interface DashboardSummaryData {
   totalPastures: number;
   totalTasks: number;
   pendingTasks: number;
+  /** Solo gastos en pesos. */
   totalExpenses: number;
+  totalExpensesUsd: number;
   totalSupplies: number;
   totalUsers: number;
   recordsByType: RecordByType[];
@@ -69,6 +71,7 @@ export const ZERO_DASHBOARD: DashboardSummaryData = {
   totalTasks: 0,
   pendingTasks: 0,
   totalExpenses: 0,
+  totalExpensesUsd: 0,
   totalSupplies: 0,
   totalUsers: 0,
   recordsByType: [],

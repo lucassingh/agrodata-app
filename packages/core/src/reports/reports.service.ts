@@ -30,6 +30,7 @@ export async function getDashboardSummary(tenantId: string) {
     supplyAlerts,
     expenseCategories,
     deathsAgg,
+    usdExpensesAgg,
   ] = await Promise.all([
     prisma.record.count({ where: { tenantId } }),
     prisma.userTenantMembership.count({ where: { tenantId, status: "ACTIVE" } }),
@@ -37,7 +38,9 @@ export async function getDashboardSummary(tenantId: string) {
     prisma.pasture.count({ where: { tenantId } }),
     prisma.task.count({ where: { tenantId } }),
     prisma.task.count({ where: { tenantId, status: "PENDING" } }),
-    prisma.expense.aggregate({ where: { tenantId }, _sum: { amount: true } }),
+    // Pesos y dólares no se suman (todavía no hay tipo de cambio): el total y la
+    // torta van en pesos y los dólares se informan aparte.
+    prisma.expense.aggregate({ where: { tenantId, currency: "ARS" }, _sum: { amount: true } }),
     prisma.supply.count({ where: { tenantId } }),
     prisma.record.findMany({ where: { tenantId }, orderBy: { createdAt: "desc" }, take: 10 }),
     prisma.pasture.aggregate({ where: { tenantId }, _sum: { hectares: true } }),
@@ -48,7 +51,7 @@ export async function getDashboardSummary(tenantId: string) {
       _sum: { quantity: true },
     }),
     prisma.pastureCrop.groupBy({ by: ["crop"], where: { pasture: { tenantId } }, _count: true }),
-    prisma.expense.groupBy({ by: ["categoryId"], where: { tenantId }, _sum: { amount: true }, _count: true }),
+    prisma.expense.groupBy({ by: ["categoryId"], where: { tenantId, currency: "ARS" }, _sum: { amount: true }, _count: true }),
     prisma.supply.findMany({
       where: { tenantId, quantity: { lte: LOW_STOCK_THRESHOLD } },
       include: { category: true },
@@ -57,6 +60,7 @@ export async function getDashboardSummary(tenantId: string) {
     }),
     prisma.expenseCategory.findMany({ where: { tenantId } }),
     prisma.livestockEvent.aggregate({ where: { tenantId, type: "DEATH" }, _sum: { quantity: true } }),
+    prisma.expense.aggregate({ where: { tenantId, currency: "USD" }, _sum: { amount: true } }),
   ]);
 
   const categoryMap = new Map(expenseCategories.map((c) => [c.id, c]));
@@ -88,6 +92,7 @@ export async function getDashboardSummary(tenantId: string) {
     totalTasks,
     pendingTasks,
     totalExpenses: expensesAgg._sum.amount ?? 0,
+    totalExpensesUsd: usdExpensesAgg._sum.amount ?? 0,
     totalSupplies,
     totalUsers,
     recordsByType: recordsByTypeRaw.map((r) => ({ type: r.type, count: r._count })),

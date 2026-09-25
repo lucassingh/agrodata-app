@@ -108,6 +108,7 @@ export function SummaryClient({ dashboard, hasActiveTenant }: SummaryClientProps
           icon={<Wallet size={18} />}
           value={formatArs(dashboard.totalExpenses)}
           label="Gastos totales"
+          caption={dashboard.totalExpensesUsd > 0 ? `+ USD ${new Intl.NumberFormat("es-AR").format(dashboard.totalExpensesUsd)}` : undefined}
           color="#D97706"
         />
       </div>
@@ -167,7 +168,7 @@ export function SummaryClient({ dashboard, hasActiveTenant }: SummaryClientProps
 
         <Card className="rounded-2xl shadow-soft">
           <CardContent className="space-y-3">
-            <p className="font-heading text-sm font-bold">Distribución de gastos</p>
+            <p className="font-heading text-sm font-bold">Distribución de gastos (en pesos)</p>
             {pieData.length === 0 ? (
               <p className="text-sm text-muted-foreground">Sin gastos cargados. Registrá gastos desde la sección Gastos.</p>
             ) : (

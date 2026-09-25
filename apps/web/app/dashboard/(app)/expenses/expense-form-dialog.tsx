@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -28,9 +29,9 @@ interface ExpenseFormDialogProps {
   expense?: Expense;
   categories: ExpenseCategoryRef[];
   defaultCurrency: "ARS" | "USD";
-  /** El legacy toma `withIva` siempre del toggle global de la barra de filtros al
-   *  momento de guardar -- nunca del valor real del gasto que se está editando. Se
-   *  replica ese comportamiento tal cual (gap documentado en CLAUDE.md). */
+  /** Valor inicial del IVA para un gasto NUEVO (el toggle de la barra de filtros).
+   *  Al editar se usa el valor real del gasto: el legacy lo pisaba con el toggle
+   *  global, y eso cambiaba en silencio el IVA de gastos ya cargados. */
   ivaMode: "con" | "sin";
   onClose: () => void;
 }
@@ -56,6 +57,7 @@ export function ExpenseFormDialog({
   const [currency, setCurrency] = useState<"ARS" | "USD">(expense?.currency ?? defaultCurrency);
   const [date, setDate] = useState(expense ? dateInputValue(expense.date) : todayISO());
   const [description, setDescription] = useState(expense?.description ?? "");
+  const [withIva, setWithIva] = useState(expense ? expense.withIva : ivaMode === "con");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -81,7 +83,7 @@ export function ExpenseFormDialog({
       currency,
       date,
       description: description.trim() || undefined,
-      withIva: ivaMode === "con",
+      withIva,
     };
 
     startTransition(async () => {
@@ -179,6 +181,11 @@ export function ExpenseFormDialog({
               rows={2}
             />
           </div>
+
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox checked={withIva} onCheckedChange={(checked: boolean) => setWithIva(checked)} />
+            El importe incluye IVA
+          </label>
 
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
         </div>

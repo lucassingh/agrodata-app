@@ -37,6 +37,7 @@ import { formatExpenseAmount } from "./expense-format";
 import { formatDateOnly } from "@/lib/format-date-only";
 import { ExpenseFormDialog } from "./expense-form-dialog";
 import { ExpenseCategoryDialog } from "./expense-category-dialog";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 const ROWS_PER_PAGE_OPTIONS = [5, 10, 25];
 
@@ -100,6 +101,7 @@ export function ExpensesClient({
   );
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [isDeleting, startDelete] = useTransition();
+  const [deleting, setDeleting] = useState<Expense | null>(null);
 
   useEffect(() => {
     setPage(0);
@@ -127,14 +129,16 @@ export function ExpensesClient({
 
   const paged = filteredExpenses.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
-  const handleDelete = (expense: Expense) => {
+  const handleDelete = () => {
+    if (!deleting) return;
     startDelete(async () => {
-      const result = await deleteExpenseAction(expense.id);
+      const result = await deleteExpenseAction(deleting.id);
       if (!result.success) {
         toast.error(result.error ?? "No se pudo eliminar el gasto.");
         return;
       }
       toast.success("Gasto eliminado.");
+      setDeleting(null);
     });
   };
 
@@ -201,7 +205,7 @@ export function ExpensesClient({
               size="icon-sm"
               title="Eliminar"
               disabled={isDeleting}
-              onClick={() => handleDelete(e)}
+              onClick={() => setDeleting(e)}
             >
               <Trash2 size={14} />
             </Button>
@@ -459,6 +463,21 @@ export function ExpensesClient({
           onCreated={() => setCategoryDialogOpen(false)}
         />
       ) : null}
+
+      <ConfirmDialog
+        open={deleting !== null}
+        title="Eliminar gasto"
+        description={
+          deleting
+            ? `Se elimina el gasto de ${formatExpenseAmount(deleting.amount, deleting.currency)} en «${deleting.category.name}». No se puede deshacer.`
+            : undefined
+        }
+        confirmLabel="Eliminar"
+        confirmVariant="destructive"
+        loading={isDeleting}
+        onConfirm={handleDelete}
+        onClose={() => !isDeleting && setDeleting(null)}
+      />
     </div>
   );
 }
