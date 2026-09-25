@@ -45,3 +45,42 @@ export function usuarioLabel(
   if (member) return member.fullName;
   return `Usuario ${record.userId.slice(0, 6)}`;
 }
+
+/** Etiquetas de los campos que extrae la IA de un mensaje de WhatsApp. */
+const DATA_LABELS: Record<string, string> = {
+  potrero: "Potrero",
+  destinoPotrero: "Potrero destino",
+  cultivo: "Cultivo",
+  hectareas: "Hectáreas",
+  cantidad: "Cantidad",
+  unidad: "Unidad",
+  item: "Animales",
+  producto: "Producto",
+  movimientoStock: "Stock",
+  monto: "Monto",
+  moneda: "Moneda",
+  contraparte: "Proveedor / comprador",
+  dosis: "Dosis",
+  categoria: "Rubro",
+};
+
+const STOCK_LABELS: Record<string, string> = { INGRESO: "Ingreso", EGRESO: "Egreso" };
+
+/** Campos del registro para mostrar en el detalle (sin el resumen ni los efectos). */
+export function recordDataEntries(data: unknown): [string, string][] {
+  const d = (data ?? {}) as Record<string, unknown>;
+  return Object.entries(d)
+    .filter(([key, value]) => key !== "summary" && key !== "efectos" && value !== null && value !== "")
+    .map(([key, value]) => {
+      const label = DATA_LABELS[key] ?? key;
+      if (key === "movimientoStock") return [label, STOCK_LABELS[String(value)] ?? String(value)];
+      if (key === "monto" && typeof value === "number") return [label, new Intl.NumberFormat("es-AR").format(value)];
+      return [label, typeof value === "object" ? JSON.stringify(value) : String(value)];
+    });
+}
+
+/** Lo que un mensaje de WhatsApp cargó en los módulos (ver `RECORD_EFFECTS_KEY` en core). */
+export function recordEffects(data: unknown): string[] {
+  const effects = ((data ?? {}) as Record<string, unknown>).efectos;
+  return Array.isArray(effects) ? effects.map(String) : [];
+}

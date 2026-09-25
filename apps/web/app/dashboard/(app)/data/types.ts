@@ -5,4 +5,5 @@ export interface RecordRow {
   data: unknown;
   source: string;
   userId: string | null;
+  rawMessage: string | null;
 }

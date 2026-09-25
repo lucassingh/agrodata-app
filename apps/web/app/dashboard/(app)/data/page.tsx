@@ -29,6 +29,7 @@ export default async function DataPage() {
           data: r.data,
           source: r.source,
           userId: r.userId,
+          rawMessage: r.rawMessage,
         }))}
         teamMembers={teamMembers
           .filter((m) => m.status === "ACTIVE")
@@ -36,6 +37,7 @@ export default async function DataPage() {
         hasActiveTenant={Boolean(user.activeTenantId)}
         currentUserId={user.id}
         currentUserName={user.name ?? "Vos"}
+        canDelete={user.capabilities.canDeleteOperationalData}
       />
     </div>
   );

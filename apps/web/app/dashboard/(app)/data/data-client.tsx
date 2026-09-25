@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Database, Eye, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,6 +11,9 @@ import { TablePagination } from "@/components/table-pagination";
 import type { RecordRow } from "./types";
 import { formatRecordSource, formatRecordDescription, usuarioLabel } from "./record-format";
 import { getRecordConfig } from "./record-constants";
+import { RecordDetailDialog } from "./record-detail-dialog";
+import { RecordEditDialog } from "./record-edit-dialog";
+import { deleteRecordAction } from "./actions";
 
 const ROWS_PER_PAGE_OPTIONS = [5, 10, 25];
 
@@ -19,6 +23,7 @@ interface DataClientProps {
   hasActiveTenant: boolean;
   currentUserId: string;
   currentUserName: string;
+  canDelete: boolean;
 }
 
 /** `timeZone` fijo a propósito: sin un huso horario explícito, este SSR-eado
@@ -49,6 +54,7 @@ export function DataClient({
   hasActiveTenant,
   currentUserId,
   currentUserName,
+  canDelete,
 }: DataClientProps) {
   const [activeTab, setActiveTab] = useState<"all" | "mine">("all");
   const [page, setPage] = useState(0);
@@ -65,12 +71,22 @@ export function DataClient({
     setPage(0);
   };
 
-  /** Puerto exacto del legacy: los 3 botones de acción son stubs -- el backend
-   *  no tiene ningún endpoint PATCH/DELETE para Record, así que no hay nada
-   *  real que llamar. Se replica el mismo toast informativo, sin diálogo ni
-   *  confirmación de ningún tipo. */
-  const handleStubAction = (action: "Ver" | "Editar" | "Borrar", id: string) => {
-    toast.info(`${action}: ${id}`);
+  const [viewing, setViewing] = useState<RecordRow | null>(null);
+  const [editing, setEditing] = useState<RecordRow | null>(null);
+  const [deleting, setDeleting] = useState<RecordRow | null>(null);
+  const [isDeleting, startDelete] = useTransition();
+
+  const handleDelete = () => {
+    if (!deleting) return;
+    startDelete(async () => {
+      const result = await deleteRecordAction(deleting.id);
+      if (!result.success) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success("Registro borrado");
+      setDeleting(null);
+    });
   };
 
   const columns: DataTableColumn<RecordRow>[] = [
@@ -118,20 +134,17 @@ export function DataClient({
       label: "",
       render: (r) => (
         <div className="flex justify-end gap-1">
-          <Button variant="ghost" size="icon-sm" title="Ver registro" onClick={() => handleStubAction("Ver", r.id)}>
+          <Button variant="ghost" size="icon-sm" title="Ver registro" onClick={() => setViewing(r)}>
             <Eye size={14} />
           </Button>
-          <Button variant="ghost" size="icon-sm" title="Editar registro" onClick={() => handleStubAction("Editar", r.id)}>
+          <Button variant="ghost" size="icon-sm" title="Editar registro" onClick={() => setEditing(r)}>
             <Pencil size={14} />
           </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            title="Borrar registro"
-            onClick={() => handleStubAction("Borrar", r.id)}
-          >
-            <Trash2 size={14} />
-          </Button>
+          {canDelete ? (
+            <Button variant="ghost" size="icon-sm" title="Borrar registro" onClick={() => setDeleting(r)}>
+              <Trash2 size={14} />
+            </Button>
+          ) : null}
         </div>
       ),
     },
@@ -183,6 +196,26 @@ export function DataClient({
           />
         </div>
       )}
+
+      {viewing ? (
+        <RecordDetailDialog
+          record={viewing}
+          occurredAtLabel={formatOccurredAt(viewing.occurredAt)}
+          userLabel={usuarioLabel(viewing, currentUserId, currentUserName, teamMembers)}
+          onClose={() => setViewing(null)}
+        />
+      ) : null}
+      {editing ? <RecordEditDialog record={editing} onClose={() => setEditing(null)} /> : null}
+      <ConfirmDialog
+        open={deleting !== null}
+        title="Borrar registro"
+        description="Se borra del historial. No deshace lo que el mensaje haya cargado en Gastos, Insumos, Potreros o Tareas: eso se corrige en cada módulo."
+        confirmLabel="Borrar"
+        confirmVariant="destructive"
+        loading={isDeleting}
+        onConfirm={handleDelete}
+        onClose={() => !isDeleting && setDeleting(null)}
+      />
     </div>
   );
 }

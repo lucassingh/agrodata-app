@@ -19,7 +19,7 @@ export interface RecordTypeConfig {
   label: string;
 }
 
-/** Solo los 9 valores reales del enum `RecordType` -- el legacy también mapeaba
+/** Los valores reales del enum `RecordType` -- el legacy también mapeaba
  *  strings de una era pre-enum (LLUVIA, MOVIMIENTO, SANIDAD...) que no existen acá. */
 const RECORD_TYPE_MAP: Record<string, RecordTypeConfig> = {
   SEEDING: { icon: Sprout, color: "#2D6A4F", bg: "#E8F5EE", label: "Siembra" },
@@ -31,6 +31,8 @@ const RECORD_TYPE_MAP: Record<string, RecordTypeConfig> = {
   FUEL_USAGE: { icon: Droplets, color: "#D4930D", bg: "#FDF4E3", label: "Combustible" },
   EXPENSE_INVOICE: { icon: ShoppingCart, color: "#C4453A", bg: "#FDECEB", label: "Gasto" },
   TASK_COMPLETED: { icon: ShieldPlus, color: "#10B981", bg: "#E6F9F1", label: "Tarea completada" },
+  FERTILIZATION: { icon: FlaskConical, color: "#10B981", bg: "#E6F9F1", label: "Fertilización" },
+  SANITARY_TREATMENT: { icon: ShieldPlus, color: "#D97706", bg: "#FDF4E3", label: "Sanidad" },
 };
 
 const DEFAULT_TYPE_CONFIG: RecordTypeConfig = {
