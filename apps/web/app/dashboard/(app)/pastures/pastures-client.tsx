@@ -18,6 +18,8 @@ import { QuickAddAnimalDialog } from "./quick-add-animal-dialog";
 
 interface PasturesClientProps {
   pastures: Pasture[];
+  /** Días de descanso por potrero (null: ocupado o sin datos). */
+  restByPasture: Record<string, number | null>;
   cropOptions: ComboboxOption[];
   animalOptions: ComboboxOption[];
   hasActiveTenant: boolean;
@@ -26,6 +28,7 @@ interface PasturesClientProps {
 
 export function PasturesClient({
   pastures,
+  restByPasture,
   cropOptions,
   animalOptions,
   hasActiveTenant,
@@ -136,6 +139,22 @@ export function PasturesClient({
       ),
     },
     {
+      key: "rest",
+      label: "Descanso",
+      render: (p) => {
+        if (p.animals.some((a) => a.quantity > 0)) {
+          return <span className="text-sm text-muted-foreground">Con hacienda</span>;
+        }
+        const days = restByPasture[p.id];
+        if (days === null || days === undefined) return <span className="text-sm text-muted-foreground">—</span>;
+        return (
+          <span className="rounded-full bg-[#E8F5EE] px-2 py-0.5 text-xs font-medium whitespace-nowrap text-[#2D6A4F]">
+            {days === 1 ? "1 día" : `${days} días`}
+          </span>
+        );
+      },
+    },
+    {
       key: "actions",
       label: "",
       render: (p) => (
@@ -200,7 +219,11 @@ export function PasturesClient({
       ) : null}
 
       {detailTarget ? (
-        <PastureDetailDialog pasture={detailTarget} onClose={() => setDetailTarget(null)} />
+        <PastureDetailDialog
+          pasture={detailTarget}
+          restDays={restByPasture[detailTarget.id] ?? null}
+          onClose={() => setDetailTarget(null)}
+        />
       ) : null}
 
       {quickCropTarget ? (

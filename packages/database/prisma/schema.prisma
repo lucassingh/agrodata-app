@@ -544,6 +544,9 @@ enum LivestockEventType {
   DEATH
   TRANSFER_IN
   TRANSFER_OUT
+  // Correcciones hechas a mano en Potreros (alta o baja sin un evento de campo detrás).
+  ADJUSTMENT_IN
+  ADJUSTMENT_OUT
 }
 
 model LivestockEvent {

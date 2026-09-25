@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { requireUser } from "@/lib/session";
-import { listPastures, getAllPreferences } from "@repo/core";
+import { listPastures, getAllPreferences, lastOutflowByPasture, restDays } from "@repo/core";
 import { HeroBanner } from "@/components/hero-banner";
 import { PasturesClient } from "./pastures-client";
 
@@ -16,15 +16,32 @@ export default async function PasturesPage({ searchParams }: PasturesPageProps) 
   const user = await requireUser();
   const { create } = await searchParams;
 
-  const [pastures, preferences] = user.activeTenantId
-    ? await Promise.all([listPastures(user.activeTenantId), getAllPreferences(user.activeTenantId)])
-    : [[], { animalCategories: [], cropConfigs: [] }];
+  const [pastures, preferences, lastOutflow] = user.activeTenantId
+    ? await Promise.all([
+        listPastures(user.activeTenantId),
+        getAllPreferences(user.activeTenantId),
+        lastOutflowByPasture(user.activeTenantId),
+      ])
+    : [[], { animalCategories: [], cropConfigs: [] }, {} as Record<string, Date>];
+
+  const now = new Date();
+  const restByPasture = Object.fromEntries(
+    pastures.map((p) => [
+      p.id,
+      restDays(
+        p.animals.reduce((sum, a) => sum + a.quantity, 0),
+        lastOutflow[p.id] ?? null,
+        now,
+      ),
+    ]),
+  );
 
   return (
     <div className="space-y-6">
       <HeroBanner title="Potreros" subtitle="Lotes del campo, con sus cultivos y animales asociados." />
       <PasturesClient
         pastures={pastures}
+        restByPasture={restByPasture}
         cropOptions={preferences.cropConfigs.map((c) => ({ value: c.name, label: c.name }))}
         animalOptions={preferences.animalCategories.map((a) => ({ value: a.name, label: a.name }))}
         hasActiveTenant={Boolean(user.activeTenantId)}

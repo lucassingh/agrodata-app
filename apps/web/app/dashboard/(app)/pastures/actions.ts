@@ -14,6 +14,7 @@ import {
   createAnimalCategory,
   createCropConfigSchema,
   createCropConfig,
+  listPastureLivestockEvents,
   type CreatePastureInput,
   type UpdatePastureInput,
 } from "@repo/core";
@@ -130,6 +131,39 @@ export async function createAnimalOptionAction(
     const category = await createAnimalCategory(tenantId, parsed.data);
     revalidatePath("/dashboard/pastures");
     return ok({ id: category.id, name: category.name });
+  } catch (error) {
+    if (error instanceof AppError) return fail(error.message);
+    throw error;
+  }
+}
+
+export interface LivestockEventRow {
+  id: string;
+  date: string;
+  type: "BIRTH" | "PURCHASE" | "SALE" | "DEATH" | "TRANSFER_IN" | "TRANSFER_OUT" | "ADJUSTMENT_IN" | "ADJUSTMENT_OUT";
+  animalType: string;
+  quantity: number;
+  amount: number | null;
+  currency: "ARS" | "USD" | null;
+  counterparty: string | null;
+}
+
+export async function listPastureHistoryAction(pastureId: string): Promise<ActionResult<LivestockEventRow[]>> {
+  try {
+    const tenantId = await requireActiveTenantId();
+    const events = await listPastureLivestockEvents(tenantId, pastureId);
+    return ok(
+      events.map((e) => ({
+        id: e.id,
+        date: e.date.toISOString(),
+        type: e.type,
+        animalType: e.animalType,
+        quantity: e.quantity,
+        amount: e.amount,
+        currency: e.currency,
+        counterparty: e.counterparty,
+      })),
+    );
   } catch (error) {
     if (error instanceof AppError) return fail(error.message);
     throw error;

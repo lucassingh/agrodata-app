@@ -19,6 +19,7 @@ export * from "./expenses/expenses.schema";
 export * from "./expenses/expenses.service";
 export * from "./pastures/pastures.schema";
 export * from "./pastures/pastures.service";
+export * from "./pastures/herd";
 export * from "./records/records.schema";
 export * from "./records/records.service";
 export * from "./reports/reports.service";

@@ -1,7 +1,10 @@
 import "server-only";
-import { prisma } from "@repo/database";
+import { prisma, type Prisma } from "@repo/database";
 import { notFound } from "../errors";
+import { herdDiff, OUTFLOW_TYPES, type HerdLine } from "./herd";
 import type { CreatePastureInput, UpdatePastureInput } from "./pastures.schema";
+
+type Tx = Prisma.TransactionClient;
 
 const PASTURE_INCLUDE = { crops: true, animals: true } as const;
 
@@ -30,16 +33,38 @@ function cropsCreateData(crops: CreatePastureInput["crops"]) {
   }));
 }
 
-export async function createPasture(tenantId: string, input: CreatePastureInput) {
-  return prisma.pasture.create({
-    data: {
+/** Una edición a mano de la hacienda queda en el historial como ajuste, para que
+ *  los movimientos y los días de descanso del potrero cierren. */
+async function logHerdAdjustments(tx: Tx, tenantId: string, pastureId: string, before: HerdLine[], after: HerdLine[]) {
+  const changes = herdDiff(before, after);
+  if (changes.length === 0) return;
+  const date = new Date();
+  await tx.livestockEvent.createMany({
+    data: changes.map((change) => ({
       tenantId,
-      name: input.name,
-      hectares: input.hectares,
-      crops: input.crops?.length ? { createMany: { data: cropsCreateData(input.crops) } } : undefined,
-      animals: input.animals?.length ? { createMany: { data: input.animals } } : undefined,
-    },
-    include: PASTURE_INCLUDE,
+      pastureId,
+      type: change.delta > 0 ? ("ADJUSTMENT_IN" as const) : ("ADJUSTMENT_OUT" as const),
+      animalType: change.animalType,
+      quantity: Math.abs(change.delta),
+      date,
+    })),
+  });
+}
+
+export async function createPasture(tenantId: string, input: CreatePastureInput) {
+  return prisma.$transaction(async (tx) => {
+    const pasture = await tx.pasture.create({
+      data: {
+        tenantId,
+        name: input.name,
+        hectares: input.hectares,
+        crops: input.crops?.length ? { createMany: { data: cropsCreateData(input.crops) } } : undefined,
+        animals: input.animals?.length ? { createMany: { data: input.animals } } : undefined,
+      },
+      include: PASTURE_INCLUDE,
+    });
+    await logHerdAdjustments(tx, tenantId, pasture.id, [], input.animals ?? []);
+    return pasture;
   });
 }
 
@@ -58,7 +83,7 @@ export async function updatePasture(
   id: string,
   input: UpdatePastureInput,
 ) {
-  await findPasture(tenantId, id);
+  const current = await findPasture(tenantId, id);
 
   await prisma.$transaction(async (tx) => {
     if (input.crops !== undefined) {
@@ -70,6 +95,7 @@ export async function updatePasture(
       }
     }
     if (input.animals !== undefined) {
+      await logHerdAdjustments(tx, tenantId, id, current.animals, input.animals);
       await tx.pastureAnimal.deleteMany({ where: { pastureId: id } });
       if (input.animals.length) {
         await tx.pastureAnimal.createMany({
@@ -89,4 +115,27 @@ export async function updatePasture(
 export async function deletePasture(tenantId: string, id: string) {
   await findPasture(tenantId, id);
   await prisma.pasture.delete({ where: { id } });
+}
+
+/** Movimientos de hacienda de un potrero, del más nuevo al más viejo. */
+export function listPastureLivestockEvents(tenantId: string, pastureId: string) {
+  return prisma.livestockEvent.findMany({
+    where: { tenantId, pastureId },
+    orderBy: [{ date: "desc" }, { createdAt: "desc" }],
+    take: 100,
+  });
+}
+
+/** Fecha de la última salida de hacienda de cada potrero (para los días de descanso). */
+export async function lastOutflowByPasture(tenantId: string): Promise<Record<string, Date>> {
+  const rows = await prisma.livestockEvent.groupBy({
+    by: ["pastureId"],
+    where: { tenantId, pastureId: { not: null }, type: { in: [...OUTFLOW_TYPES] } },
+    _max: { date: true },
+  });
+  const result: Record<string, Date> = {};
+  for (const row of rows) {
+    if (row.pastureId && row._max.date) result[row.pastureId] = row._max.date;
+  }
+  return result;
 }
