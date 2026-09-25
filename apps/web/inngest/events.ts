@@ -23,3 +23,8 @@ export const whatsappMessageReceivedSchema = z.object({
 export const whatsappMessageReceived = eventType("whatsapp/message.received", {
   schema: whatsappMessageReceivedSchema,
 });
+
+/** Dispara el resumen semanal a mano (el disparo normal es el cron de los lunes). */
+export const weeklySummaryRequested = eventType("agrodata/weekly-summary.requested", {
+  schema: z.object({}),
+});

@@ -1,3 +1,6 @@
+/** Umbral de "stock bajo" (heredado del legacy): igual para el dashboard, el Resumen y el resumen semanal. */
+export const LOW_STOCK_THRESHOLD = 5;
+
 /** Saldo que queda tras un movimiento y cuánto se movió de verdad: un consumo
  *  nunca deja el stock en negativo (mismo criterio que el legacy), así que se
  *  registra por lo que había. */

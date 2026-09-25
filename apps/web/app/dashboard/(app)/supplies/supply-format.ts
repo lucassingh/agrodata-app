@@ -1,6 +1,7 @@
+import { LOW_STOCK_THRESHOLD } from "@repo/core/supplies/stock-math";
 import type { Supply } from "./types";
 
-export const LOW_STOCK_THRESHOLD = 5;
+export { LOW_STOCK_THRESHOLD };
 
 /** Paleta + hash determinístico del legacy (`accentForCategory` en SuppliesPage.tsx):
  *  las categorías nunca reciben un `color` propio desde la UI (el form de Preferencias

@@ -11,8 +11,23 @@ function requiredEnv(name: string): string {
   return value;
 }
 
-/** Manda un mensaje de texto simple por WhatsApp Cloud API. */
-export async function sendWhatsAppText(to: string, body: string): Promise<void> {
+/** Error de la Graph API al mandar un mensaje, con el código de Meta. El que más
+ *  importa es 131047: pasaron más de 24 hs desde el último mensaje del usuario y
+ *  solo se le puede escribir con una plantilla aprobada. */
+export class WhatsAppSendError extends Error {
+  constructor(
+    readonly status: number,
+    readonly code: number | null,
+    body: string,
+  ) {
+    super(`Error al enviar WhatsApp (HTTP ${status}): ${body}`);
+    this.name = "WhatsAppSendError";
+  }
+}
+
+export const OUTSIDE_24H_WINDOW = 131047;
+
+async function postMessage(payload: Record<string, unknown>): Promise<void> {
   const phoneNumberId = requiredEnv("WHATSAPP_PHONE_NUMBER_ID");
   const accessToken = requiredEnv("WHATSAPP_ACCESS_TOKEN");
 
@@ -22,18 +37,43 @@ export async function sendWhatsAppText(to: string, body: string): Promise<void> 
       Authorization: `Bearer ${accessToken}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      messaging_product: "whatsapp",
-      to,
-      type: "text",
-      text: { body },
-    }),
+    body: JSON.stringify({ messaging_product: "whatsapp", ...payload }),
   });
 
   if (!response.ok) {
     const errorBody = await response.text();
-    throw new Error(`Error al enviar WhatsApp (HTTP ${response.status}): ${errorBody}`);
+    let code: number | null = null;
+    try {
+      code = (JSON.parse(errorBody) as { error?: { code?: number } }).error?.code ?? null;
+    } catch {
+      // cuerpo no JSON: queda sin código
+    }
+    throw new WhatsAppSendError(response.status, code, errorBody);
   }
+}
+
+/** Manda un mensaje de texto simple por WhatsApp Cloud API. */
+export async function sendWhatsAppText(to: string, body: string): Promise<void> {
+  await postMessage({ to, type: "text", text: { body } });
+}
+
+/** Manda una plantilla aprobada en Meta. Los parámetros del cuerpo no pueden
+ *  tener saltos de línea (regla de Meta). */
+export async function sendWhatsAppTemplate(
+  to: string,
+  template: { name: string; language: string; bodyParams: string[] },
+): Promise<void> {
+  await postMessage({
+    to,
+    type: "template",
+    template: {
+      name: template.name,
+      language: { code: template.language },
+      components: [
+        { type: "body", parameters: template.bodyParams.map((text) => ({ type: "text", text: text.replace(/\s+/g, " ") })) },
+      ],
+    },
+  });
 }
 
 export interface DownloadedMedia {

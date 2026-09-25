@@ -1,8 +1,8 @@
 import "server-only";
 import { prisma } from "@repo/database";
+import { LOW_STOCK_THRESHOLD } from "../supplies/stock-math";
 import { dateOnlyRangeFilter, dateRangeFilter, type DateRange } from "./date-range";
 
-const LOW_STOCK_THRESHOLD = 5;
 
 /** Puerto directo de `ReportsService.dashboard()` del legacy: 15 queries en
  *  paralelo + 1 secuencial (categorías de gasto, para resolver nombre/color).

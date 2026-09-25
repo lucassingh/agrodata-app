@@ -26,7 +26,9 @@
         "SENTRY_ORG",
         "SENTRY_PROJECT",
         "NEXT_RUNTIME",
-        "CI"
+        "CI",
+        "WHATSAPP_WEEKLY_SUMMARY_TEMPLATE",
+        "WHATSAPP_WEEKLY_SUMMARY_TEMPLATE_LANG"
       ]
     },
     "lint": {

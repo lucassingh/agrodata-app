@@ -45,3 +45,6 @@ export * from "./whatsapp/pending-actions";
 export * from "./whatsapp/pending-actions.service";
 export * from "./exports/export-data.service";
 export * from "./farm-query/farm-query.service";
+export * from "./weekly-summary/weekly-summary";
+export * from "./weekly-summary/weekly-summary.service";
+export * from "./whatsapp/wa-id";
