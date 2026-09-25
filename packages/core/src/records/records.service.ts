@@ -17,15 +17,24 @@ export function createRecord(tenantId: string, input: CreateRecordInput) {
   });
 }
 
-/** Puerto directo de `findByTenantForUser` del legacy: `take: 100`, sin cursor ni
- *  total -- si el tenant tiene más de 100 registros, el resto queda invisible sin
- *  ningún indicador en la UI. Gap real del legacy, replicado a propósito. */
-export function listRecordsForUser(tenantId: string) {
-  return prisma.record.findMany({
-    where: { tenantId },
-    orderBy: { occurredAt: "desc" },
-    take: 100,
-  });
+/** Historial paginado en el servidor, con total. El legacy traía solo los
+ *  últimos 100 sin avisar (lo más viejo quedaba invisible). `userId` filtra
+ *  "Mis datos". */
+export async function listRecordsPage(
+  tenantId: string,
+  options: { page: number; pageSize: number; userId?: string },
+) {
+  const where = { tenantId, ...(options.userId ? { userId: options.userId } : {}) };
+  const [records, total] = await Promise.all([
+    prisma.record.findMany({
+      where,
+      orderBy: [{ occurredAt: "desc" }, { createdAt: "desc" }],
+      skip: options.page * options.pageSize,
+      take: options.pageSize,
+    }),
+    prisma.record.count({ where }),
+  ]);
+  return { records, total };
 }
 
 async function findRecord(tenantId: string, id: string) {

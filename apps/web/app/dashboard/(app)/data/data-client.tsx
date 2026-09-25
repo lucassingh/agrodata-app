@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Database, Eye, Pencil, Trash2 } from "lucide-react";
@@ -15,10 +16,13 @@ import { RecordDetailDialog } from "./record-detail-dialog";
 import { RecordEditDialog } from "./record-edit-dialog";
 import { deleteRecordAction } from "./actions";
 
-const ROWS_PER_PAGE_OPTIONS = [5, 10, 25];
-
 interface DataClientProps {
   records: RecordRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+  pageSizes: number[];
+  tab: "all" | "mine";
   teamMembers: { userId: string; fullName: string }[];
   hasActiveTenant: boolean;
   currentUserId: string;
@@ -50,25 +54,28 @@ function formatOccurredAt(date: Date): string {
 
 export function DataClient({
   records,
+  total,
+  page,
+  pageSize,
+  pageSizes,
+  tab,
   teamMembers,
   hasActiveTenant,
   currentUserId,
   currentUserName,
   canDelete,
 }: DataClientProps) {
-  const [activeTab, setActiveTab] = useState<"all" | "mine">("all");
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const router = useRouter();
+  const pathname = usePathname();
 
-  const scoped = useMemo(
-    () => (activeTab === "mine" ? records.filter((r) => r.userId === currentUserId) : records),
-    [records, activeTab, currentUserId],
-  );
-  const paged = scoped.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-
-  const handleTabChange = (value: "all" | "mine") => {
-    setActiveTab(value);
-    setPage(0);
+  /** La paginación y la pestaña viven en la URL: el servidor trae solo la página pedida. */
+  const navigate = (next: { tab?: "all" | "mine"; page?: number; size?: number }) => {
+    const params = new URLSearchParams({
+      tab: next.tab ?? tab,
+      page: String(next.page ?? page),
+      size: String(next.size ?? pageSize),
+    });
+    router.push(`${pathname}?${params.toString()}`);
   };
 
   const [viewing, setViewing] = useState<RecordRow | null>(null);
@@ -165,34 +172,27 @@ export function DataClient({
 
   return (
     <div className="space-y-4">
-      <Tabs value={activeTab} onValueChange={(v: string | null) => v && handleTabChange(v as "all" | "mine")}>
+      <Tabs value={tab} onValueChange={(v: string | null) => v && navigate({ tab: v as "all" | "mine", page: 0 })}>
         <TabsList>
           <TabsTrigger value="all">Todos</TabsTrigger>
           <TabsTrigger value="mine">Mis datos</TabsTrigger>
         </TabsList>
       </Tabs>
 
-      {records.length === 0 ? (
+      {total === 0 ? (
         <div className="rounded-xl border border-dashed border-border py-16 text-center text-sm text-muted-foreground">
-          Todavía no hay registros cargados.
-        </div>
-      ) : scoped.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border py-16 text-center text-sm text-muted-foreground">
-          No hay registros para mostrar acá.
+          {tab === "mine" ? "No hay registros tuyos para mostrar." : "Todavía no hay registros cargados."}
         </div>
       ) : (
         <div className="space-y-1">
-          <DataTable rows={paged} columns={columns} />
+          <DataTable rows={records} columns={columns} />
           <TablePagination
             page={page}
-            rowsPerPage={rowsPerPage}
-            rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
-            count={scoped.length}
-            onPageChange={setPage}
-            onRowsPerPageChange={(n) => {
-              setRowsPerPage(n);
-              setPage(0);
-            }}
+            rowsPerPage={pageSize}
+            rowsPerPageOptions={pageSizes}
+            count={total}
+            onPageChange={(next) => navigate({ page: next })}
+            onRowsPerPageChange={(size) => navigate({ size, page: 0 })}
           />
         </div>
       )}
