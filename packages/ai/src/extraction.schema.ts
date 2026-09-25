@@ -18,6 +18,10 @@ export const EXTRACTABLE_RECORD_TYPES = [
   "EXPENSE_INVOICE",
 ] as const;
 
+/** Lo que puede ser un mensaje: un evento a registrar o una consulta sobre lo ya
+ *  cargado. QUERY no es un RecordType: una consulta se responde, no se guarda. */
+export const MESSAGE_TYPES = [...EXTRACTABLE_RECORD_TYPES, "QUERY"] as const;
+
 export const STOCK_MOVEMENTS = ["INGRESO", "EGRESO", "NINGUNO"] as const;
 
 /** Schema plano (sin unión discriminada) a propósito: es el shape documentado
@@ -41,7 +45,7 @@ export const extractedEventSchema = z.object({
     .describe(
       "si recognized=false, UNA pregunta breve y concreta en español para pedirle la aclaración al usuario por WhatsApp. Cadena vacía si recognized=true",
     ),
-  type: z.enum(EXTRACTABLE_RECORD_TYPES).nullable().describe("null si recognized=false"),
+  type: z.enum(MESSAGE_TYPES).nullable().describe("null si recognized=false"),
   summary: z
     .string()
     .describe(

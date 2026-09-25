@@ -16,6 +16,9 @@ const TYPE_GUIDE = `
 - SANITARY_TREATMENT (sanidad): vacunar, desparasitar o tratar animales.
 - FUEL_USAGE (combustible): carga de gasoil, nafta u otro combustible.
 - EXPENSE_INVOICE (factura/gasto): una foto de factura, o un gasto que no encaja en los tipos anteriores.
+- QUERY (consulta): el usuario PREGUNTA por datos que ya cargó (cuánto gastó, cuánto stock le queda,
+  cuántos animales hay, qué se aplicó en un potrero, cuándo vacunó). No registra nada: en summary
+  poné la pregunta reformulada con claridad y dejá el resto de los campos en null (movimientoStock NINGUNO).
 `.trim();
 
 function buildSystemPrompt(todayInArgentina: string): string {
@@ -33,7 +36,7 @@ Reglas:
    para registrarlo, marcá recognized=true, elegí el type correcto, y completá summary
    (una oración corta en español, neutra) y los demás campos que puedas inferir. Los
    campos que no apliquen o no se mencionen quedan en null.
-2. Si el mensaje es un saludo, una pregunta, algo ajeno al campo, o le falta un dato
+2. Si el mensaje es un saludo, algo ajeno al campo, o le falta un dato
    imprescindible para que el registro tenga sentido (ej. "compré algo" sin decir qué
    ni cuánto costó), marcá recognized=false y escribí en clarificationQuestion UNA
    pregunta breve y concreta en español para pedir esa aclaración por WhatsApp. En ese

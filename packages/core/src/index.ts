@@ -44,3 +44,4 @@ export * from "./whatsapp/tenant-catalog.service";
 export * from "./whatsapp/pending-actions";
 export * from "./whatsapp/pending-actions.service";
 export * from "./exports/export-data.service";
+export * from "./farm-query/farm-query.service";

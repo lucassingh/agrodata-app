@@ -9,6 +9,8 @@ import {
   executePendingAction,
   savePendingAction,
   loadTenantCatalog,
+  createFarmQueryHandlers,
+  todayInArgentina,
   planMessageEffects,
   applyMessagePlan,
   confirmationQuestion,
@@ -17,6 +19,7 @@ import {
   type TenantCatalog,
 } from "@repo/core";
 import {
+  answerFarmQuestion,
   extractFarmEvent,
   interpretPendingReply,
   toRecordPayload,
@@ -207,6 +210,19 @@ export const processWhatsAppMessage = inngest.createFunction(
         extracted.clarificationQuestion || "No pude entender bien tu mensaje. ¿Podés contarme con más detalle qué pasó?";
       await step.run("reply-clarification", () => sendWhatsAppText(waId, notice + question));
       return { status: "needs-clarification" as const };
+    }
+
+    // ── Consulta: se responde con los datos del campo, no se registra nada ──
+    if (extracted.type === "QUERY") {
+      const answer = await step.run("answer-question", () =>
+        answerFarmQuestion({
+          question: textForExtraction || extracted.summary,
+          today: todayInArgentina(new Date()),
+          handlers: createFarmQueryHandlers(activeTenantId),
+        }),
+      );
+      await step.run("reply-answer", () => sendWhatsAppText(waId, notice + answer));
+      return { status: "answered-question" as const, answer };
     }
 
     // ── Log en el historial de Datos (siempre) ─────────────────────────────
