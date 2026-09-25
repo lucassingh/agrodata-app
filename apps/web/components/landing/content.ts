@@ -7,7 +7,7 @@ export const SIGN_IN_LABEL = "Ingresar";
 export const HERO = {
   title: "Todo lo que pasa en tu campo, ordenado desde WhatsApp.",
   subtitle:
-    "Un mensaje, un audio o la foto de una factura. AgroData lo convierte en datos ordenados, listos para consultar.",
+    "Un mensaje, un audio o la foto de una factura. AgroData lo convierte en datos ordenados, listos para consultar y exportar.",
   secondaryCta: "Ver cómo funciona",
 };
 
@@ -103,7 +103,7 @@ export const HOW_IT_WORKS = {
     },
     {
       title: "Queda en tu dashboard",
-      body: "El registro aparece ordenado por campo y por potrero, listo para consultar y corregir.",
+      body: "El registro aparece ordenado por campo y por potrero, listo para consultar, corregir o exportar.",
     },
   ],
 };
@@ -216,7 +216,7 @@ export const PRICING = {
         "1 campo",
         "Hasta 5 personas cargando por WhatsApp",
         "Dashboard completo",
-        { label: "Exportación a Excel", soon: true },
+        "Exportación a Excel",
       ],
     },
     {
@@ -229,9 +229,10 @@ export const PRICING = {
       features: [
         "Hasta 10 campos",
         "Personas ilimitadas por WhatsApp",
-        { label: "Reportes semanales automáticos", soon: true },
-        { label: "Exportación a Excel y PDF", soon: true },
-        { label: "Consultas por chat en lenguaje natural", soon: true },
+        "Reportes semanales automáticos",
+        "Exportación a Excel",
+        { label: "Exportación a PDF", soon: true },
+        "Consultas por chat en lenguaje natural",
       ],
     },
     {
@@ -282,7 +283,7 @@ export const FAQ = {
     {
       id: "datos",
       q: "¿Los datos son míos?",
-      a: "Siempre. Si dejás de usar AgroData, te damos una copia completa de tu información. Y muy pronto vas a poder exportarla vos mismo a Excel o PDF.",
+      a: "Siempre. Exportás todo a Excel cuando quieras, y si dejás de usar AgroData te llevás tu información.",
     },
   ],
 };

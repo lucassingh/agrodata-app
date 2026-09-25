@@ -44,7 +44,6 @@ export function FeaturesBento() {
             tone="brand"
             className="lg:col-span-2"
             title="Preguntale a tu campo"
-            soon
             body="Consultas en lenguaje natural, desde el mismo chat."
           >
             <AskPreview />
@@ -281,12 +280,11 @@ function ExportCell() {
       />
       <div className="relative grid gap-8 p-6 sm:p-10 lg:max-w-[560px] lg:py-14">
         <div>
-          <SoonBadge onDark className="mb-4" />
           <h3 className="font-heading text-[clamp(1.6rem,2.4vw,2.25rem)] leading-tight font-semibold tracking-[-0.02em]">
             Exportá todo y recibí un reporte cada semana
           </h3>
           <p className="mt-3 max-w-[44ch] leading-relaxed text-white/80">
-            Planillas de Excel y PDF listas para tu contador, tu socio o el banco. Y un resumen de la semana todos los lunes.
+            Planillas de Excel listas para tu contador, tu socio o el banco (PDF, muy pronto). Y un resumen de la semana todos los lunes.
           </p>
         </div>
         <ul className="flex flex-wrap gap-2 text-sm">
@@ -297,6 +295,7 @@ function ExportCell() {
           <li className="flex items-center gap-2 rounded-full bg-white/12 px-4 py-2 backdrop-blur-sm">
             <FileText className="size-4 text-l-brand-light" aria-hidden />
             PDF
+            <SoonBadge onDark />
           </li>
           <li className="flex items-center gap-2 rounded-full bg-white/12 px-4 py-2 backdrop-blur-sm">
             <CalendarClock className="size-4 text-l-accent" aria-hidden />
