@@ -7,9 +7,10 @@ import { extractedEventSchema, type ExtractedEvent } from "./extraction.schema";
 const TYPE_GUIDE = `
 - SEEDING (siembra): sembrar o plantar un cultivo en un potrero.
 - ANIMAL_BIRTH (nacimiento): parió un animal, nació una cría.
+- ANIMAL_DEATH (mortandad): murió uno o más animales.
 - POTRERO_CHANGE (cambio de potrero): mover hacienda de un potrero a otro.
 - PURCHASE (compra): comprar insumos, animales, maquinaria u otro bien.
-- SALE (venta): vender animales, cosecha u otro bien.
+- SALE (venta): vender animales, cosecha u otro bien. Si son animales, completá item, cantidad, potrero (de dónde salen), kilos, monto y contraparte (comprador) si se mencionan.
 - FUMIGATION (pulverización): aplicar un fitosanitario (herbicida, insecticida, fungicida) en un potrero.
 - FERTILIZATION (fertilización): aplicar fertilizante en un potrero.
 - SANITARY_TREATMENT (sanidad): vacunar, desparasitar o tratar animales.
@@ -117,6 +118,7 @@ const FALLBACK_CLARIFICATION: ExtractedEvent = {
   item: null,
   producto: null,
   movimientoStock: "NINGUNO",
+  kilos: null,
   monto: null,
   moneda: null,
   contraparte: null,

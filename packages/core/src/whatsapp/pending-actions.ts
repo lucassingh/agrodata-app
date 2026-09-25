@@ -19,6 +19,8 @@ export const farmEventSchema = z.object({
   item: nullableString,
   producto: nullableString,
   movimientoStock: z.enum(["INGRESO", "EGRESO", "NINGUNO"]),
+  // default: acciones guardadas antes de que existiera el campo siguen siendo válidas.
+  kilos: nullableNumber.default(null),
   monto: nullableNumber,
   moneda: z.enum(["ARS", "USD"]).nullable(),
   contraparte: nullableString,

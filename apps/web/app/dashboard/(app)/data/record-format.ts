@@ -57,6 +57,7 @@ const DATA_LABELS: Record<string, string> = {
   item: "Animales",
   producto: "Producto",
   movimientoStock: "Stock",
+  kilos: "Kilos",
   monto: "Monto",
   moneda: "Moneda",
   contraparte: "Proveedor / comprador",

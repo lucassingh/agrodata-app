@@ -18,6 +18,8 @@ export interface FarmEvent {
   /** Insumo involucrado. */
   producto: string | null;
   movimientoStock: "INGRESO" | "EGRESO" | "NINGUNO";
+  /** Kilos totales de hacienda comprada o vendida. */
+  kilos: number | null;
   monto: number | null;
   moneda: "ARS" | "USD" | null;
   contraparte: string | null;

@@ -35,6 +35,7 @@ function event(overrides: Partial<FarmEvent>): FarmEvent {
     item: null,
     producto: null,
     movimientoStock: "NINGUNO",
+    kilos: null,
     monto: null,
     moneda: null,
     contraparte: null,
@@ -218,7 +219,16 @@ describe("animales", () => {
     );
     expect(plan.creations).toEqual([]);
     expect(plan.effects).toEqual([
-      { kind: "addAnimals", pastureRef: { existingId: "p-bajo" }, pastureName: "El Bajo", animalType: "Terneros", quantity: 3 },
+      {
+        kind: "addAnimals",
+        reason: "BIRTH",
+        pastureRef: { existingId: "p-bajo" },
+        pastureName: "El Bajo",
+        animalType: "Terneros",
+        quantity: 3,
+        date: "2026-09-25",
+        deal: null,
+      },
     ]);
   });
 
@@ -246,6 +256,7 @@ describe("animales", () => {
         toPastureName: "El Bajo",
         animalType: "Novillos",
         quantity: 25,
+        date: "2026-09-25",
       },
     ]);
   });
@@ -263,6 +274,76 @@ describe("animales", () => {
   it("no acepta cantidades de animales no enteras", () => {
     const plan = planMessageEffects(event({ type: "ANIMAL_BIRTH", item: "Terneros", cantidad: 2.5, potrero: "El Bajo" }), catalog, NOW);
     expect(plan.effects).toEqual([]);
+  });
+});
+
+describe("venta, mortandad y compra de hacienda", () => {
+  it("una venta descuenta del potrero indicado y guarda los datos de la operación", () => {
+    const plan = planMessageEffects(
+      event({
+        type: "SALE",
+        item: "novillos",
+        cantidad: 30,
+        potrero: "Potrero Norte",
+        kilos: 12600,
+        monto: 25000000,
+        contraparte: "Frigorífico Rafaela",
+      }),
+      catalog,
+      NOW,
+    );
+    expect(plan.effects).toEqual([
+      {
+        kind: "removeAnimals",
+        reason: "SALE",
+        pastureId: "p-norte",
+        pastureName: "Potrero Norte",
+        animalType: "Novillos",
+        quantity: 30,
+        date: "2026-09-25",
+        deal: { amount: 25000000, currency: "ARS", totalKg: 12600, counterparty: "Frigorífico Rafaela" },
+      },
+    ]);
+  });
+
+  it("sin potrero usa el único que tiene esos animales", () => {
+    const plan = planMessageEffects(event({ type: "ANIMAL_DEATH", item: "Novillos", cantidad: 1 }), catalog, NOW);
+    expect(plan.effects[0]).toMatchObject({ kind: "removeAnimals", reason: "DEATH", pastureId: "p-norte", deal: null });
+  });
+
+  it("sin potrero y con varios candidatos no adivina", () => {
+    const twoHerds: TenantCatalog = {
+      ...catalog,
+      pastures: [
+        catalog.pastures[0]!,
+        { ...catalog.pastures[1]!, animals: [{ id: "a2", animalType: "Novillos", quantity: 10 }] },
+      ],
+    };
+    const plan = planMessageEffects(event({ type: "ANIMAL_DEATH", item: "Novillos", cantidad: 1 }), twoHerds, NOW);
+    expect(plan.effects).toEqual([]);
+    expect(plan.notes[0]).toContain("varios potreros");
+  });
+
+  it("no descuenta más de lo que hay", () => {
+    const plan = planMessageEffects(event({ type: "SALE", item: "Novillos", cantidad: 80, potrero: "Potrero Norte" }), catalog, NOW);
+    expect(plan.effects).toEqual([]);
+    expect(plan.notes[0]).toContain("hay 40 Novillos");
+  });
+
+  it("una compra de hacienda suma animales y además genera el gasto", () => {
+    const plan = planMessageEffects(
+      event({ type: "PURCHASE", item: "Terneros", cantidad: 20, potrero: "El Bajo", monto: 9000000, categoria: "Hacienda" }),
+      catalog,
+      NOW,
+    );
+    expect(plan.effects.map((e) => e.kind)).toEqual(["expense", "addAnimals"]);
+    expect(plan.effects[1]).toMatchObject({ reason: "PURCHASE", pastureName: "El Bajo", quantity: 20 });
+  });
+
+  it("una venta de granos no toca animales", () => {
+    const plan = planMessageEffects(event({ type: "SALE", cultivo: "Soja", cantidad: 300, monto: 1000 }), catalog, NOW);
+    expect(plan.effects).toEqual([]);
+    expect(plan.notes).toEqual([]);
   });
 });
 

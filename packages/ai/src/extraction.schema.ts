@@ -7,6 +7,7 @@ import { z } from "zod";
 export const EXTRACTABLE_RECORD_TYPES = [
   "SEEDING",
   "ANIMAL_BIRTH",
+  "ANIMAL_DEATH",
   "POTRERO_CHANGE",
   "PURCHASE",
   "SALE",
@@ -24,10 +25,11 @@ export const STOCK_MOVEMENTS = ["INGRESO", "EGRESO", "NINGUNO"] as const;
  *
  *  LÍMITE DURO: la API de Claude rechaza (HTTP 400, "Schemas contains too many
  *  parameters with union types") cualquier schema con más de 16 campos
- *  nullable/union. Hoy hay 15. Por eso `clarificationQuestion` y `summary` son
+ *  nullable/union. Hoy hay 16: ESTÁ EN EL LÍMITE. Por eso `clarificationQuestion` y `summary` son
  *  strings no-nullable (vacíos cuando no aplican) y los campos de dominio son
- *  genéricos y se reusan según el tipo de evento. Antes de sumar un campo
- *  nullable, contá. */
+ *  genéricos y se reusan según el tipo de evento. Para sumar otro campo hay
+ *  que reestructurar (ej. agrupar campos opcionales en un objeto o pasar alguno a
+ *  no-nullable con valor vacío). */
 export const extractedEventSchema = z.object({
   recognized: z
     .boolean()
@@ -60,7 +62,7 @@ export const extractedEventSchema = z.object({
     .number()
     .nullable()
     .describe(
-      "cantidad numérica. En eventos con animales (nacimiento, cambio de potrero, sanidad): cabezas. En los demás: cantidad del producto (litros, bolsas, kg...)",
+      "cantidad numérica. En eventos con animales (nacimiento, mortandad, cambio de potrero, sanidad, compra o venta de hacienda): cabezas. En los demás: cantidad del producto (litros, bolsas, kg...)",
     ),
   unidad: z
     .string()
@@ -70,7 +72,7 @@ export const extractedEventSchema = z.object({
     .string()
     .nullable()
     .describe(
-      "categoría de animal involucrada (ternero, novillo, vaquillona...) en nacimientos, cambios de potrero, sanidad, y compras o ventas de hacienda",
+      "categoría de animal involucrada (ternero, novillo, vaquillona...) en nacimientos, mortandad, cambios de potrero, sanidad, y compras o ventas de hacienda. null si la compra o venta no es de animales",
     ),
   producto: z
     .string()
@@ -83,6 +85,10 @@ export const extractedEventSchema = z.object({
     .describe(
       "INGRESO si entra un insumo al stock del campo (compra o recepción de insumos); EGRESO si se usa o consume un insumo del stock propio; NINGUNO si no hay movimiento de stock",
     ),
+  kilos: z
+    .number()
+    .nullable()
+    .describe("kilos totales de hacienda vendida o comprada (si se da el promedio por cabeza, multiplicalo por la cantidad)"),
   monto: z.number().nullable(),
   moneda: z.enum(["ARS", "USD"]).nullable().describe("ARS por defecto si hay monto y el usuario no aclara"),
   contraparte: z.string().nullable().describe("proveedor en una compra o factura, o comprador en una venta"),

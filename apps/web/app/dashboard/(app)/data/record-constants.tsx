@@ -24,6 +24,7 @@ export interface RecordTypeConfig {
 const RECORD_TYPE_MAP: Record<string, RecordTypeConfig> = {
   SEEDING: { icon: Sprout, color: "#2D6A4F", bg: "#E8F5EE", label: "Siembra" },
   ANIMAL_BIRTH: { icon: Bug, color: "#7C6445", bg: "#F3EDE5", label: "Nacimiento" },
+  ANIMAL_DEATH: { icon: Bug, color: "#C4453A", bg: "#FDECEB", label: "Mortandad" },
   POTRERO_CHANGE: { icon: MoveRight, color: "#D4930D", bg: "#FDF4E3", label: "Cambio potrero" },
   PURCHASE: { icon: ShoppingCart, color: "#3B7DC4", bg: "#E8F0FA", label: "Compra" },
   SALE: { icon: ShoppingCart, color: "#2D9F5C", bg: "#E8F5EE", label: "Venta" },

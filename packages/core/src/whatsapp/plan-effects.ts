@@ -17,6 +17,15 @@ export interface TenantCatalog {
   animalCategories: { id: string; name: string }[];
 }
 
+/** Datos económicos de una compra o venta de hacienda. Se guardan en el
+ *  movimiento aunque todavía no exista el módulo de ingresos. */
+export interface LivestockDeal {
+  amount: number | null;
+  currency: "ARS" | "USD" | null;
+  totalKg: number | null;
+  counterparty: string | null;
+}
+
 /** Referencia a una entidad: una que ya existe, o una que el plan va a crear. */
 export type EntityRef = { existingId: string } | { newKey: string };
 
@@ -41,7 +50,26 @@ export type Effect =
     }
   | { kind: "stock"; supplyRef: EntityRef; supplyName: string; direction: "in" | "out"; quantity: number; unit: string | null }
   | { kind: "addCrop"; pastureRef: EntityRef; pastureName: string; crop: string; hectares: number | null; startDate: string }
-  | { kind: "addAnimals"; pastureRef: EntityRef; pastureName: string; animalType: string; quantity: number }
+  | {
+      kind: "addAnimals";
+      reason: "BIRTH" | "PURCHASE";
+      pastureRef: EntityRef;
+      pastureName: string;
+      animalType: string;
+      quantity: number;
+      date: string;
+      deal: LivestockDeal | null;
+    }
+  | {
+      kind: "removeAnimals";
+      reason: "SALE" | "DEATH";
+      pastureId: string;
+      pastureName: string;
+      animalType: string;
+      quantity: number;
+      date: string;
+      deal: LivestockDeal | null;
+    }
   | {
       kind: "moveAnimals";
       fromPastureId: string;
@@ -50,6 +78,7 @@ export type Effect =
       toPastureName: string;
       animalType: string;
       quantity: number;
+      date: string;
     }
   | {
       kind: "task";
@@ -254,33 +283,114 @@ function wholeCount(value: number | null): number | null {
   return value !== null && Number.isInteger(value) && value > 0 ? value : null;
 }
 
-function planAnimals(event: FarmEvent, catalog: TenantCatalog, builder: PlanBuilder) {
-  if (event.type !== "ANIMAL_BIRTH" && event.type !== "POTRERO_CHANGE") return;
+const ANIMAL_TYPES = new Set(["ANIMAL_BIRTH", "ANIMAL_DEATH", "POTRERO_CHANGE", "SALE", "PURCHASE"]);
+
+function dealOf(event: FarmEvent): LivestockDeal {
+  return { amount: event.monto, currency: event.monto !== null ? (event.moneda ?? "ARS") : null, totalKg: event.kilos, counterparty: event.contraparte };
+}
+
+function sameAnimalType(a: string, b: string): boolean {
+  return normalizeEntityName(a) === normalizeEntityName(b);
+}
+
+/** Potrero del que salen animales. Si el mensaje no lo dice, se usa el único
+ *  potrero que tenga suficientes animales de esa categoría; si hay más de uno
+ *  (o ninguno) no se adivina: se avisa. */
+function outflowHerd(
+  event: FarmEvent,
+  catalog: TenantCatalog,
+  builder: PlanBuilder,
+  quantity: number,
+  action: string,
+): { pasture: TenantCatalog["pastures"][number]; animalType: string } | null {
+  const item = event.item!;
+  if (event.potrero) {
+    const pasture = findByNormalizedName(catalog.pastures, event.potrero);
+    if (!pasture) {
+      builder.plan.notes.push(`No tenés un potrero «${event.potrero}» cargado, así que no ${action}.`);
+      return null;
+    }
+    const herd = pasture.animals.find((animal) => sameAnimalType(animal.animalType, item));
+    if (!herd || herd.quantity < quantity) {
+      builder.plan.notes.push(
+        `En «${pasture.name}» hay ${herd ? herd.quantity : "ningún"} ${herd?.animalType ?? item} cargados, no ${quantity}; no ${action}. Revisá Potreros.`,
+      );
+      return null;
+    }
+    return { pasture, animalType: herd.animalType };
+  }
+
+  const candidates = catalog.pastures.filter((pasture) =>
+    pasture.animals.some((animal) => sameAnimalType(animal.animalType, item) && animal.quantity >= quantity),
+  );
+  if (candidates.length !== 1) {
+    builder.plan.notes.push(
+      candidates.length === 0
+        ? `No encontré un potrero con ${quantity} ${item} cargados, así que no ${action}. Revisá Potreros.`
+        : `Hay ${item} en varios potreros (${candidates.map((p) => `«${p.name}»`).join(", ")}); decime de cuál y lo cargo.`,
+    );
+    return null;
+  }
+  const pasture = candidates[0]!;
+  const herd = pasture.animals.find((animal) => sameAnimalType(animal.animalType, item))!;
+  return { pasture, animalType: herd.animalType };
+}
+
+function planAnimals(event: FarmEvent, catalog: TenantCatalog, builder: PlanBuilder, now: Date) {
+  if (!ANIMAL_TYPES.has(event.type)) return;
+  // Compras y ventas que no son de hacienda (insumos, granos) no tocan animales.
+  if ((event.type === "SALE" || event.type === "PURCHASE") && !event.item) return;
 
   const quantity = wholeCount(event.cantidad);
   if (!event.item || quantity === null) {
     builder.plan.notes.push("Faltó la cantidad o la categoría de los animales, así que no actualicé Potreros.");
     return;
   }
+  const date = eventDate(event, now);
 
-  if (event.type === "ANIMAL_BIRTH") {
+  if (event.type === "ANIMAL_BIRTH" || event.type === "PURCHASE") {
+    const verb = event.type === "ANIMAL_BIRTH" ? "nacieron" : "entraron";
     if (!event.potrero) {
-      builder.plan.notes.push("No dijiste en qué potrero nacieron, así que no sumé los animales a Potreros.");
+      builder.plan.notes.push(`No dijiste en qué potrero ${verb}, así que no sumé los animales a Potreros.`);
       return;
     }
     const pasture = builder.pasture(catalog, event.potrero, null);
     const existing = "existingId" in pasture.ref ? catalog.pastures.find((p) => p.id === (pasture.ref as { existingId: string }).existingId) : null;
     const animalType = builder.animalType(catalog, event.item);
-    const alreadyThere = existing?.animals.some(
-      (animal) => normalizeEntityName(animal.animalType) === normalizeEntityName(animalType),
-    );
+    const alreadyThere = existing?.animals.some((animal) => sameAnimalType(animal.animalType, animalType));
     if (existing && !alreadyThere && existing.animals.length >= MAX_ITEMS_PER_PASTURE) {
       builder.plan.notes.push(
         `«${existing.name}» ya tiene ${MAX_ITEMS_PER_PASTURE} tipos de animales (el máximo); no sumé ${animalType}.`,
       );
       return;
     }
-    builder.plan.effects.push({ kind: "addAnimals", pastureRef: pasture.ref, pastureName: pasture.name, animalType, quantity });
+    builder.plan.effects.push({
+      kind: "addAnimals",
+      reason: event.type === "ANIMAL_BIRTH" ? "BIRTH" : "PURCHASE",
+      pastureRef: pasture.ref,
+      pastureName: pasture.name,
+      animalType,
+      quantity,
+      date,
+      deal: event.type === "PURCHASE" ? dealOf(event) : null,
+    });
+    return;
+  }
+
+  if (event.type === "SALE" || event.type === "ANIMAL_DEATH") {
+    const action = event.type === "SALE" ? "descargué la venta" : "descargué la mortandad";
+    const source = outflowHerd(event, catalog, builder, quantity, action);
+    if (!source) return;
+    builder.plan.effects.push({
+      kind: "removeAnimals",
+      reason: event.type === "SALE" ? "SALE" : "DEATH",
+      pastureId: source.pasture.id,
+      pastureName: source.pasture.name,
+      animalType: source.animalType,
+      quantity,
+      date,
+      deal: event.type === "SALE" ? dealOf(event) : null,
+    });
     return;
   }
 
@@ -289,32 +399,22 @@ function planAnimals(event: FarmEvent, catalog: TenantCatalog, builder: PlanBuil
     builder.plan.notes.push("Faltó el potrero de origen o el de destino, así que no moví animales.");
     return;
   }
-  const from = findByNormalizedName(catalog.pastures, event.potrero);
-  if (!from) {
-    builder.plan.notes.push(`No tenés un potrero «${event.potrero}» cargado, así que no moví animales.`);
-    return;
-  }
-  const herd = from.animals.find((animal) => normalizeEntityName(animal.animalType) === normalizeEntityName(event.item!));
-  if (!herd || herd.quantity < quantity) {
-    const available = herd ? `${herd.quantity}` : "ningún";
-    builder.plan.notes.push(
-      `En «${from.name}» hay ${available} ${herd?.animalType ?? event.item} cargados, no ${quantity}; no moví nada. Revisá Potreros.`,
-    );
-    return;
-  }
+  const source = outflowHerd(event, catalog, builder, quantity, "moví nada");
+  if (!source) return;
   const to = builder.pasture(catalog, event.destinoPotrero, null);
-  if (normalizeEntityName(to.name) === normalizeEntityName(from.name)) {
+  if (sameAnimalType(to.name, source.pasture.name)) {
     builder.plan.notes.push("El potrero de origen y el de destino son el mismo; no moví nada.");
     return;
   }
   builder.plan.effects.push({
     kind: "moveAnimals",
-    fromPastureId: from.id,
-    fromPastureName: from.name,
+    fromPastureId: source.pasture.id,
+    fromPastureName: source.pasture.name,
     toPastureRef: to.ref,
     toPastureName: to.name,
-    animalType: herd.animalType,
+    animalType: source.animalType,
     quantity,
+    date,
   });
 }
 
@@ -351,7 +451,7 @@ export function planMessageEffects(event: FarmEvent, catalog: TenantCatalog, now
   planExpense(event, catalog, builder, now);
   planStock(event, catalog, builder);
   planSeeding(event, catalog, builder, now);
-  planAnimals(event, catalog, builder);
+  planAnimals(event, catalog, builder, now);
   planTask(event, catalog, builder, now);
   return builder.plan;
 }
@@ -393,7 +493,9 @@ export function describeEffect(effect: Effect): string {
     case "addCrop":
       return `${effect.crop} en el potrero «${effect.pastureName}»${effect.hectares !== null ? ` (${formatQuantity(effect.hectares, "ha")})` : ""}`;
     case "addAnimals":
-      return `+${effect.quantity} ${effect.animalType} en «${effect.pastureName}»`;
+      return `+${effect.quantity} ${effect.animalType} en «${effect.pastureName}»${effect.reason === "PURCHASE" ? " (compra)" : ""}`;
+    case "removeAnimals":
+      return `−${effect.quantity} ${effect.animalType} de «${effect.pastureName}» (${effect.reason === "SALE" ? "venta" : "mortandad"})${effect.deal?.amount ? ` por ${formatMoney(effect.deal.amount, effect.deal.currency)}` : ""}`;
     case "moveAnimals":
       return `${effect.quantity} ${effect.animalType} de «${effect.fromPastureName}» a «${effect.toPastureName}»`;
     case "task":

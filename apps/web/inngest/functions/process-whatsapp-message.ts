@@ -61,6 +61,7 @@ function toFarmEvent(extracted: ExtractedEvent, type: string): FarmEvent {
     item: extracted.item,
     producto: extracted.producto,
     movimientoStock: extracted.movimientoStock,
+    kilos: extracted.kilos,
     monto: extracted.monto,
     moneda: extracted.moneda,
     contraparte: extracted.contraparte,

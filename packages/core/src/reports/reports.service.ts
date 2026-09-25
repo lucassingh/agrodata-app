@@ -29,6 +29,7 @@ export async function getDashboardSummary(tenantId: string) {
     expensesByCategoryRaw,
     supplyAlerts,
     expenseCategories,
+    deathsAgg,
   ] = await Promise.all([
     prisma.record.count({ where: { tenantId } }),
     prisma.userTenantMembership.count({ where: { tenantId, status: "ACTIVE" } }),
@@ -55,6 +56,7 @@ export async function getDashboardSummary(tenantId: string) {
       orderBy: { quantity: "asc" },
     }),
     prisma.expenseCategory.findMany({ where: { tenantId } }),
+    prisma.livestockEvent.aggregate({ where: { tenantId, type: "DEATH" }, _sum: { quantity: true } }),
   ]);
 
   const categoryMap = new Map(expenseCategories.map((c) => [c.id, c]));
@@ -73,11 +75,11 @@ export async function getDashboardSummary(tenantId: string) {
     tenantId,
     kpis: {
       animales: animalsAgg._sum.quantity ?? 0,
-      // `lluvia`/`mortandad`: constantes en 0 en el legacy -- no existe ningún
-      // RecordType ni tabla para lluvia/mortandad en el schema, nunca hubo con
-      // qué calcularlos.
+      // `lluvia`: constante en 0 heredada del legacy -- todavía no hay dónde
+      // registrar lluvias. `mortandad`: cabezas muertas registradas (movimientos
+      // de hacienda de tipo DEATH, cargados por WhatsApp).
       lluvia: 0,
-      mortandad: 0,
+      mortandad: deathsAgg._sum.quantity ?? 0,
       ventas: sales?._count ?? 0,
       compras: purchases?._count ?? 0,
       datosIngresados: totalRecords,

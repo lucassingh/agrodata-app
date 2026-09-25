@@ -45,7 +45,7 @@ export async function applyMessagePlan(input: {
 
     const lines: string[] = [];
     for (const effect of input.plan.effects) {
-      await applyEffect(tx, input.tenantId, input.userId, effect, resolve);
+      await applyEffect(tx, { tenantId: input.tenantId, userId: input.userId, recordId: record.id }, effect, resolve);
       lines.push(describeEffect(effect));
     }
 
@@ -118,10 +118,34 @@ async function addToHerd(tx: Tx, pastureId: string, animalType: string, quantity
   }
 }
 
+/** Fecha de un evento (YYYY-MM-DD) al mediodía de Argentina, para que no se corra de día. */
+function eventDate(date: string): Date {
+  return new Date(`${date}T12:00:00-03:00`);
+}
+
+async function removeFromHerd(tx: Tx, pastureId: string, pastureName: string, animalType: string, quantity: number) {
+  const herd = await findHerd(tx, pastureId, animalType);
+  if (!herd || herd.quantity < quantity) {
+    throw new Error(`Ya no hay ${quantity} ${animalType} en «${pastureName}»`);
+  }
+  const remaining = herd.quantity - quantity;
+  if (remaining === 0) {
+    await tx.pastureAnimal.delete({ where: { id: herd.id } });
+  } else {
+    await tx.pastureAnimal.update({ where: { id: herd.id }, data: { quantity: remaining } });
+  }
+  return herd.animalType;
+}
+
+interface ApplyContext {
+  tenantId: string;
+  userId: string;
+  recordId: string;
+}
+
 async function applyEffect(
   tx: Tx,
-  tenantId: string,
-  userId: string,
+  { tenantId, userId, recordId }: ApplyContext,
   effect: Effect,
   resolve: (ref: EntityRef) => string,
 ) {
@@ -158,21 +182,61 @@ async function applyEffect(
       return;
     }
     case "addAnimals": {
-      await addToHerd(tx, resolve(effect.pastureRef), effect.animalType, effect.quantity);
+      const pastureId = resolve(effect.pastureRef);
+      await addToHerd(tx, pastureId, effect.animalType, effect.quantity);
+      await tx.livestockEvent.create({
+        data: {
+          tenantId,
+          pastureId,
+          type: effect.reason,
+          animalType: effect.animalType,
+          quantity: effect.quantity,
+          date: eventDate(effect.date),
+          amount: effect.deal?.amount ?? null,
+          currency: effect.deal?.currency ?? null,
+          totalKg: effect.deal?.totalKg ?? null,
+          counterparty: effect.deal?.counterparty ?? null,
+          recordId,
+        },
+      });
+      return;
+    }
+    case "removeAnimals": {
+      const animalType = await removeFromHerd(tx, effect.pastureId, effect.pastureName, effect.animalType, effect.quantity);
+      await tx.livestockEvent.create({
+        data: {
+          tenantId,
+          pastureId: effect.pastureId,
+          type: effect.reason,
+          animalType,
+          quantity: effect.quantity,
+          date: eventDate(effect.date),
+          amount: effect.deal?.amount ?? null,
+          currency: effect.deal?.currency ?? null,
+          totalKg: effect.deal?.totalKg ?? null,
+          counterparty: effect.deal?.counterparty ?? null,
+          recordId,
+        },
+      });
       return;
     }
     case "moveAnimals": {
-      const herd = await findHerd(tx, effect.fromPastureId, effect.animalType);
-      if (!herd || herd.quantity < effect.quantity) {
-        throw new Error(`Ya no hay ${effect.quantity} ${effect.animalType} en «${effect.fromPastureName}» para mover`);
-      }
-      const remaining = herd.quantity - effect.quantity;
-      if (remaining === 0) {
-        await tx.pastureAnimal.delete({ where: { id: herd.id } });
-      } else {
-        await tx.pastureAnimal.update({ where: { id: herd.id }, data: { quantity: remaining } });
-      }
-      await addToHerd(tx, resolve(effect.toPastureRef), herd.animalType, effect.quantity);
+      const animalType = await removeFromHerd(
+        tx,
+        effect.fromPastureId,
+        effect.fromPastureName,
+        effect.animalType,
+        effect.quantity,
+      );
+      const toPastureId = resolve(effect.toPastureRef);
+      await addToHerd(tx, toPastureId, animalType, effect.quantity);
+      const common = { tenantId, animalType, quantity: effect.quantity, date: eventDate(effect.date), recordId };
+      await tx.livestockEvent.createMany({
+        data: [
+          { ...common, pastureId: effect.fromPastureId, type: "TRANSFER_OUT" },
+          { ...common, pastureId: toPastureId, type: "TRANSFER_IN" },
+        ],
+      });
       return;
     }
     case "task": {
