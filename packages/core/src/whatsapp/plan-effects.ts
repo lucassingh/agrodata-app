@@ -2,7 +2,7 @@ import { findByNormalizedName, normalizeEntityName } from "./entity-name";
 import { formatMoney, formatQuantity, todayInArgentina, type FarmEvent } from "./farm-event";
 import { unitsConflict } from "./units";
 import { unitCostOf } from "../supplies/stock-math";
-import { seasonOf } from "../economy/economy-math";
+import { harvestTotalKg, seasonOf } from "../economy/economy-math";
 
 /** Catálogo del campo (ver `loadTenantCatalog`). */
 export interface TenantCatalog {
@@ -70,6 +70,19 @@ export type Effect =
       /** Potrero donde se aplicó, solo si ya existe (un consumo no crea potreros). */
       pastureId: string | null;
       cropHint: string | null;
+    }
+  | { kind: "harvest"; campaignId: string; campaignLabel: string; totalKg: number; date: string }
+  | {
+      kind: "grainSale";
+      /** null si no se puede saber de qué campaña es (queda sin asignar). */
+      campaignId: string | null;
+      campaignLabel: string | null;
+      crop: string;
+      quantityKg: number | null;
+      amount: number;
+      currency: "ARS" | "USD";
+      counterparty: string | null;
+      date: string;
     }
   | { kind: "addCrop"; pastureRef: EntityRef; pastureName: string; crop: string; hectares: number | null; startDate: string }
   | {
@@ -516,6 +529,77 @@ function planTask(event: FarmEvent, catalog: TenantCatalog, builder: PlanBuilder
   });
 }
 
+function campaignLabel(catalog: TenantCatalog, campaign: TenantCatalog["campaigns"][number]): string {
+  const pasture = catalog.pastures.find((p) => p.id === campaign.pastureId);
+  return `${campaign.crop} ${campaign.season} de «${pasture?.name ?? "lote"}»`;
+}
+
+function planHarvest(event: FarmEvent, catalog: TenantCatalog, builder: PlanBuilder, now: Date) {
+  if (event.type !== "HARVEST" || !event.cultivo) return;
+  const pasture = event.potrero ? findByNormalizedName(catalog.pastures, event.potrero) : null;
+  if (!pasture) {
+    builder.plan.notes.push(
+      event.potrero
+        ? `No encontré el lote «${event.potrero}»: la cosecha quedó solo en el historial.`
+        : "No dijiste qué lote cosechaste: la cosecha quedó solo en el historial.",
+    );
+    return;
+  }
+  const sameCrop = catalog.campaigns.filter(
+    (c) => c.pastureId === pasture.id && normalizeEntityName(c.crop) === normalizeEntityName(event.cultivo!),
+  );
+  const campaign = sameCrop.find((c) => c.status === "IN_PROGRESS") ?? sameCrop[0];
+  if (!campaign) {
+    builder.plan.notes.push(`No hay una campaña de ${event.cultivo} en «${pasture.name}»: la cosecha quedó solo en el historial.`);
+    return;
+  }
+  const totalKg =
+    event.cantidad !== null ? harvestTotalKg(event.cantidad, event.unidad, campaign.hectares ?? event.hectareas ?? pasture.hectares) : null;
+  if (totalKg === null || totalKg <= 0) {
+    builder.plan.notes.push("No entendí el rinde: mandalo como kg/ha, qq/ha o toneladas totales.");
+    return;
+  }
+  builder.plan.effects.push({
+    kind: "harvest",
+    campaignId: campaign.id,
+    campaignLabel: campaignLabel(catalog, campaign),
+    totalKg: Math.round(totalKg),
+    date: eventDate(event, now),
+  });
+}
+
+function planGrainSale(event: FarmEvent, catalog: TenantCatalog, builder: PlanBuilder, now: Date) {
+  if (event.type !== "SALE" || event.item || !event.cultivo || event.monto === null || event.monto <= 0) return;
+  const pasture = event.potrero ? findByNormalizedName(catalog.pastures, event.potrero) : null;
+  const candidates = catalog.campaigns.filter(
+    (c) =>
+      normalizeEntityName(c.crop) === normalizeEntityName(event.cultivo!) &&
+      (!pasture || c.pastureId === pasture.id),
+  );
+  // Se vende lo cosechado: primero las campañas cosechadas.
+  const harvested = candidates.filter((c) => c.status === "HARVESTED");
+  const pool = harvested.length > 0 ? harvested : candidates;
+  const campaign = pool.length === 1 ? pool[0]! : null;
+  if (!campaign) {
+    builder.plan.notes.push(
+      pool.length === 0
+        ? `No hay una campaña de ${event.cultivo} para asignarle la venta: quedó como ingreso sin lote.`
+        : `Tenés ${pool.length} campañas de ${event.cultivo}: asigná la venta desde Economía.`,
+    );
+  }
+  builder.plan.effects.push({
+    kind: "grainSale",
+    campaignId: campaign?.id ?? null,
+    campaignLabel: campaign ? campaignLabel(catalog, campaign) : null,
+    crop: event.cultivo,
+    quantityKg: event.cantidad !== null ? harvestTotalKg(event.cantidad, event.unidad, null) : null,
+    amount: event.monto,
+    currency: event.moneda ?? "ARS",
+    counterparty: event.contraparte,
+    date: eventDate(event, now),
+  });
+}
+
 /** Decide todos los efectos de un mensaje sobre el campo, sin tocar la base.
  *  Función pura: mismo evento + mismo catálogo → mismo plan. */
 export function planMessageEffects(event: FarmEvent, catalog: TenantCatalog, now: Date = new Date()): MessagePlan {
@@ -525,6 +609,8 @@ export function planMessageEffects(event: FarmEvent, catalog: TenantCatalog, now
   planSeeding(event, catalog, builder, now);
   planAnimals(event, catalog, builder, now);
   planTask(event, catalog, builder, now);
+  planHarvest(event, catalog, builder, now);
+  planGrainSale(event, catalog, builder, now);
   return builder.plan;
 }
 
@@ -562,6 +648,10 @@ export function describeEffect(effect: Effect): string {
       return `Gasto de ${formatMoney(effect.amount, effect.currency)} en «${effect.categoryName}»`;
     case "stock":
       return `Stock de «${effect.supplyName}»: ${effect.direction === "in" ? "+" : "−"}${formatQuantity(effect.quantity, effect.unit)}`;
+    case "harvest":
+      return `Cosecha de ${formatQuantity(effect.totalKg / 1000, "t")} en la campaña ${effect.campaignLabel}`;
+    case "grainSale":
+      return `Venta de ${effect.crop}${effect.quantityKg ? ` (${formatQuantity(effect.quantityKg / 1000, "t")})` : ""} por ${formatMoney(effect.amount, effect.currency)}${effect.campaignLabel ? ` a la campaña ${effect.campaignLabel}` : ""}`;
     case "openCampaign":
       return `Campaña ${effect.crop} ${effect.season} en «${effect.pastureName}»`;
     case "addCrop":

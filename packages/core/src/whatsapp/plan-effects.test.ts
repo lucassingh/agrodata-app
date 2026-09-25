@@ -405,8 +405,7 @@ describe("venta, mortandad y compra de hacienda", () => {
 
   it("una venta de granos no toca animales", () => {
     const plan = planMessageEffects(event({ type: "SALE", cultivo: "Soja", cantidad: 300, monto: 1000 }), catalog, NOW);
-    expect(plan.effects).toEqual([]);
-    expect(plan.notes).toEqual([]);
+    expect(plan.effects.map((e) => e.kind)).toEqual(["grainSale"]);
   });
 });
 
@@ -462,5 +461,88 @@ describe("resultMessage", () => {
     expect(resultMessage("Compra de gasoil", ["Gasto de $ 10 en «Combustible»"], ["Ojo"])).toBe(
       "✅ Registrado: Compra de gasoil\n• Gasto de $ 10 en «Combustible»\n⚠️ Ojo",
     );
+  });
+});
+
+describe("cosecha y venta de granos", () => {
+  const withCampaigns: TenantCatalog = {
+    ...catalog,
+    campaigns: [
+      { id: "cp-soja", pastureId: "p-norte", crop: "Soja", season: "25/26", status: "IN_PROGRESS", hectares: 100 },
+      { id: "cp-maiz", pastureId: "p-bajo", crop: "Maíz", season: "25/26", status: "HARVESTED", hectares: 80 },
+    ],
+  };
+
+  it("la cosecha en kg/ha se multiplica por las hectáreas de la campaña", () => {
+    const plan = planMessageEffects(
+      event({ type: "HARVEST", cultivo: "soja", potrero: "Potrero Norte", cantidad: 3200, unidad: "kg/ha" }),
+      withCampaigns,
+      NOW,
+    );
+    expect(plan.effects).toEqual([
+      { kind: "harvest", campaignId: "cp-soja", campaignLabel: "Soja 25/26 de «Potrero Norte»", totalKg: 320000, date: "2026-09-25" },
+    ]);
+  });
+
+  it("acepta quintales por hectárea", () => {
+    const plan = planMessageEffects(
+      event({ type: "HARVEST", cultivo: "Soja", potrero: "Potrero Norte", cantidad: 32, unidad: "qq/ha" }),
+      withCampaigns,
+      NOW,
+    );
+    expect(plan.effects).toContainEqual(expect.objectContaining({ kind: "harvest", totalKg: 320000 }));
+  });
+
+  it("sin campaña de ese cultivo en el lote, no inventa y avisa", () => {
+    const plan = planMessageEffects(
+      event({ type: "HARVEST", cultivo: "Trigo", potrero: "Potrero Norte", cantidad: 3000, unidad: "kg/ha" }),
+      withCampaigns,
+      NOW,
+    );
+    expect(plan.effects).toEqual([]);
+    expect(plan.notes[0]).toContain("No hay una campaña de Trigo");
+  });
+
+  it("la venta de granos va a la campaña cosechada de ese cultivo", () => {
+    const plan = planMessageEffects(
+      event({ type: "SALE", cultivo: "maiz", cantidad: 200, unidad: "t", monto: 40000, moneda: "USD", contraparte: "Acopio Sur" }),
+      withCampaigns,
+      NOW,
+    );
+    expect(plan.effects).toEqual([
+      {
+        kind: "grainSale",
+        campaignId: "cp-maiz",
+        campaignLabel: "Maíz 25/26 de «El Bajo»",
+        crop: "maiz",
+        quantityKg: 200000,
+        amount: 40000,
+        currency: "USD",
+        counterparty: "Acopio Sur",
+        date: "2026-09-25",
+      },
+    ]);
+  });
+
+  it("una venta de animales no es venta de granos", () => {
+    const plan = planMessageEffects(
+      event({ type: "SALE", item: "Novillos", cantidad: 5, potrero: "Potrero Norte", monto: 5000000 }),
+      withCampaigns,
+      NOW,
+    );
+    expect(plan.effects.some((e) => e.kind === "grainSale")).toBe(false);
+  });
+
+  it("con varias campañas posibles, el ingreso queda sin asignar y avisa", () => {
+    const twoSoy: TenantCatalog = {
+      ...withCampaigns,
+      campaigns: [
+        ...withCampaigns.campaigns,
+        { id: "cp-soja2", pastureId: "p-bajo", crop: "Soja", season: "25/26", status: "IN_PROGRESS", hectares: 80 },
+      ],
+    };
+    const plan = planMessageEffects(event({ type: "SALE", cultivo: "Soja", cantidad: 100, unidad: "t", monto: 30000, moneda: "USD" }), twoSoy, NOW);
+    expect(plan.effects).toContainEqual(expect.objectContaining({ kind: "grainSale", campaignId: null }));
+    expect(plan.notes[0]).toContain("asigná la venta desde Economía");
   });
 });

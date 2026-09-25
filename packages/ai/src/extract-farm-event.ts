@@ -11,11 +11,15 @@ const TYPE_GUIDE = `
 - POTRERO_CHANGE (cambio de potrero): mover hacienda de un potrero a otro.
 - PURCHASE (compra): comprar insumos, animales, maquinaria u otro bien.
 - SALE (venta): vender animales, cosecha u otro bien. Si son animales, completá item, cantidad, potrero (de dónde salen), kilos, monto y contraparte (comprador) si se mencionan.
+  Si son granos, NO completes item: poné el grano en cultivo, la cantidad con su unidad (t, kg o qq), el monto total y
+  la contraparte (acopio, cooperativa o comprador). Si dice precio por tonelada, calculá el monto total.
 - FUMIGATION (pulverización): aplicar un fitosanitario (herbicida, insecticida, fungicida) en un potrero.
 - FERTILIZATION (fertilización): aplicar fertilizante en un potrero.
 - SANITARY_TREATMENT (sanidad): vacunar, desparasitar o tratar animales.
 - FUEL_USAGE (combustible): carga de gasoil, nafta u otro combustible.
 - EXPENSE_INVOICE (factura/gasto): una foto de factura, o un gasto que no encaja en los tipos anteriores.
+- HARVEST (cosecha): se cosechó un lote. Completá cultivo, potrero, y el rinde en cantidad + unidad tal como lo
+  dice ("3200" + "kg/ha", "32" + "qq/ha", o toneladas totales "320" + "t"); hectareas si las menciona.
 - QUERY (consulta): el usuario PREGUNTA por datos que ya cargó (cuánto gastó, cuánto stock le queda,
   cuántos animales hay, qué se aplicó en un potrero, cuándo vacunó). No registra nada: en summary
   poné la pregunta reformulada con claridad y dejá el resto de los campos en null (movimientoStock NINGUNO).

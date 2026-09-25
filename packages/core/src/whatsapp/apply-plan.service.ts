@@ -229,6 +229,30 @@ async function applyEffect(
           }
         : null;
     }
+    case "harvest": {
+      await tx.harvest.create({
+        data: { tenantId, campaignId: effect.campaignId, date: eventDate(effect.date), totalKg: effect.totalKg, recordId },
+      });
+      await tx.campaign.update({ where: { id: effect.campaignId }, data: { status: "HARVESTED" } });
+      return null;
+    }
+    case "grainSale": {
+      await tx.income.create({
+        data: {
+          tenantId,
+          campaignId: effect.campaignId,
+          type: "GRAIN_SALE",
+          date: eventDate(effect.date),
+          crop: effect.crop,
+          quantityKg: effect.quantityKg,
+          amount: effect.amount,
+          currency: effect.currency,
+          counterparty: effect.counterparty,
+          recordId,
+        },
+      });
+      return null;
+    }
     case "openCampaign": {
       await ensureCampaign(tx, tenantId, {
         pastureId: resolve(effect.pastureRef),

@@ -16,6 +16,7 @@ export const EXTRACTABLE_RECORD_TYPES = [
   "SANITARY_TREATMENT",
   "FUEL_USAGE",
   "EXPENSE_INVOICE",
+  "HARVEST",
 ] as const;
 
 /** Lo que puede ser un mensaje: un evento a registrar o una consulta sobre lo ya

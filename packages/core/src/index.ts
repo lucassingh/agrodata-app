@@ -54,3 +54,4 @@ export * from "./economy/exchange-rates.service";
 export * from "./economy/campaigns.schema";
 export * from "./economy/campaigns.service";
 export * from "./economy/allocations.service";
+export * from "./economy/economy.service";

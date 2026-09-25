@@ -10,6 +10,7 @@ import {
   FlaskConical,
   Upload,
   type LucideIcon,
+  Wheat,
 } from "lucide-react";
 
 export interface RecordTypeConfig {
@@ -33,6 +34,7 @@ const RECORD_TYPE_MAP: Record<string, RecordTypeConfig> = {
   EXPENSE_INVOICE: { icon: ShoppingCart, color: "#C4453A", bg: "#FDECEB", label: "Gasto" },
   TASK_COMPLETED: { icon: ShieldPlus, color: "#10B981", bg: "#E6F9F1", label: "Tarea completada" },
   FERTILIZATION: { icon: FlaskConical, color: "#10B981", bg: "#E6F9F1", label: "Fertilización" },
+  HARVEST: { icon: Wheat, color: "#B7791F", bg: "#FDF4E3", label: "Cosecha" },
   SANITARY_TREATMENT: { icon: ShieldPlus, color: "#D97706", bg: "#FDF4E3", label: "Sanidad" },
 };
 
