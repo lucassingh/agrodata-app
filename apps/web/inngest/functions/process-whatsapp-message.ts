@@ -8,10 +8,13 @@ import {
   discardPendingAction,
   executePendingAction,
   savePendingAction,
-  listExpenseCategoryNames,
-  planExpenseEffect,
-  applyExpenseEffect,
-  type ExpenseEventData,
+  loadTenantCatalog,
+  planMessageEffects,
+  applyMessagePlan,
+  confirmationQuestion,
+  resultMessage,
+  type FarmEvent,
+  type TenantCatalog,
 } from "@repo/core";
 import {
   extractFarmEvent,
@@ -19,6 +22,7 @@ import {
   toRecordPayload,
   transcribeAudio,
   type ExtractedEvent,
+  type ExtractionContext,
 } from "@repo/ai";
 import { inngest } from "../client";
 import { whatsappMessageReceived } from "../events";
@@ -29,14 +33,38 @@ function toClaudeImageMimeType(mimeType: string): "image/jpeg" | "image/png" | "
   return SUPPORTED_IMAGE_MIME_TYPES.has(mimeType) ? (mimeType as never) : "image/jpeg";
 }
 
-function toExpenseEventData(extracted: ExtractedEvent & { type: string; summary: string }): ExpenseEventData {
+/** Lo que Claude necesita saber del campo para elegir nombres que ya existen. */
+function toExtractionContext(catalog: TenantCatalog): ExtractionContext {
+  const animalTypes = new Set([
+    ...catalog.animalCategories.map((category) => category.name),
+    ...catalog.pastures.flatMap((pasture) => pasture.animals.map((animal) => animal.animalType)),
+  ]);
   return {
-    type: extracted.type,
+    expenseCategories: catalog.expenseCategories.map((category) => category.name),
+    supplies: catalog.supplies.map((supply) => ({ name: supply.name, unit: supply.unit })),
+    pastures: catalog.pastures.map((pasture) => pasture.name),
+    animalTypes: [...animalTypes],
+  };
+}
+
+function toFarmEvent(extracted: ExtractedEvent, type: string): FarmEvent {
+  return {
+    type,
     summary: extracted.summary,
     occurredAt: extracted.occurredAt,
+    potrero: extracted.potrero,
+    destinoPotrero: extracted.destinoPotrero,
+    cultivo: extracted.cultivo,
+    hectareas: extracted.hectareas,
+    cantidad: extracted.cantidad,
+    unidad: extracted.unidad,
+    item: extracted.item,
+    producto: extracted.producto,
+    movimientoStock: extracted.movimientoStock,
     monto: extracted.monto,
     moneda: extracted.moneda,
     contraparte: extracted.contraparte,
+    dosis: extracted.dosis,
     categoria: extracted.categoria,
   };
 }
@@ -47,10 +75,11 @@ function toExpenseEventData(extracted: ExtractedEvent & { type: string; summary:
  *  retoma desde el paso que falló sin repetir los anteriores.
  *
  *  Además del log en `Record` (historial de Datos), el mensaje impacta en los
- *  módulos reales (Slice C de la Fase 4). Hoy: los gastos con monto se cargan en
- *  Gastos. Si falta una entidad (ej. la categoría), el bot pregunta antes de
- *  crear nada y guarda una `PendingWhatsAppAction`; el mensaje siguiente del
- *  productor se interpreta primero como respuesta a esa pregunta.
+ *  módulos reales (Slice C de la Fase 4): Gastos, stock de Insumos, cultivos y
+ *  animales de Potreros, y Tareas. `planMessageEffects` decide todo eso sin
+ *  tocar la base; si hace falta crear algo (categoría, insumo, potrero...), el
+ *  bot pregunta antes y guarda una `PendingWhatsAppAction`; el mensaje
+ *  siguiente del productor se interpreta primero como respuesta a esa pregunta.
  *
  *  `triggers` (no un segundo argumento posicional `{event: "..."}`) es la
  *  forma real de `createFunction` en Inngest v4 -- ver `../events.ts`. */
@@ -117,7 +146,10 @@ export const processWhatsAppMessage = inngest.createFunction(
       await step.run("discard-pending-action", () => discardPendingAction(pending.id));
       if (intent === "reject") {
         await step.run("reply-pending-rejected", () =>
-          sendWhatsAppText(waId, "Listo, no cargué nada. Si querés, mandame el dato de nuevo como corresponda."),
+          sendWhatsAppText(
+            waId,
+            "Listo, no cargué nada en el sistema (el mensaje queda en el historial de Datos). Si querés, mandame el dato de nuevo como corresponda.",
+          ),
         );
         return { status: "pending-rejected" as const };
       }
@@ -133,18 +165,16 @@ export const processWhatsAppMessage = inngest.createFunction(
       return { status: isAudioMessage ? ("empty-transcription" as const) : ("unsupported-message-type" as const) };
     }
 
-    // ── Extracción ─────────────────────────────────────────────────────────
-    const expenseCategories = await step.run("load-expense-categories", () =>
-      listExpenseCategoryNames(activeTenantId),
-    );
+    // ── Extracción, con el catálogo real del campo como contexto ───────────
+    const catalog = await step.run("load-tenant-catalog", () => loadTenantCatalog(activeTenantId));
 
     const extracted: ExtractedEvent = await step.run("extract-event", () =>
-      extractFarmEvent({ text: textForExtraction, image: imagePayload, context: { expenseCategories } }),
+      extractFarmEvent({ text: textForExtraction, image: imagePayload, context: toExtractionContext(catalog) }),
     );
 
     if (!extracted.recognized || !extracted.type || !extracted.summary) {
       const question =
-        extracted.clarificationQuestion ?? "No pude entender bien tu mensaje. ¿Podés contarme con más detalle qué pasó?";
+        extracted.clarificationQuestion || "No pude entender bien tu mensaje. ¿Podés contarme con más detalle qué pasó?";
       await step.run("reply-clarification", () => sendWhatsAppText(waId, notice + question));
       return { status: "needs-clarification" as const };
     }
@@ -152,46 +182,49 @@ export const processWhatsAppMessage = inngest.createFunction(
     // ── Log en el historial de Datos (siempre) ─────────────────────────────
     const recordInput = createRecordSchema.parse({
       type: extracted.type,
-      occurredAt: extracted.occurredAt ?? new Date().toISOString(),
+      // Una fecha sola (YYYY-MM-DD) se guarda al mediodía de Argentina: a medianoche UTC
+      // se mostraba como las 21 hs del día anterior.
+      occurredAt: extracted.occurredAt ? `${extracted.occurredAt}T12:00:00-03:00` : new Date().toISOString(),
       data: toRecordPayload(extracted),
       source: "WHATSAPP",
       userId: sender.userId,
+      rawMessage: textForExtraction?.slice(0, 4000),
     });
     const record = await step.run("persist-record", () => createRecord(activeTenantId, recordInput));
 
-    // ── Efecto en Gastos ───────────────────────────────────────────────────
-    const expenseEvent = toExpenseEventData({ ...extracted, type: extracted.type, summary: extracted.summary });
-    const expensePlan = await step.run("plan-expense", () => planExpenseEffect(activeTenantId, expenseEvent));
+    // ── Efectos en los módulos ─────────────────────────────────────────────
+    const farmEvent = toFarmEvent(extracted, extracted.type);
+    // Dentro de un paso para que la fecha de "hoy" quede fija ante reintentos.
+    const plan = await step.run("plan-effects", () => planMessageEffects(farmEvent, catalog));
 
-    if (expensePlan.kind === "ready") {
-      const confirmation = await step.run("create-expense", () =>
-        applyExpenseEffect(activeTenantId, expenseEvent, { id: expensePlan.categoryId, name: expensePlan.categoryName }),
-      );
-      await step.run("reply-confirmation", () => sendWhatsAppText(waId, notice + confirmation));
-      return { status: "expense-created" as const, recordId: record.id };
-    }
-
-    if (expensePlan.kind === "needs-new-category") {
+    if (plan.creations.length > 0) {
+      const question = confirmationQuestion(plan);
       await step.run("save-pending-action", () =>
         savePendingAction({
           tenantId: activeTenantId,
           userId: sender.userId,
           waId,
-          question: expensePlan.question,
-          action: {
-            actionType: "CREATE_EXPENSE_WITH_NEW_CATEGORY",
-            payload: { categoryName: expensePlan.categoryName, expense: expenseEvent },
-          },
+          question,
+          action: { actionType: "APPLY_MESSAGE_PLAN", payload: { recordId: record.id, event: farmEvent } },
         }),
       );
-      await step.run("reply-question", () => sendWhatsAppText(waId, notice + expensePlan.question));
+      await step.run("reply-question", () => sendWhatsAppText(waId, notice + question));
       return { status: "awaiting-confirmation" as const, recordId: record.id };
     }
 
+    const lines =
+      plan.effects.length > 0
+        ? (
+            await step.run("apply-effects", () =>
+              applyMessagePlan({ tenantId: activeTenantId, userId: sender.userId, recordId: record.id, plan }),
+            )
+          ).lines
+        : [];
+
     await step.run("reply-confirmation", () =>
-      sendWhatsAppText(waId, `${notice}✅ Registrado: ${extracted.summary}`),
+      sendWhatsAppText(waId, notice + resultMessage(extracted.summary, lines, plan.notes)),
     );
 
-    return { status: "recorded" as const, recordId: record.id };
+    return { status: "recorded" as const, recordId: record.id, effects: lines.length };
   },
 );

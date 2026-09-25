@@ -1,9 +1,9 @@
 import "server-only";
 import { prisma, type Prisma } from "@repo/database";
-import { expenseCreateData } from "../expenses/expenses.service";
-import { buildExpenseInput, formatMoney } from "./expense-event";
-import { findByNormalizedName } from "./entity-name";
+import { applyMessagePlan } from "./apply-plan.service";
+import { planMessageEffects, resultMessage } from "./plan-effects";
 import { isPendingActionExpired, PENDING_ACTION_TTL_MS, pendingActionSchema, type PendingAction } from "./pending-actions";
+import { loadTenantCatalog } from "./tenant-catalog.service";
 
 export interface StoredPendingAction {
   id: string;
@@ -66,32 +66,19 @@ export async function discardPendingAction(id: string) {
   await prisma.pendingWhatsAppAction.deleteMany({ where: { id } });
 }
 
-/** Ejecuta la acción confirmada por el productor y la borra, todo en una sola
- *  transacción: si algo falla no queda ni el dato a medias ni la acción
- *  consumida, y un reintento no puede duplicar el gasto (la acción ya no
- *  existe). Devuelve el texto de confirmación para mandar por WhatsApp. */
+/** Ejecuta la acción que el productor confirmó y la consume. Se vuelve a
+ *  planificar contra el catálogo actual (algo pudo cambiar desde la pregunta).
+ *  Es seguro reintentarla: `applyMessagePlan` no re-aplica un plan ya anotado
+ *  en el registro. Devuelve el texto de confirmación para WhatsApp. */
 export async function executePendingAction(pending: StoredPendingAction): Promise<string> {
   const { action } = pending;
   switch (action.actionType) {
-    case "CREATE_EXPENSE_WITH_NEW_CATEGORY": {
-      const { categoryName, expense } = action.payload;
-      return prisma.$transaction(async (tx) => {
-        const consumed = await tx.pendingWhatsAppAction.deleteMany({ where: { id: pending.id } });
-        if (consumed.count === 0) {
-          throw new Error("La acción pendiente ya no existe (¿se ejecutó en otro intento?)");
-        }
-
-        // Si mientras tanto alguien creó la categoría desde el dashboard, se usa esa.
-        const categories = await tx.expenseCategory.findMany({ where: { tenantId: pending.tenantId } });
-        const category =
-          findByNormalizedName(categories, categoryName) ??
-          (await tx.expenseCategory.create({ data: { tenantId: pending.tenantId, name: categoryName } }));
-
-        const input = buildExpenseInput(expense, category.id);
-        await tx.expense.create({ data: expenseCreateData(pending.tenantId, input) });
-
-        return `✅ Listo: creé la categoría «${category.name}» y cargué el gasto de ${formatMoney(input.amount, input.currency ?? "ARS")}.`;
-      });
+    case "APPLY_MESSAGE_PLAN": {
+      const { event, recordId } = action.payload;
+      const plan = planMessageEffects(event, await loadTenantCatalog(pending.tenantId));
+      const result = await applyMessagePlan({ tenantId: pending.tenantId, userId: pending.userId, recordId, plan });
+      await discardPendingAction(pending.id);
+      return resultMessage(event.summary, result.lines, plan.notes);
     }
   }
 }

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-/** Los 8 tipos de evento que un mensaje de WhatsApp puede generar. Se excluye
+/** Los tipos de evento que un mensaje de WhatsApp puede generar. Se excluye
  *  a propósito `TASK_COMPLETED` del enum `RecordType` de Prisma -- ese valor
  *  solo lo produce el botón "Agregar Dato" del módulo Tareas del dashboard,
  *  nunca un mensaje de WhatsApp (igual que en el legacy). */
@@ -11,26 +11,23 @@ export const EXTRACTABLE_RECORD_TYPES = [
   "PURCHASE",
   "SALE",
   "FUMIGATION",
+  "FERTILIZATION",
+  "SANITARY_TREATMENT",
   "FUEL_USAGE",
   "EXPENSE_INVOICE",
 ] as const;
 
+export const STOCK_MOVEMENTS = ["INGRESO", "EGRESO", "NINGUNO"] as const;
+
 /** Schema plano (sin unión discriminada) a propósito: es el shape documentado
- *  y soportado por `zodOutputFormat` para structured outputs de Claude. Todo
- *  campo que no sea siempre requerido usa `.nullable()`, no `.optional()` --
- *  los structured outputs generan JSON Schema estricto (`required` con todas
- *  las claves), así que "ausente" se modela con `null`, nunca con la key
- *  faltante. `recognized`+`clarificationQuestion` reemplazan lo que hubiera
- *  sido una unión "evento reconocido | necesita aclaración".
+ *  y soportado por `zodOutputFormat` para structured outputs de Claude.
  *
- *  Los campos de dominio (`item`, `cantidad`, `potrero`, `contraparte`) son
- *  deliberadamente genéricos y se reusan según el `type` del evento -- la API
- *  de Claude rechaza (HTTP 400) cualquier schema con más de 16 parámetros
- *  nullable/union ("Schemas contains too many parameters with union types"),
- *  y un campo dedicado por cada variante posible (`animalType`, `proveedor`,
- *  `comprador`, `producto`, `litros`, `vehiculo`, `origenPotrero`...) superaba
- *  ese límite (21). Cada campo genérico documenta en su `.describe()` qué
- *  significa según el tipo de evento. */
+ *  LÍMITE DURO: la API de Claude rechaza (HTTP 400, "Schemas contains too many
+ *  parameters with union types") cualquier schema con más de 16 campos
+ *  nullable/union. Hoy hay 15. Por eso `clarificationQuestion` y `summary` son
+ *  strings no-nullable (vacíos cuando no aplican) y los campos de dominio son
+ *  genéricos y se reusan según el tipo de evento. Antes de sumar un campo
+ *  nullable, contá. */
 export const extractedEventSchema = z.object({
   recognized: z
     .boolean()
@@ -39,53 +36,61 @@ export const extractedEventSchema = z.object({
     ),
   clarificationQuestion: z
     .string()
-    .nullable()
     .describe(
-      "si recognized=false, UNA pregunta breve y concreta en español para pedirle la aclaración al usuario por WhatsApp. null si recognized=true",
+      "si recognized=false, UNA pregunta breve y concreta en español para pedirle la aclaración al usuario por WhatsApp. Cadena vacía si recognized=true",
     ),
-  type: z
-    .enum(EXTRACTABLE_RECORD_TYPES)
-    .nullable()
-    .describe("null si recognized=false"),
+  type: z.enum(EXTRACTABLE_RECORD_TYPES).nullable().describe("null si recognized=false"),
   summary: z
     .string()
-    .nullable()
     .describe(
-      "resumen corto en español, en tono neutro, ej: 'Siembra de soja en potrero Norte' o 'Compra de 500L de gasoil'. null si recognized=false",
+      "resumen corto en español, en tono neutro, ej: 'Siembra de soja en potrero Norte' o 'Compra de 500 L de gasoil'. Cadena vacía si recognized=false",
     ),
   occurredAt: z
     .string()
     .nullable()
-    .describe("fecha ISO 8601 (YYYY-MM-DD) si el usuario la menciona explícitamente, si no null"),
+    .describe("fecha ISO 8601 (YYYY-MM-DD) si el usuario la menciona (o se deduce, ej. 'ayer'); si no, null"),
   potrero: z
     .string()
     .nullable()
-    .describe(
-      "nombre del potrero mencionado. En POTRERO_CHANGE es el potrero de ORIGEN (el destino va en destinoPotrero)",
-    ),
+    .describe("nombre del potrero o lote mencionado. En POTRERO_CHANGE es el de ORIGEN"),
   destinoPotrero: z.string().nullable().describe("solo en POTRERO_CHANGE: potrero de destino"),
-  cultivo: z.string().nullable(),
-  hectareas: z.number().nullable(),
+  cultivo: z.string().nullable().describe("cultivo sembrado o sobre el que se aplicó algo"),
+  hectareas: z.number().nullable().describe("superficie sembrada, pulverizada o fertilizada"),
   cantidad: z
     .number()
     .nullable()
     .describe(
-      "cantidad numérica según el contexto: cabezas de animales, litros de combustible, unidades compradas/vendidas, etc.",
+      "cantidad numérica. En eventos con animales (nacimiento, cambio de potrero, sanidad): cabezas. En los demás: cantidad del producto (litros, bolsas, kg...)",
     ),
+  unidad: z
+    .string()
+    .nullable()
+    .describe("unidad de 'cantidad' cuando es un producto: 'L', 'kg', 'bolsas', 'dosis', 'unidades'..."),
   item: z
     .string()
     .nullable()
     .describe(
-      "el 'qué' del evento según el tipo: categoría de animal nacido (ANIMAL_BIRTH), qué se compró/vendió (PURCHASE/SALE), producto fitosanitario aplicado (FUMIGATION), o vehículo cargado (FUEL_USAGE)",
+      "categoría de animal involucrada (ternero, novillo, vaquillona...) en nacimientos, cambios de potrero, sanidad, y compras o ventas de hacienda",
     ),
-  monto: z.number().nullable(),
-  moneda: z.enum(["ARS", "USD"]).nullable().describe("ARS por defecto si el usuario no aclara"),
-  contraparte: z
+  producto: z
     .string()
     .nullable()
-    .describe("proveedor en una compra/factura, o comprador en una venta"),
-  dosis: z.string().nullable().describe("dosis o tasa de aplicación en una fumigación, ej. '2L/ha'"),
-  categoria: z.string().nullable().describe("categoría del gasto, si se puede inferir"),
+    .describe(
+      "insumo involucrado: lo que se compró (semilla, gasoil, vacuna, fertilizante...), el combustible cargado, el producto pulverizado o aplicado, la vacuna o tratamiento sanitario",
+    ),
+  movimientoStock: z
+    .enum(STOCK_MOVEMENTS)
+    .describe(
+      "INGRESO si entra un insumo al stock del campo (compra o recepción de insumos); EGRESO si se usa o consume un insumo del stock propio; NINGUNO si no hay movimiento de stock",
+    ),
+  monto: z.number().nullable(),
+  moneda: z.enum(["ARS", "USD"]).nullable().describe("ARS por defecto si hay monto y el usuario no aclara"),
+  contraparte: z.string().nullable().describe("proveedor en una compra o factura, o comprador en una venta"),
+  dosis: z.string().nullable().describe("dosis o tasa de aplicación, ej. '2 L/ha' o '5 ml por animal'"),
+  categoria: z
+    .string()
+    .nullable()
+    .describe("rubro del gasto o del insumo (ej. Combustible, Semillas, Sanidad, Fertilizantes)"),
 });
 
 export type ExtractedEvent = z.infer<typeof extractedEventSchema>;
