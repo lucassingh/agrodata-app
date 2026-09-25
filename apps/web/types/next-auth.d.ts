@@ -14,6 +14,8 @@ declare module "next-auth" {
       isSuperAdmin: boolean;
       activeTenantId: string | null;
       capabilities: Capabilities;
+      /** Owner o Farm Manager (los Operators solo usan WhatsApp). Ver `canAccessWebApp`. */
+      canAccessWeb: boolean;
     } & DefaultSession["user"];
   }
 }

@@ -7,6 +7,7 @@ import {
   verifyWhatsappCode,
   resolvePlatformRole,
   capabilitiesForRole,
+  canAccessWebApp,
   effectiveIsSuperAdmin,
   AppError,
 } from "@repo/core";
@@ -93,6 +94,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           isSuperAdmin: true,
           activeTenantId: true,
           memberships: { where: { status: "ACTIVE" }, select: { role: true } },
+          _count: { select: { memberships: true } },
         },
       });
       if (!user) return session;
@@ -110,6 +112,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       session.user.platformRole = platformRole;
       session.user.activeTenantId = user.activeTenantId;
       session.user.capabilities = capabilitiesForRole(platformRole);
+      // Misma regla que al iniciar sesión, recalculada en cada request: si a alguien
+      // le sacan el rol de Farm Manager con la sesión abierta, pierde la web al instante.
+      session.user.canAccessWeb = canAccessWebApp({
+        isSuperAdmin: user.isSuperAdmin,
+        email: user.email,
+        activeMemberships: user.memberships,
+        totalMembershipRows: user._count.memberships,
+      });
 
       return session;
     },

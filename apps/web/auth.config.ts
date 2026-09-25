@@ -24,6 +24,9 @@ export const authConfig = {
         pathname === "/dashboard/verify";
 
       if (isPublicAuthPage) {
+        // Con `error` (ej. un Operator con sesión abierta rebotado por `requireUser`) se
+        // muestra el login con el motivo; redirigirlo al dashboard armaría un loop.
+        if (request.nextUrl.searchParams.has("error")) return true;
         return !isLoggedIn || Response.redirect(new URL("/dashboard", request.nextUrl));
       }
       if (isOnDashboard) {
