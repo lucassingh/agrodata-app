@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Tipos, lint, tests y build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Valores de mentira: el build solo necesita que existan. Ningún paso toca la
+    # base ni las APIs reales, y ningún secreto de producción pasa por la CI.
+    env:
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+      AUTH_SECRET: ci-only-not-a-secret
+      AUTH_URL: http://localhost:3000
+      WHATSAPP_ACCESS_TOKEN: ci
+      WHATSAPP_PHONE_NUMBER_ID: ci
+      WHATSAPP_BUSINESS_ACCOUNT_ID: ci
+      WHATSAPP_APP_SECRET: ci
+      WHATSAPP_WEBHOOK_VERIFY_TOKEN: ci
+      ANTHROPIC_API_KEY: ci
+      OPENAI_API_KEY: ci
+      INNGEST_DEV: "1"
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check-types
+      - run: pnpm lint
+      - run: pnpm test
+      - run: pnpm build
