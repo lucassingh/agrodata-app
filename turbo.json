@@ -20,7 +20,13 @@
         "OPENAI_API_KEY",
         "INNGEST_EVENT_KEY",
         "INNGEST_SIGNING_KEY",
-        "INNGEST_DEV"
+        "INNGEST_DEV",
+        "NEXT_PUBLIC_SENTRY_DSN",
+        "SENTRY_AUTH_TOKEN",
+        "SENTRY_ORG",
+        "SENTRY_PROJECT",
+        "NEXT_RUNTIME",
+        "CI"
       ]
     },
     "lint": {

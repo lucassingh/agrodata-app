@@ -24,6 +24,7 @@ import {
   type ExtractedEvent,
   type ExtractionContext,
 } from "@repo/ai";
+import * as Sentry from "@sentry/nextjs";
 import { inngest } from "../client";
 import { whatsappMessageReceived } from "../events";
 
@@ -85,7 +86,35 @@ function toFarmEvent(extracted: ExtractedEvent, type: string): FarmEvent {
  *  `triggers` (no un segundo argumento posicional `{event: "..."}`) es la
  *  forma real de `createFunction` en Inngest v4 -- ver `../events.ts`. */
 export const processWhatsAppMessage = inngest.createFunction(
-  { id: "process-whatsapp-message", retries: 3, triggers: [{ event: whatsappMessageReceived }] },
+  {
+    id: "process-whatsapp-message",
+    retries: 3,
+    triggers: [{ event: whatsappMessageReceived }],
+    // Se agotaron los reintentos: sin esto el productor se queda esperando una
+    // respuesta que nunca llega y nadie se entera del error.
+    onFailure: async ({ event, error, step }) => {
+      const { waId, webhookEventId } = event.data.event.data;
+      console.error("[whatsapp] mensaje sin procesar tras agotar reintentos", {
+        runId: event.data.run_id,
+        webhookEventId,
+        error: error.message,
+      });
+      Sentry.captureException(error, {
+        tags: { flow: "whatsapp" },
+        extra: { runId: event.data.run_id, webhookEventId },
+      });
+      await step.run("reply-processing-failed", async () => {
+        try {
+          await sendWhatsAppText(
+            waId,
+            "No pude procesar tu último mensaje por un error de nuestro lado. No se cargó nada: probá mandarlo de nuevo en unos minutos.",
+          );
+        } catch (sendError) {
+          console.error("[whatsapp] tampoco se pudo avisar del error al productor", sendError);
+        }
+      });
+    },
+  },
   async ({ event, step }) => {
     const { waId, messageType, textBody, mediaId, mediaMimeType } = event.data;
 
