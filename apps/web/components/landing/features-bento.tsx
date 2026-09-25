@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { TASK_TYPE_CONFIG, TASK_TYPE_ORDER } from "@/app/dashboard/(app)/tasks/task-constants";
 import { TASK_TYPE_LABEL } from "@/app/dashboard/(app)/tasks/task-labels";
 import { FEATURES_TITLE } from "./content";
-import { Container, SectionTitle } from "./primitives";
+import { Container, SectionTitle, SoonBadge } from "./primitives";
 
 // Todas las cifras de esta sección son datos de ejemplo para ilustrar la UI.
 
@@ -44,6 +44,7 @@ export function FeaturesBento() {
             tone="brand"
             className="lg:col-span-2"
             title="Preguntale a tu campo"
+            soon
             body="Consultas en lenguaje natural, desde el mismo chat."
           >
             <AskPreview />
@@ -66,12 +67,14 @@ function Cell({
   children,
   className,
   tone = "light",
+  soon = false,
 }: {
   title: string;
   body: string;
   children: ReactNode;
   className?: string;
   tone?: "light" | "brand";
+  soon?: boolean;
 }) {
   const brand = tone === "brand";
   return (
@@ -83,7 +86,10 @@ function Cell({
         className,
       )}
     >
-      <h3 className="relative font-heading text-xl font-semibold tracking-[-0.01em]">{title}</h3>
+      <div className="relative flex flex-wrap items-center gap-2">
+        <h3 className="font-heading text-xl font-semibold tracking-[-0.01em]">{title}</h3>
+        {soon ? <SoonBadge onDark={brand} /> : null}
+      </div>
       <p className={cn("relative mt-1.5 max-w-[40ch] leading-relaxed", brand ? "text-white/80" : "text-l-ink-soft")}>{body}</p>
       <div className="relative mt-6 flex flex-1 flex-col justify-end">{children}</div>
     </SpotlightCard>
@@ -275,6 +281,7 @@ function ExportCell() {
       />
       <div className="relative grid gap-8 p-6 sm:p-10 lg:max-w-[560px] lg:py-14">
         <div>
+          <SoonBadge onDark className="mb-4" />
           <h3 className="font-heading text-[clamp(1.6rem,2.4vw,2.25rem)] leading-tight font-semibold tracking-[-0.02em]">
             Exportá todo y recibí un reporte cada semana
           </h3>

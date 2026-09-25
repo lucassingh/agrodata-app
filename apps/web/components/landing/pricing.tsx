@@ -6,7 +6,7 @@ import { useId, useState } from "react";
 import { cn } from "@/lib/utils";
 import { CtaLink } from "./cta-link";
 import { DEMO_CTA_LABEL, PRICING } from "./content";
-import { Container, SectionTitle } from "./primitives";
+import { Container, SectionTitle, SoonBadge, featureLabel, type PlanFeature } from "./primitives";
 import { usePrefersReducedMotion } from "@/lib/use-prefers-reduced-motion";
 
 type Billing = "monthly" | "yearly";
@@ -109,10 +109,13 @@ export function Pricing() {
               </div>
 
               <ul className="mt-8 grid flex-1 content-start gap-3">
-                {plan.features.map((feature) => (
-                  <li key={feature} className="flex gap-3">
+                {plan.features.map((feature: PlanFeature) => (
+                  <li key={featureLabel(feature)} className="flex gap-3">
                     <Check className={cn("mt-0.5 size-5 shrink-0", plan.highlighted ? "text-l-brand-light" : "text-l-brand")} aria-hidden />
-                    <span className={plan.highlighted ? "text-white/90" : "text-l-ink"}>{feature}</span>
+                    <span className={plan.highlighted ? "text-white/90" : "text-l-ink"}>
+                      {featureLabel(feature)}
+                      {typeof feature !== "string" && feature.soon ? <SoonBadge onDark={plan.highlighted} className="ml-2 align-middle" /> : null}
+                    </span>
                   </li>
                 ))}
               </ul>

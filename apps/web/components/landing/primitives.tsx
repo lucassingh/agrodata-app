@@ -19,3 +19,25 @@ export function SectionTitle({ children, className, id }: { children: ReactNode;
     </h2>
   );
 }
+
+/** Marca una función prometida que todavía no está disponible. Se saca cuando existe. */
+export function SoonBadge({ className, onDark = false }: { className?: string; onDark?: boolean }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+        onDark ? "bg-white/15 text-white" : "bg-l-accent-tint text-l-ink",
+        className,
+      )}
+    >
+      Próximamente
+    </span>
+  );
+}
+
+/** Una función de un plan: texto, o texto marcado como próximamente. */
+export type PlanFeature = string | { label: string; soon: boolean };
+
+export function featureLabel(feature: PlanFeature): string {
+  return typeof feature === "string" ? feature : feature.label;
+}
