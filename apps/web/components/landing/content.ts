@@ -312,9 +312,9 @@ export const FOOTER = {
     {
       title: "Producto",
       links: [
-        { href: "#como-funciona", label: "Cómo funciona" },
-        { href: "#producto", label: "Dashboard" },
-        { href: "#precios", label: "Precios" },
+        { href: "/#como-funciona", label: "Cómo funciona" },
+        { href: "/#producto", label: "Dashboard" },
+        { href: "/#precios", label: "Precios" },
       ],
     },
     {
@@ -324,5 +324,20 @@ export const FOOTER = {
         { href: "/dashboard/register", label: "Crear cuenta" },
       ],
     },
+    {
+      title: "Legal",
+      links: [
+        { href: "/terminos", label: "Términos y condiciones" },
+        { href: "/privacidad", label: "Política de privacidad" },
+      ],
+    },
   ],
+};
+
+/** Datos del responsable que aparecen en Términos y Privacidad. Completar antes
+ *  de publicar (los pide Meta para verificar la app de WhatsApp). */
+export const LEGAL = {
+  updatedAt: "25 de septiembre de 2026",
+  responsible: "[Nombre o razón social del titular, CUIT]",
+  contactEmail: "[email de contacto]",
 };

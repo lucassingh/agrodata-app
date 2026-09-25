@@ -166,7 +166,16 @@ export function RegisterForm() {
           )}
         />
         <Label htmlFor="acceptTerms" className="font-normal">
-          Acepto los términos y condiciones
+          <span>
+            Acepto los{" "}
+            <Link href="/terminos" target="_blank" className="text-primary underline underline-offset-2">
+              términos y condiciones
+            </Link>{" "}
+            y la{" "}
+            <Link href="/privacidad" target="_blank" className="text-primary underline underline-offset-2">
+              política de privacidad
+            </Link>
+          </span>
         </Label>
       </div>
 
