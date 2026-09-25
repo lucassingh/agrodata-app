@@ -39,7 +39,7 @@ export function TablePagination({
           value={String(rowsPerPage)}
           onValueChange={(v: string | null) => v && onRowsPerPageChange(Number(v))}
         >
-          <SelectTrigger className="h-7 w-[70px]">
+          <SelectTrigger className="h-7 w-[70px]" aria-label="Filas por página">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -58,18 +58,20 @@ export function TablePagination({
         <Button
           variant="ghost"
           size="icon-sm"
+          aria-label="Página anterior"
           disabled={page <= 0}
           onClick={() => onPageChange(page - 1)}
         >
-          <ChevronLeft size={16} />
+          <ChevronLeft size={16} aria-hidden />
         </Button>
         <Button
           variant="ghost"
           size="icon-sm"
+          aria-label="Página siguiente"
           disabled={to >= count}
           onClick={() => onPageChange(page + 1)}
         >
-          <ChevronRight size={16} />
+          <ChevronRight size={16} aria-hidden />
         </Button>
       </div>
     </div>
