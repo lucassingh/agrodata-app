@@ -4,6 +4,7 @@ import { expenseCreateData } from "../expenses/expenses.service";
 import { applyStockChange } from "../supplies/stock-movements.service";
 import { findByNormalizedName, normalizeEntityName } from "./entity-name";
 import { describeEffect, type Creation, type Effect, type EntityRef, type MessagePlan } from "./plan-effects";
+import { ensureCampaign } from "../economy/campaigns.service";
 
 type Tx = Prisma.TransactionClient;
 
@@ -175,6 +176,16 @@ async function applyEffect(
         recordId,
         userId,
         date: eventDate(effect.date),
+      });
+      return;
+    }
+    case "openCampaign": {
+      await ensureCampaign(tx, tenantId, {
+        pastureId: resolve(effect.pastureRef),
+        crop: effect.crop,
+        hectares: effect.hectares,
+        sowingDay: effect.sowingDate,
+        recordId,
       });
       return;
     }

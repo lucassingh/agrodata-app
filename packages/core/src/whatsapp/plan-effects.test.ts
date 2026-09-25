@@ -19,6 +19,7 @@ const catalog: TenantCatalog = {
     { id: "p-bajo", name: "El Bajo", hectares: 80, crops: [], animals: [] },
   ],
   animalCategories: [{ id: "ac1", name: "Novillos" }, { id: "ac2", name: "Terneros" }],
+  campaigns: [],
 };
 
 function event(overrides: Partial<FarmEvent>): FarmEvent {
@@ -201,7 +202,27 @@ describe("siembra", () => {
         hectares: 100,
         startDate: "2026-09-24",
       },
+      {
+        kind: "openCampaign",
+        pastureRef: { existingId: "p-norte" },
+        pastureName: "Potrero Norte",
+        crop: "Soja",
+        season: "26/27",
+        hectares: 100,
+        sowingDate: "2026-09-24",
+      },
     ]);
+  });
+
+  it("sin hectáreas en el mensaje, la campaña toma las del lote", () => {
+    const plan = planMessageEffects(event({ type: "SEEDING", cultivo: "Soja", potrero: "El Bajo", occurredAt: "2026-10-02" }), catalog, NOW);
+    expect(plan.effects).toContainEqual(expect.objectContaining({ kind: "openCampaign", hectares: 80, season: "26/27" }));
+  });
+
+  it("volver a sembrar un cultivo que el lote ya tiene abre la campaña del ciclo nuevo", () => {
+    const plan = planMessageEffects(event({ type: "SEEDING", cultivo: "maiz", potrero: "Potrero Norte" }), catalog, NOW);
+    expect(plan.effects.map((e) => e.kind)).toEqual(["openCampaign"]);
+    expect(plan.notes).toEqual([]);
   });
 
   it("propone crear el potrero con las hectáreas sembradas", () => {
@@ -209,8 +230,12 @@ describe("siembra", () => {
     expect(plan.creations).toEqual([{ key: "pasture:la loma", kind: "pasture", name: "La Loma", hectares: 60 }]);
   });
 
-  it("no duplica un cultivo que el potrero ya tiene", () => {
-    const plan = planMessageEffects(event({ type: "SEEDING", cultivo: "maiz", potrero: "Potrero Norte" }), catalog, NOW);
+  it("no duplica un cultivo que el potrero ya tiene con su campaña abierta", () => {
+    const withCampaign: TenantCatalog = {
+      ...catalog,
+      campaigns: [{ id: "cp1", pastureId: "p-norte", crop: "Maíz", season: "26/27", status: "IN_PROGRESS", hectares: 120 }],
+    };
+    const plan = planMessageEffects(event({ type: "SEEDING", cultivo: "maiz", potrero: "Potrero Norte" }), withCampaign, NOW);
     expect(plan.effects).toEqual([]);
     expect(plan.notes[0]).toContain("ya tiene maiz cargado");
   });
@@ -223,7 +248,7 @@ describe("siembra", () => {
       ],
     };
     const plan = planMessageEffects(event({ type: "SEEDING", cultivo: "Soja", potrero: "Potrero Norte" }), full, NOW);
-    expect(plan.effects).toEqual([]);
+    expect(plan.effects.map((e) => e.kind)).toEqual(["openCampaign"]);
     expect(plan.notes[0]).toContain("5 cultivos");
   });
 

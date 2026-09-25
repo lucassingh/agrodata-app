@@ -2,6 +2,7 @@ import { findByNormalizedName, normalizeEntityName } from "./entity-name";
 import { formatMoney, formatQuantity, todayInArgentina, type FarmEvent } from "./farm-event";
 import { unitsConflict } from "./units";
 import { unitCostOf } from "../supplies/stock-math";
+import { seasonOf } from "../economy/economy-math";
 
 /** Catálogo del campo (ver `loadTenantCatalog`). */
 export interface TenantCatalog {
@@ -16,6 +17,8 @@ export interface TenantCatalog {
     animals: { id: string; animalType: string; quantity: number }[];
   }[];
   animalCategories: { id: string; name: string }[];
+  /** Campañas en curso o cosechadas (las que pueden recibir costos, cosechas o ventas). */
+  campaigns: { id: string; pastureId: string; crop: string; season: string; status: "IN_PROGRESS" | "HARVESTED" | "CLOSED"; hectares: number | null }[];
 }
 
 /** Datos económicos de una compra o venta de hacienda. Se guardan en el
@@ -64,6 +67,15 @@ export type Effect =
       pastureId: string | null;
     }
   | { kind: "addCrop"; pastureRef: EntityRef; pastureName: string; crop: string; hectares: number | null; startDate: string }
+  | {
+      kind: "openCampaign";
+      pastureRef: EntityRef;
+      pastureName: string;
+      crop: string;
+      season: string;
+      hectares: number | null;
+      sowingDate: string;
+    }
   | {
       kind: "addAnimals";
       reason: "BIRTH" | "PURCHASE";
@@ -278,29 +290,57 @@ function planSeeding(event: FarmEvent, catalog: TenantCatalog, builder: PlanBuil
   }
 
   const pasture = builder.pasture(catalog, event.potrero, event.hectareas);
-  const existing = "existingId" in pasture.ref ? catalog.pastures.find((p) => p.id === (pasture.ref as { existingId: string }).existingId) : null;
+  const pastureId = "existingId" in pasture.ref ? pasture.ref.existingId : null;
+  const existing = pastureId ? catalog.pastures.find((p) => p.id === pastureId) : null;
+  const sowingDate = eventDate(event, now);
+  const season = seasonOf(sowingDate);
 
-  if (existing) {
-    if (findByNormalizedName(existing.crops.map((crop) => ({ name: crop.crop })), event.cultivo)) {
-      builder.plan.notes.push(`«${existing.name}» ya tiene ${event.cultivo} cargado; no lo dupliqué.`);
-      return;
-    }
-    if (existing.crops.length >= MAX_ITEMS_PER_PASTURE) {
+  // La campaña es independiente del cultivo cargado en Potreros: volver a sembrar
+  // soja en un lote que ya "tiene" soja abre la campaña del ciclo nuevo.
+  const campaignOpen =
+    pastureId !== null &&
+    catalog.campaigns.some(
+      (c) =>
+        c.pastureId === pastureId &&
+        c.season === season &&
+        c.status === "IN_PROGRESS" &&
+        normalizeEntityName(c.crop) === normalizeEntityName(event.cultivo!),
+    );
+  const cropLoaded = existing ? findByNormalizedName(existing.crops.map((crop) => ({ name: crop.crop })), event.cultivo) : null;
+
+  if (cropLoaded && campaignOpen) {
+    builder.plan.notes.push(`«${existing!.name}» ya tiene ${event.cultivo} cargado; no lo dupliqué.`);
+    return;
+  }
+
+  if (!cropLoaded) {
+    if (existing && existing.crops.length >= MAX_ITEMS_PER_PASTURE) {
       builder.plan.notes.push(
-        `«${existing.name}» ya tiene ${MAX_ITEMS_PER_PASTURE} cultivos (el máximo); no sumé ${event.cultivo}.`,
+        `«${existing.name}» ya tiene ${MAX_ITEMS_PER_PASTURE} cultivos (el máximo); no sumé ${event.cultivo} a Potreros.`,
       );
-      return;
+    } else {
+      builder.plan.effects.push({
+        kind: "addCrop",
+        pastureRef: pasture.ref,
+        pastureName: pasture.name,
+        crop: event.cultivo,
+        hectares: event.hectareas,
+        startDate: sowingDate,
+      });
     }
   }
 
-  builder.plan.effects.push({
-    kind: "addCrop",
-    pastureRef: pasture.ref,
-    pastureName: pasture.name,
-    crop: event.cultivo,
-    hectares: event.hectareas,
-    startDate: eventDate(event, now),
-  });
+  if (!campaignOpen) {
+    builder.plan.effects.push({
+      kind: "openCampaign",
+      pastureRef: pasture.ref,
+      pastureName: pasture.name,
+      crop: event.cultivo,
+      season,
+      hectares: event.hectareas ?? existing?.hectares ?? null,
+      sowingDate,
+    });
+  }
 }
 
 function wholeCount(value: number | null): number | null {
@@ -514,6 +554,8 @@ export function describeEffect(effect: Effect): string {
       return `Gasto de ${formatMoney(effect.amount, effect.currency)} en «${effect.categoryName}»`;
     case "stock":
       return `Stock de «${effect.supplyName}»: ${effect.direction === "in" ? "+" : "−"}${formatQuantity(effect.quantity, effect.unit)}`;
+    case "openCampaign":
+      return `Campaña ${effect.crop} ${effect.season} en «${effect.pastureName}»`;
     case "addCrop":
       return `${effect.crop} en el potrero «${effect.pastureName}»${effect.hectares !== null ? ` (${formatQuantity(effect.hectares, "ha")})` : ""}`;
     case "addAnimals":

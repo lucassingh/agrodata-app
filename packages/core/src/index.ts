@@ -51,3 +51,5 @@ export * from "./whatsapp/wa-id";
 export * from "./economy/economy-math";
 export * from "./economy/exchange-rates";
 export * from "./economy/exchange-rates.service";
+export * from "./economy/campaigns.schema";
+export * from "./economy/campaigns.service";

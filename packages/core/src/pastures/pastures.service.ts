@@ -1,6 +1,9 @@
 import "server-only";
 import { prisma, type Prisma } from "@repo/database";
 import { notFound } from "../errors";
+import { ensureCampaign } from "../economy/campaigns.service";
+import { normalizeEntityName } from "../whatsapp/entity-name";
+import { todayInArgentina } from "../whatsapp/farm-event";
 import { herdDiff, OUTFLOW_TYPES, type HerdLine } from "./herd";
 import type { CreatePastureInput, UpdatePastureInput } from "./pastures.schema";
 
@@ -51,6 +54,22 @@ async function logHerdAdjustments(tx: Tx, tenantId: string, pastureId: string, b
   });
 }
 
+/** Un cultivo nuevo cargado en Potreros es una siembra: abre su campaña. */
+async function openCampaignsForNewCrops(
+  tx: Tx,
+  tenantId: string,
+  pastureId: string,
+  before: { crop: string }[],
+  after: NonNullable<CreatePastureInput["crops"]>,
+) {
+  const known = new Set(before.map((c) => normalizeEntityName(c.crop)));
+  for (const crop of after) {
+    if (known.has(normalizeEntityName(crop.crop))) continue;
+    const day = crop.startDate && /^\d{4}-\d{2}-\d{2}/.test(crop.startDate) ? crop.startDate.slice(0, 10) : todayInArgentina(new Date());
+    await ensureCampaign(tx, tenantId, { pastureId, crop: crop.crop, hectares: crop.hectares ?? null, sowingDay: day });
+  }
+}
+
 export async function createPasture(tenantId: string, input: CreatePastureInput) {
   return prisma.$transaction(async (tx) => {
     const pasture = await tx.pasture.create({
@@ -64,6 +83,7 @@ export async function createPasture(tenantId: string, input: CreatePastureInput)
       include: PASTURE_INCLUDE,
     });
     await logHerdAdjustments(tx, tenantId, pasture.id, [], input.animals ?? []);
+    await openCampaignsForNewCrops(tx, tenantId, pasture.id, [], input.crops ?? []);
     return pasture;
   });
 }
@@ -87,6 +107,7 @@ export async function updatePasture(
 
   await prisma.$transaction(async (tx) => {
     if (input.crops !== undefined) {
+      await openCampaignsForNewCrops(tx, tenantId, id, current.crops, input.crops);
       await tx.pastureCrop.deleteMany({ where: { pastureId: id } });
       if (input.crops.length) {
         await tx.pastureCrop.createMany({
