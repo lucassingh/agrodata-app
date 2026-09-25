@@ -63,6 +63,8 @@ describe("gastos", () => {
         currency: "ARS",
         date: "2026-09-25",
         description: "Carga de gasoil",
+        pastureId: null,
+        cropHint: null,
       },
     ]);
   });
@@ -105,6 +107,7 @@ describe("stock", () => {
       unitCost: null,
       currency: null,
       pastureId: null,
+      cropHint: null,
     });
     expect(plan.notes).toEqual([]);
   });
@@ -183,6 +186,17 @@ describe("stock", () => {
     );
     expect(plan.effects).toHaveLength(1);
     expect(plan.notes[0]).toBe("«Gasoil» quedó en 0: tenías 1.000 L y el mensaje descuenta 1.500 L.");
+  });
+});
+
+describe("costos por lote", () => {
+  it("un gasto que nombra un lote lleva el lote y el cultivo para asignarlo a su campaña", () => {
+    const plan = planMessageEffects(
+      event({ type: "EXPENSE_INVOICE", summary: "Contratista de siembra", monto: 800000, categoria: "Combustible", potrero: "potrero norte", cultivo: "Soja" }),
+      catalog,
+      NOW,
+    );
+    expect(plan.effects).toContainEqual(expect.objectContaining({ kind: "expense", pastureId: "p-norte", cropHint: "Soja" }));
   });
 });
 

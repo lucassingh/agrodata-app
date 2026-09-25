@@ -5,6 +5,8 @@ import { applyStockChange } from "../supplies/stock-movements.service";
 import { findByNormalizedName, normalizeEntityName } from "./entity-name";
 import { describeEffect, type Creation, type Effect, type EntityRef, type MessagePlan } from "./plan-effects";
 import { ensureCampaign } from "../economy/campaigns.service";
+import { allocateCost, resolveCampaignForPasture, type CostSource } from "../economy/allocations.service";
+import { formatMoney, formatQuantity } from "./farm-event";
 
 type Tx = Prisma.TransactionClient;
 
@@ -46,10 +48,14 @@ export async function applyMessagePlan(input: {
     };
 
     const lines: string[] = [];
+    const costs: PendingCost[] = [];
     for (const effect of input.plan.effects) {
-      await applyEffect(tx, { tenantId: input.tenantId, userId: input.userId, recordId: record.id }, effect, resolve);
+      const cost = await applyEffect(tx, { tenantId: input.tenantId, userId: input.userId, recordId: record.id }, effect, resolve);
+      if (cost) costs.push(cost);
       lines.push(describeEffect(effect));
     }
+    // Al final: así una campaña que abrió este mismo mensaje ya recibe sus costos.
+    for (const cost of costs) lines.push(await allocatePendingCost(tx, input.tenantId, cost));
 
     await tx.record.update({
       where: { id: record.id },
@@ -139,6 +145,25 @@ async function removeFromHerd(tx: Tx, pastureId: string, pastureName: string, an
   return herd.animalType;
 }
 
+/** Costo de un lote que se asigna a su campaña después de aplicar todos los efectos. */
+interface PendingCost {
+  pastureId: string;
+  cropHint: string | null;
+  source: CostSource;
+}
+
+async function allocatePendingCost(tx: Tx, tenantId: string, cost: PendingCost): Promise<string> {
+  const { campaign, open } = await resolveCampaignForPasture(tx, tenantId, cost.pastureId, cost.cropHint);
+  if (!campaign) {
+    const pasture = await tx.pasture.findUniqueOrThrow({ where: { id: cost.pastureId }, select: { name: true } });
+    return open.length === 0
+      ? `Sin campaña en curso en «${pasture.name}»: el costo no entró a ningún margen.`
+      : `«${pasture.name}» tiene ${open.length} campañas en curso: asigná el costo desde Economía.`;
+  }
+  await allocateCost(tx, tenantId, [campaign.id], cost.source);
+  return `Costo de ${formatMoney(cost.source.amount, cost.source.currency)} a la campaña ${campaign.crop} ${campaign.season} de «${campaign.pasture.name}»`;
+}
+
 interface ApplyContext {
   tenantId: string;
   userId: string;
@@ -150,10 +175,10 @@ async function applyEffect(
   { tenantId, userId, recordId }: ApplyContext,
   effect: Effect,
   resolve: (ref: EntityRef) => string,
-) {
+): Promise<PendingCost | null> {
   switch (effect.kind) {
     case "expense": {
-      await tx.expense.create({
+      const expense = await tx.expense.create({
         data: expenseCreateData(tenantId, {
           categoryId: resolve(effect.categoryRef),
           amount: effect.amount,
@@ -162,10 +187,22 @@ async function applyEffect(
           description: effect.description,
         }),
       });
-      return;
+      return effect.pastureId
+        ? {
+            pastureId: effect.pastureId,
+            cropHint: effect.cropHint,
+            source: {
+              expenseId: expense.id,
+              amount: effect.amount,
+              currency: effect.currency,
+              date: expense.date,
+              concept: effect.description,
+            },
+          }
+        : null;
     }
     case "stock": {
-      await applyStockChange(tx, tenantId, {
+      const { movement } = await applyStockChange(tx, tenantId, {
         supplyId: resolve(effect.supplyRef),
         direction: effect.direction,
         quantity: effect.quantity,
@@ -177,7 +214,20 @@ async function applyEffect(
         userId,
         date: eventDate(effect.date),
       });
-      return;
+      // Un consumo en un lote, con costo, es costo directo de su campaña.
+      return movement && movement.direction === "OUT" && movement.pastureId && movement.unitCost !== null && movement.currency
+        ? {
+            pastureId: movement.pastureId,
+            cropHint: effect.cropHint,
+            source: {
+              stockMovementId: movement.id,
+              amount: Math.round(movement.quantity * movement.unitCost * 100) / 100,
+              currency: movement.currency,
+              date: movement.date,
+              concept: `${effect.supplyName}: ${formatQuantity(movement.quantity, effect.unit)}`,
+            },
+          }
+        : null;
     }
     case "openCampaign": {
       await ensureCampaign(tx, tenantId, {
@@ -187,7 +237,7 @@ async function applyEffect(
         sowingDay: effect.sowingDate,
         recordId,
       });
-      return;
+      return null;
     }
     case "addCrop": {
       await tx.pastureCrop.create({
@@ -198,7 +248,7 @@ async function applyEffect(
           startDate: new Date(effect.startDate),
         },
       });
-      return;
+      return null;
     }
     case "addAnimals": {
       const pastureId = resolve(effect.pastureRef);
@@ -218,7 +268,7 @@ async function applyEffect(
           recordId,
         },
       });
-      return;
+      return null;
     }
     case "removeAnimals": {
       const animalType = await removeFromHerd(tx, effect.pastureId, effect.pastureName, effect.animalType, effect.quantity);
@@ -237,7 +287,7 @@ async function applyEffect(
           recordId,
         },
       });
-      return;
+      return null;
     }
     case "moveAnimals": {
       const animalType = await removeFromHerd(
@@ -256,7 +306,7 @@ async function applyEffect(
           { ...common, pastureId: toPastureId, type: "TRANSFER_IN" },
         ],
       });
-      return;
+      return null;
     }
     case "task": {
       const isFertilization = effect.taskType === "FERTILIZACION";
@@ -285,7 +335,7 @@ async function applyEffect(
           animals: { create: effect.animals },
         },
       });
-      return;
+      return null;
     }
   }
 }

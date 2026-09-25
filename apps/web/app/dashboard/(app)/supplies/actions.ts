@@ -71,8 +71,9 @@ export async function adjustSupplyStockAction(
   direction: "in" | "out",
   amount: number,
   unitCost?: number,
+  campaignId?: string,
 ): Promise<ActionResult> {
-  const parsed = adjustSupplyStockSchema.safeParse({ direction, amount, unitCost });
+  const parsed = adjustSupplyStockSchema.safeParse({ direction, amount, unitCost, campaignId });
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Datos inválidos.");
   try {
     const user = await requireUser();

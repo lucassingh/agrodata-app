@@ -35,6 +35,7 @@ import {
   formatCost,
 } from "./supply-format";
 import { ExportButton } from "@/components/export-button";
+import type { CampaignOption } from "@/components/campaign-picker";
 
 const ROWS_PER_PAGE_OPTIONS = [5, 10, 25, 50];
 
@@ -43,6 +44,7 @@ interface SuppliesClientProps {
   categories: SupplyCategoryRef[];
   /** Variación neta de stock por insumo en los últimos 30 días. */
   netChange30d: Record<string, number>;
+  campaignOptions: CampaignOption[];
   hasActiveTenant: boolean;
   canEdit: boolean;
   canDelete: boolean;
@@ -52,6 +54,7 @@ export function SuppliesClient({
   supplies,
   categories,
   netChange30d,
+  campaignOptions,
   hasActiveTenant,
   canEdit,
   canDelete,
@@ -429,6 +432,7 @@ export function SuppliesClient({
         <StockAdjustDialog
           supply={stockTarget.supply}
           direction={stockTarget.direction}
+          campaignOptions={campaignOptions}
           onClose={() => setStockTarget(null)}
         />
       ) : null}

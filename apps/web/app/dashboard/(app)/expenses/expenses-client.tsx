@@ -39,12 +39,16 @@ import { ExpenseFormDialog } from "./expense-form-dialog";
 import { ExpenseCategoryDialog } from "./expense-category-dialog";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { ExportButton } from "@/components/export-button";
+import type { CampaignOption } from "@/components/campaign-picker";
 
 const ROWS_PER_PAGE_OPTIONS = [5, 10, 25];
 
 interface ExpensesClientProps {
   dashboard: ExpenseDashboard;
   categories: ExpenseCategoryRef[];
+  campaignOptions: CampaignOption[];
+  /** Para cada gasto, las campañas a las que está asignado. */
+  expenseCampaigns: Record<string, string[]>;
   hasActiveTenant: boolean;
   canEdit: boolean;
   canDelete: boolean;
@@ -91,6 +95,8 @@ export function ExpensesClient({
   currency,
   from,
   to,
+  campaignOptions,
+  expenseCampaigns,
 }: ExpensesClientProps) {
   const router = useRouter();
   const [ivaMode, setIvaMode] = useState<"con" | "sin">("con");
@@ -457,6 +463,8 @@ export function ExpensesClient({
           mode={formState.mode}
           expense={formState.mode === "edit" ? formState.expense : undefined}
           categories={categories}
+          campaignOptions={campaignOptions}
+          initialCampaignIds={formState.mode === "edit" ? (expenseCampaigns[formState.expense.id] ?? []) : []}
           defaultCurrency={currency}
           ivaMode={ivaMode}
           onClose={() => setFormState(null)}

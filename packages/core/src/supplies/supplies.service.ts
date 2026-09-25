@@ -3,6 +3,7 @@ import { prisma } from "@repo/database";
 import { notFound } from "../errors";
 import type { CreateSupplyInput, UpdateSupplyInput } from "./supplies.schema";
 import { applyStockChange } from "./stock-movements.service";
+import { allocateCost } from "../economy/allocations.service";
 
 const SUPPLY_INCLUDE = { category: true } as const;
 
@@ -103,18 +104,35 @@ export async function updateSupply(tenantId: string, id: string, input: UpdateSu
 export async function adjustSupplyStock(
   tenantId: string,
   id: string,
-  change: { direction: "in" | "out"; amount: number; unitCost?: number; userId?: string },
+  change: { direction: "in" | "out"; amount: number; unitCost?: number; userId?: string; campaignId?: string },
 ) {
-  await findSupply(tenantId, id);
+  const current = await findSupply(tenantId, id);
   return prisma.$transaction(async (tx) => {
-    const { supply } = await applyStockChange(tx, tenantId, {
+    // Un consumo aplicado en una campaña queda en su lote y suma a su costo directo.
+    const campaign =
+      change.direction === "out" && change.campaignId
+        ? await tx.campaign.findFirst({ where: { id: change.campaignId, tenantId } })
+        : null;
+    if (change.campaignId && change.direction === "out" && !campaign) notFound("Campaña no encontrada");
+
+    const { supply, movement } = await applyStockChange(tx, tenantId, {
       supplyId: id,
       direction: change.direction,
       quantity: change.amount,
       source: "MANUAL",
       unitCost: change.unitCost ?? null,
       userId: change.userId,
+      pastureId: campaign?.pastureId ?? null,
     });
+    if (campaign && movement && movement.unitCost !== null && movement.currency) {
+      await allocateCost(tx, tenantId, [campaign.id], {
+        stockMovementId: movement.id,
+        amount: Math.round(movement.quantity * movement.unitCost * 100) / 100,
+        currency: movement.currency,
+        date: movement.date,
+        concept: `${current.name}: ${movement.quantity} ${current.unit ?? ""}`.trim(),
+      });
+    }
     return supply;
   });
 }

@@ -23,11 +23,14 @@ import {
 } from "@/components/ui/select";
 import { createExpenseAction, updateExpenseAction } from "./actions";
 import type { Expense, ExpenseCategoryRef } from "./types";
+import { CampaignPicker, type CampaignOption } from "@/components/campaign-picker";
 
 interface ExpenseFormDialogProps {
   mode: "create" | "edit";
   expense?: Expense;
   categories: ExpenseCategoryRef[];
+  campaignOptions: CampaignOption[];
+  initialCampaignIds: string[];
   defaultCurrency: "ARS" | "USD";
   /** Valor inicial del IVA para un gasto NUEVO (el toggle de la barra de filtros).
    *  Al editar se usa el valor real del gasto: el legacy lo pisaba con el toggle
@@ -48,10 +51,13 @@ export function ExpenseFormDialog({
   mode,
   expense,
   categories,
+  campaignOptions,
+  initialCampaignIds,
   defaultCurrency,
   ivaMode,
   onClose,
 }: ExpenseFormDialogProps) {
+  const [campaignIds, setCampaignIds] = useState<string[]>(initialCampaignIds);
   const [categoryId, setCategoryId] = useState(expense?.categoryId ?? categories[0]?.id ?? "");
   const [amount, setAmount] = useState(expense ? String(expense.amount) : "");
   const [currency, setCurrency] = useState<"ARS" | "USD">(expense?.currency ?? defaultCurrency);
@@ -88,7 +94,7 @@ export function ExpenseFormDialog({
 
     startTransition(async () => {
       if (mode === "create") {
-        const result = await createExpenseAction(payload);
+        const result = await createExpenseAction(payload, campaignIds);
         if (!result.success) {
           toast.error(result.error ?? "No se pudo registrar el gasto.");
           return;
@@ -98,7 +104,7 @@ export function ExpenseFormDialog({
         return;
       }
 
-      const result = await updateExpenseAction(expense!.id, payload);
+      const result = await updateExpenseAction(expense!.id, payload, campaignIds);
       if (!result.success) {
         toast.error(result.error ?? "No se pudo registrar el gasto.");
         return;
@@ -181,6 +187,8 @@ export function ExpenseFormDialog({
               rows={2}
             />
           </div>
+
+          <CampaignPicker options={campaignOptions} value={campaignIds} onChange={setCampaignIds} />
 
           <label className="flex items-center gap-2 text-sm">
             <Checkbox checked={withIva} onCheckedChange={(checked: boolean) => setWithIva(checked)} />

@@ -14,18 +14,25 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { adjustSupplyStockAction } from "./actions";
 import type { Supply } from "./types";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import type { CampaignOption } from "@/components/campaign-picker";
+
+const NO_CAMPAIGN = "none";
 
 interface StockAdjustDialogProps {
   supply: Supply;
   direction: "in" | "out";
+  campaignOptions: CampaignOption[];
   onClose: () => void;
 }
 
-export function StockAdjustDialog({ supply, direction, onClose }: StockAdjustDialogProps) {
+export function StockAdjustDialog({ supply, direction, campaignOptions, onClose }: StockAdjustDialogProps) {
   const [amount, setAmount] = useState("");
   const [unitCost, setUnitCost] = useState("");
+  const [campaignId, setCampaignId] = useState(NO_CAMPAIGN);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const campaignItems = [{ value: NO_CAMPAIGN, label: "Ninguna" }, ...campaignOptions.map((c) => ({ value: c.id, label: c.label }))];
 
   const handleApply = () => {
     const n = Number(amount);
@@ -40,7 +47,13 @@ export function StockAdjustDialog({ supply, direction, onClose }: StockAdjustDia
     }
     setError(null);
     startTransition(async () => {
-      const result = await adjustSupplyStockAction(supply.id, direction, n, price);
+      const result = await adjustSupplyStockAction(
+        supply.id,
+        direction,
+        n,
+        price,
+        campaignId === NO_CAMPAIGN ? undefined : campaignId,
+      );
       if (!result.success) {
         toast.error(result.error ?? "No se pudo actualizar el stock");
         return;
@@ -90,6 +103,29 @@ export function StockAdjustDialog({ supply, direction, onClose }: StockAdjustDia
                 onChange={(e) => setUnitCost(e.target.value)}
               />
               <p className="text-xs text-muted-foreground">Si lo cargás, pasa a ser el costo del insumo.</p>
+            </div>
+          ) : null}
+
+          {direction === "out" && campaignOptions.length > 0 ? (
+            <div className="space-y-2">
+              <Label htmlFor="stock-campaign">Aplicado en (opcional)</Label>
+              <Select items={campaignItems} value={campaignId} onValueChange={(v: string | null) => v && setCampaignId(v)}>
+                <SelectTrigger id="stock-campaign" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {campaignItems.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {supply.cost !== null
+                  ? "El consumo suma al costo directo de esa campaña, al costo del insumo."
+                  : "El insumo no tiene costo cargado: queda en el lote pero no suma al margen."}
+              </p>
             </div>
           ) : null}
 

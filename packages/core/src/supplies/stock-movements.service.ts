@@ -34,13 +34,14 @@ export async function applyStockChange(tx: Tx, tenantId: string, change: StockCh
     },
   });
 
+  let movement = null;
   if (moved > 0) {
     // Una compra se valoriza a su precio; un consumo, al costo vigente del insumo.
     const valuation =
       change.direction === "in"
         ? { unitCost: purchasePrice, currency: change.currency ?? supply.currency }
         : { unitCost: supply.cost, currency: supply.currency };
-    await tx.stockMovement.create({
+    movement = await tx.stockMovement.create({
       data: {
         tenantId,
         supplyId: supply.id,
@@ -57,7 +58,7 @@ export async function applyStockChange(tx: Tx, tenantId: string, change: StockCh
       },
     });
   }
-  return { supply: updated, moved };
+  return { supply: updated, moved, movement };
 }
 
 export function listStockMovements(tenantId: string, supplyId: string) {

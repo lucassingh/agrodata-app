@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { requireUser } from "@/lib/session";
-import { getExpenseDashboard, listExpenseCategories } from "@repo/core";
+import { expenseCampaignIds, getExpenseDashboard, listAssignableCampaigns, listExpenseCategories } from "@repo/core";
+import { toCampaignOptions } from "@/lib/campaign-options";
 import { HeroBanner } from "@/components/hero-banner";
 import { ExpensesClient } from "./expenses-client";
 
@@ -19,15 +20,14 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
   const from = params.from ?? "";
   const to = params.to ?? "";
 
-  const [dashboard, categories] = user.activeTenantId
+  const [dashboard, categories, campaigns, expenseCampaigns] = user.activeTenantId
     ? await Promise.all([
         getExpenseDashboard(user.activeTenantId, { currency, from: from || undefined, to: to || undefined }),
         listExpenseCategories(user.activeTenantId),
+        listAssignableCampaigns(user.activeTenantId),
+        expenseCampaignIds(user.activeTenantId),
       ])
-    : [
-        { totalAmount: 0, byCategory: [], monthlyTrends: [], expenses: [] },
-        [],
-      ];
+    : [{ totalAmount: 0, byCategory: [], monthlyTrends: [], expenses: [] }, [], [], {}];
 
   const canEdit = user.platformRole !== "OPERATOR";
   const canDelete = user.capabilities.canDeleteOperationalData;
@@ -41,6 +41,8 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
       <ExpensesClient
         dashboard={dashboard}
         categories={categories.map((c) => ({ id: c.id, name: c.name, color: c.color }))}
+        campaignOptions={toCampaignOptions(campaigns)}
+        expenseCampaigns={expenseCampaigns}
         hasActiveTenant={Boolean(user.activeTenantId)}
         canEdit={canEdit}
         canDelete={canDelete}

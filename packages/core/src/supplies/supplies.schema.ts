@@ -19,5 +19,6 @@ export const adjustSupplyStockSchema = z.object({
   amount: z.number().positive("Ingresá una cantidad mayor a 0"),
   direction: z.enum(["in", "out"]),
   unitCost: z.number().positive("El precio tiene que ser mayor a 0").optional(),
+  campaignId: z.string().min(1).optional(),
 });
 export type AdjustSupplyStockInput = z.infer<typeof adjustSupplyStockSchema>;

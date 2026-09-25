@@ -12,6 +12,7 @@ import {
   deleteExpense,
   createExpenseCategorySchema,
   createExpenseCategory,
+  setExpenseCampaigns,
   type CreateExpenseInput,
   type UpdateExpenseInput,
 } from "@repo/core";
@@ -30,12 +31,14 @@ function fail<T>(message: string): ActionResult<T> {
 
 export async function createExpenseAction(
   input: CreateExpenseInput,
+  campaignIds: string[] = [],
 ): Promise<ActionResult<{ id: string }>> {
   const parsed = createExpenseSchema.safeParse(input);
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Datos inválidos.");
   try {
     const tenantId = await requireActiveTenantId();
     const expense = await createExpense(tenantId, parsed.data);
+    if (campaignIds.length > 0) await setExpenseCampaigns(tenantId, expense.id, campaignIds);
     revalidatePath("/dashboard/expenses");
     return ok({ id: expense.id });
   } catch (error) {
@@ -47,12 +50,15 @@ export async function createExpenseAction(
 export async function updateExpenseAction(
   id: string,
   input: UpdateExpenseInput,
+  campaignIds: string[] = [],
 ): Promise<ActionResult> {
   const parsed = updateExpenseSchema.safeParse(input);
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Datos inválidos.");
   try {
     const tenantId = await requireActiveTenantId();
     await updateExpense(tenantId, id, parsed.data);
+    // Siempre: si cambió el monto, las asignaciones se recalculan.
+    await setExpenseCampaigns(tenantId, id, campaignIds);
     revalidatePath("/dashboard/expenses");
     return ok(undefined);
   } catch (error) {

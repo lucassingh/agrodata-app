@@ -51,6 +51,10 @@ export type Effect =
       currency: "ARS" | "USD";
       date: string;
       description: string;
+      /** Lote que nombra el mensaje (ya existente): el gasto va a su campaña. */
+      pastureId: string | null;
+      /** Cultivo mencionado, para elegir la campaña si el lote tiene más de una. */
+      cropHint: string | null;
     }
   | {
       kind: "stock";
@@ -65,6 +69,7 @@ export type Effect =
       currency: "ARS" | "USD" | null;
       /** Potrero donde se aplicó, solo si ya existe (un consumo no crea potreros). */
       pastureId: string | null;
+      cropHint: string | null;
     }
   | { kind: "addCrop"; pastureRef: EntityRef; pastureName: string; crop: string; hectares: number | null; startDate: string }
   | {
@@ -213,6 +218,8 @@ function planExpense(event: FarmEvent, catalog: TenantCatalog, builder: PlanBuil
     currency: event.moneda ?? "ARS",
     date: eventDate(event, now),
     description: description.slice(0, 500),
+    pastureId: event.potrero ? (findByNormalizedName(catalog.pastures, event.potrero)?.id ?? null) : null,
+    cropHint: event.cultivo,
   });
 }
 
@@ -228,6 +235,7 @@ function planStock(event: FarmEvent, catalog: TenantCatalog, builder: PlanBuilde
     unitCost,
     currency: unitCost !== null ? (event.moneda ?? "ARS") : null,
     pastureId: event.potrero ? (findByNormalizedName(catalog.pastures, event.potrero)?.id ?? null) : null,
+    cropHint: event.cultivo,
   };
 
   if (!supply) {
