@@ -34,6 +34,7 @@ import {
   formatQuantity,
   formatCost,
 } from "./supply-format";
+import { ExportButton } from "@/components/export-button";
 
 const ROWS_PER_PAGE_OPTIONS = [5, 10, 25, 50];
 
@@ -361,20 +362,23 @@ export function SuppliesClient({
           </Select>
         </div>
 
-        {canEdit ? (
-          <Button
-            disabled={categories.length === 0}
-            title={
-              categories.length === 0
-                ? "Creá una categoría en Preferencias primero"
-                : "Agregar insumo al stock"
-            }
-            onClick={() => setFormState({ mode: "create" })}
-          >
-            <Plus size={14} />
-            Nuevo insumo
-          </Button>
-        ) : null}
+        <div className="flex flex-wrap gap-2">
+          <ExportButton href="/dashboard/export/insumos" />
+          {canEdit ? (
+            <Button
+              disabled={categories.length === 0}
+              title={
+                categories.length === 0
+                  ? "Creá una categoría en Preferencias primero"
+                  : "Agregar insumo al stock"
+              }
+              onClick={() => setFormState({ mode: "create" })}
+            >
+              <Plus size={14} />
+              Nuevo insumo
+            </Button>
+          ) : null}
+        </div>
       </div>
 
       {supplies.length === 0 ? (

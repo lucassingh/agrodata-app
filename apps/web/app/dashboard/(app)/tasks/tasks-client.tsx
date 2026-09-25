@@ -26,6 +26,7 @@ import { TASK_TYPE_LABEL, taskSummary } from "./task-labels";
 import { TaskCreateDialog } from "./task-create-dialog";
 import { TaskDetailDialog } from "./task-detail-dialog";
 import { TaskCompleteSuccessDialog } from "./task-complete-success-dialog";
+import { ExportButton } from "@/components/export-button";
 
 function formatDeadline(date: Date): string {
   return formatDateOnly(date, { day: "2-digit", month: "short", year: "numeric" });
@@ -234,39 +235,42 @@ export function TasksClient({
           </TabsList>
         </Tabs>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <Button
-                disabled={!hasActiveTenant}
-                title={!hasActiveTenant ? "Elegí o creá un establecimiento para cargar tareas." : undefined}
-              />
-            }
-          >
-            <Plus size={14} />
-            Nueva Tarea
-            <ChevronDown size={14} />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuGroup>
-              {TASK_TYPE_ORDER.map((type) => {
-                const config = TASK_TYPE_CONFIG[type];
-                const Icon = config.icon;
-                return (
-                  <DropdownMenuItem key={type} onClick={() => setCreateType(type)}>
-                    <span
-                      className="flex size-6 shrink-0 items-center justify-center rounded-full"
-                      style={{ backgroundColor: config.bg, color: config.color }}
-                    >
-                      <Icon size={13} />
-                    </span>
-                    {TASK_TYPE_LABEL[type]}
-                  </DropdownMenuItem>
-                );
-              })}
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex flex-wrap gap-2">
+          {hasActiveTenant ? <ExportButton href="/dashboard/export/tareas" /> : null}
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  disabled={!hasActiveTenant}
+                  title={!hasActiveTenant ? "Elegí o creá un establecimiento para cargar tareas." : undefined}
+                />
+              }
+            >
+              <Plus size={14} />
+              Nueva Tarea
+              <ChevronDown size={14} />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuGroup>
+                {TASK_TYPE_ORDER.map((type) => {
+                  const config = TASK_TYPE_CONFIG[type];
+                  const Icon = config.icon;
+                  return (
+                    <DropdownMenuItem key={type} onClick={() => setCreateType(type)}>
+                      <span
+                        className="flex size-6 shrink-0 items-center justify-center rounded-full"
+                        style={{ backgroundColor: config.bg, color: config.color }}
+                      >
+                        <Icon size={13} />
+                      </span>
+                      {TASK_TYPE_LABEL[type]}
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       <div className="rounded-xl border border-border p-4 shadow-soft">

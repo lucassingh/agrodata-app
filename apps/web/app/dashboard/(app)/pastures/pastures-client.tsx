@@ -15,6 +15,7 @@ import { PastureFormDialog } from "./pasture-form-dialog";
 import { PastureDetailDialog } from "./pasture-detail-dialog";
 import { QuickAddCropDialog } from "./quick-add-crop-dialog";
 import { QuickAddAnimalDialog } from "./quick-add-animal-dialog";
+import { ExportButton } from "@/components/export-button";
 
 interface PasturesClientProps {
   pastures: Pasture[];
@@ -185,7 +186,8 @@ export function PasturesClient({
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        {hasActiveTenant ? <ExportButton href="/dashboard/export/potreros" /> : null}
         <Button
           disabled={!hasActiveTenant}
           title={!hasActiveTenant ? "Seleccioná o creá un establecimiento" : undefined}

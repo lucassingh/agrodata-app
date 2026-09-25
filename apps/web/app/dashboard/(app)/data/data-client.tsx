@@ -15,6 +15,7 @@ import { getRecordConfig } from "./record-constants";
 import { RecordDetailDialog } from "./record-detail-dialog";
 import { RecordEditDialog } from "./record-edit-dialog";
 import { deleteRecordAction } from "./actions";
+import { ExportButton } from "@/components/export-button";
 
 interface DataClientProps {
   records: RecordRow[];
@@ -172,12 +173,15 @@ export function DataClient({
 
   return (
     <div className="space-y-4">
-      <Tabs value={tab} onValueChange={(v: string | null) => v && navigate({ tab: v as "all" | "mine", page: 0 })}>
-        <TabsList>
-          <TabsTrigger value="all">Todos</TabsTrigger>
-          <TabsTrigger value="mine">Mis datos</TabsTrigger>
-        </TabsList>
-      </Tabs>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Tabs value={tab} onValueChange={(v: string | null) => v && navigate({ tab: v as "all" | "mine", page: 0 })}>
+          <TabsList>
+            <TabsTrigger value="all">Todos</TabsTrigger>
+            <TabsTrigger value="mine">Mis datos</TabsTrigger>
+          </TabsList>
+        </Tabs>
+        <ExportButton href="/dashboard/export/datos" />
+      </div>
 
       {total === 0 ? (
         <div className="rounded-xl border border-dashed border-border py-16 text-center text-sm text-muted-foreground">

@@ -38,6 +38,7 @@ import { formatDateOnly } from "@/lib/format-date-only";
 import { ExpenseFormDialog } from "./expense-form-dialog";
 import { ExpenseCategoryDialog } from "./expense-category-dialog";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { ExportButton } from "@/components/export-button";
 
 const ROWS_PER_PAGE_OPTIONS = [5, 10, 25];
 
@@ -93,6 +94,8 @@ export function ExpensesClient({
 }: ExpensesClientProps) {
   const router = useRouter();
   const [ivaMode, setIvaMode] = useState<"con" | "sin">("con");
+  // La planilla respeta los filtros de moneda y fechas aplicados.
+  const exportHref = `/dashboard/export/gastos?${new URLSearchParams({ currency, ...(from ? { from } : {}), ...(to ? { to } : {}) })}`;
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -412,16 +415,19 @@ export function ExpensesClient({
               Editá o eliminá registros según tu rol.
             </p>
           </div>
-          <InputGroup className="sm:max-w-xs">
-            <InputGroupAddon>
-              <Search size={14} />
-            </InputGroupAddon>
-            <InputGroupInput
-              placeholder="Buscar por categoría o descripción…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </InputGroup>
+          <div className="flex flex-wrap items-center gap-2">
+            <ExportButton href={exportHref} />
+            <InputGroup className="sm:max-w-xs">
+              <InputGroupAddon>
+                <Search size={14} />
+              </InputGroupAddon>
+              <InputGroupInput
+                placeholder="Buscar por categoría o descripción…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </InputGroup>
+          </div>
         </div>
 
         {dashboard.expenses.length === 0 ? (
