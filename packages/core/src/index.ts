@@ -48,3 +48,6 @@ export * from "./farm-query/farm-query.service";
 export * from "./weekly-summary/weekly-summary";
 export * from "./weekly-summary/weekly-summary.service";
 export * from "./whatsapp/wa-id";
+export * from "./economy/economy-math";
+export * from "./economy/exchange-rates";
+export * from "./economy/exchange-rates.service";

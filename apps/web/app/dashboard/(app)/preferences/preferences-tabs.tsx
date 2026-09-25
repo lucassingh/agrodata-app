@@ -15,6 +15,7 @@ import {
   removeExpenseCategoryAction,
 } from "./actions";
 import { colorForKey } from "@/lib/color-for-key";
+import type { ExchangeRateKind } from "@repo/core/economy/exchange-rates";
 
 interface PreferencesTabsProps {
   memberships: Array<{
@@ -26,6 +27,7 @@ interface PreferencesTabsProps {
       category: string;
       timezone: string;
       baseCurrency: string;
+      exchangeRateKind: ExchangeRateKind;
       location: string | null;
       totalHa: number | null;
     };

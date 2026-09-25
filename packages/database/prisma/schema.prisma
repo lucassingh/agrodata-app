@@ -59,6 +59,7 @@ enum RecordType {
   SANITARY_TREATMENT
   ANIMAL_DEATH
   FERTILIZATION
+  HARVEST
 }
 
 enum TaskType {
@@ -92,6 +93,8 @@ model Tenant {
   name         String
   timezone     String               @default("America/Argentina/Buenos_Aires")
   baseCurrency String               @default("ARS")
+  /// Dólar con el que este campo convierte sus márgenes (Preferencias).
+  exchangeRateKind ExchangeRateKind @default(MAYORISTA)
   category     TenantCategory       @default(MIXTO)
   location     String?
   totalHa      Float?
@@ -116,6 +119,10 @@ model Tenant {
   pendingWhatsAppActions PendingWhatsAppAction[]
   livestockEvents   LivestockEvent[]
   stockMovements    StockMovement[]
+  campaigns         Campaign[]
+  costAllocations   CostAllocation[]
+  harvests          Harvest[]
+  incomes           Income[]
 
   @@map("tenants")
 }
@@ -241,6 +248,7 @@ model Pasture {
   taskPastures TaskPasture[]
   livestockEvents LivestockEvent[]
   stockMovements  StockMovement[]
+  campaigns       Campaign[]
 
   @@index([tenantId])
   @@map("pastures")
@@ -374,11 +382,14 @@ model Expense {
   date        DateTime
   description String?
   withIva     Boolean      @default(true)
+  /// Tipo de cambio de la factura, si lo trae (manda sobre la cotización del día).
+  exchangeRate Float?
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
-  tenant   Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  category ExpenseCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  tenant      Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  category    ExpenseCategory  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  allocations CostAllocation[]
 
   @@index([tenantId, date])
   @@map("expenses")
@@ -605,8 +616,142 @@ model StockMovement {
   tenant  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   supply  Supply   @relation(fields: [supplyId], references: [id], onDelete: Cascade)
   pasture Pasture? @relation(fields: [pastureId], references: [id], onDelete: SetNull)
+  allocations CostAllocation[]
 
   @@index([supplyId, date])
   @@index([tenantId, date])
   @@map("stock_movements")
+}
+
+// ─── Economía por lote (Etapa 2) ─────────────────────────
+
+// Cotizaciones del dólar por día y tipo (dolarapi.com / argentinadatos.com).
+// Globales, no por campo: la cotización es la misma para todos.
+enum ExchangeRateKind {
+  MAYORISTA
+  OFICIAL
+  BLUE
+  BOLSA
+  CONTADOCONLIQUI
+  CRIPTO
+  TARJETA
+}
+
+model ExchangeRate {
+  id        String           @id @default(cuid())
+  kind      ExchangeRateKind
+  date      DateTime         @db.Date
+  buy       Float
+  sell      Float
+  source    String
+  updatedAt DateTime         @updatedAt
+
+  @@unique([kind, date])
+  @@map("exchange_rates")
+}
+
+// Campaña = cultivo × lote × ciclo agrícola (julio a junio: "26/27").
+enum CampaignStatus {
+  IN_PROGRESS
+  HARVESTED
+  CLOSED
+}
+
+model Campaign {
+  id             String         @id @default(cuid())
+  tenantId       String
+  pastureId      String
+  crop           String
+  season         String
+  hectares       Float?
+  sowingDate     DateTime?
+  status         CampaignStatus @default(IN_PROGRESS)
+  /// Precio de referencia en USD por tonelada, para estimar el margen antes de vender.
+  referencePrice Float?
+  notes          String?
+  recordId       String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  tenant      Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  pasture     Pasture          @relation(fields: [pastureId], references: [id], onDelete: Cascade)
+  allocations CostAllocation[]
+  harvests    Harvest[]
+  incomes     Income[]
+
+  @@index([tenantId, season])
+  @@index([pastureId, status])
+  @@map("campaigns")
+}
+
+// Qué parte de un gasto o de un consumo de stock es costo directo de una campaña.
+// Un gasto de varios lotes se reparte en varias filas (por hectáreas).
+model CostAllocation {
+  id              String       @id @default(cuid())
+  tenantId        String
+  campaignId      String
+  expenseId       String?
+  stockMovementId String?
+  amount          Float
+  currency        CurrencyType
+  date            DateTime
+  concept         String
+  createdAt       DateTime     @default(now())
+
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  campaign      Campaign       @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  expense       Expense?       @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  stockMovement StockMovement? @relation(fields: [stockMovementId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+  @@index([expenseId])
+  @@index([stockMovementId])
+  @@map("cost_allocations")
+}
+
+model Harvest {
+  id         String   @id @default(cuid())
+  tenantId   String
+  campaignId String
+  date       DateTime
+  totalKg    Float
+  moisture   Float?
+  recordId   String?
+  createdAt  DateTime @default(now())
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+  @@map("harvests")
+}
+
+enum IncomeType {
+  GRAIN_SALE
+  OTHER
+}
+
+model Income {
+  id           String       @id @default(cuid())
+  tenantId     String
+  campaignId   String?
+  type         IncomeType
+  date         DateTime
+  crop         String?
+  quantityKg   Float?
+  amount       Float
+  currency     CurrencyType
+  /// Tipo de cambio del comprobante, si lo trae.
+  exchangeRate Float?
+  counterparty String?
+  description  String?
+  recordId     String?
+  createdAt    DateTime     @default(now())
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  campaign Campaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, date])
+  @@index([campaignId])
+  @@map("incomes")
 }

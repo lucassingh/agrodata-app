@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { EXCHANGE_RATE_KINDS } from "../economy/exchange-rates";
 
 export const tenantCategorySchema = z.enum([
   "FIELD_AGRICOLA",
@@ -17,6 +18,7 @@ export const createTenantSchema = z.object({
 export const updateTenantSchema = createTenantSchema.partial().extend({
   location: z.string().max(500).optional(),
   totalHa: z.number().nonnegative().optional(),
+  exchangeRateKind: z.enum(EXCHANGE_RATE_KINDS).optional(),
 });
 
 export type CreateTenantInput = z.infer<typeof createTenantSchema>;

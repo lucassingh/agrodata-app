@@ -23,6 +23,12 @@ import {
 } from "@repo/core/tenants/tenant-labels";
 import { updateTenantConfigAction } from "./actions";
 import { setActiveTenantAction } from "@/app/dashboard/(app)/_lib/tenant-actions";
+import { EXCHANGE_RATE_KINDS, EXCHANGE_RATE_LABEL, type ExchangeRateKind } from "@repo/core/economy/exchange-rates";
+
+const EXCHANGE_RATE_ITEMS = EXCHANGE_RATE_KINDS.map((kind) => ({
+  value: kind,
+  label: kind === "MAYORISTA" ? `${EXCHANGE_RATE_LABEL[kind]} (el de referencia para granos)` : EXCHANGE_RATE_LABEL[kind],
+}));
 
 interface TenantMembership {
   tenantId: string;
@@ -33,6 +39,7 @@ interface TenantMembership {
     category: string;
     timezone: string;
     baseCurrency: string;
+    exchangeRateKind: ExchangeRateKind;
     location: string | null;
     totalHa: number | null;
   };
@@ -49,6 +56,7 @@ interface TenantFormValues {
   category: string;
   timezone: string;
   baseCurrency: string;
+  exchangeRateKind: ExchangeRateKind;
   location: string;
   totalHa: string;
 }
@@ -59,6 +67,7 @@ function toFormValues(tenant: TenantMembership["tenant"]): TenantFormValues {
     category: tenant.category,
     timezone: tenant.timezone,
     baseCurrency: tenant.baseCurrency,
+    exchangeRateKind: tenant.exchangeRateKind,
     location: tenant.location ?? "",
     totalHa: tenant.totalHa?.toString() ?? "",
   };
@@ -83,6 +92,7 @@ function TenantConfigForm({
         category: values.category,
         timezone: values.timezone,
         baseCurrency: values.baseCurrency,
+        exchangeRateKind: values.exchangeRateKind,
         location: values.location.trim() || undefined,
         totalHa: values.totalHa ? Number(values.totalHa) : undefined,
       });
@@ -173,6 +183,31 @@ function TenantConfigForm({
               ))}
             </SelectContent>
           </Select>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="exchange-rate-kind">Dólar para los márgenes</Label>
+          <Select
+            items={EXCHANGE_RATE_ITEMS}
+            value={values.exchangeRateKind}
+            disabled={readOnly}
+            onValueChange={(v: string | null) =>
+              v && setValues((p) => ({ ...p, exchangeRateKind: v as ExchangeRateKind }))
+            }
+          >
+            <SelectTrigger id="exchange-rate-kind" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {EXCHANGE_RATE_ITEMS.map((c) => (
+                <SelectItem key={c.value} value={c.value}>
+                  {c.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            Con este dólar se pasan a dólares los costos e ingresos de cada lote. Se actualiza solo.
+          </p>
         </div>
         <div className="space-y-2">
           <Label>Ubicación</Label>
