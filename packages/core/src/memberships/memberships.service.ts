@@ -14,8 +14,8 @@ export interface MembershipInviterContext {
 /**
  * Port de AuthService.register's redeemPendingInvitesForNewUser (backend legacy).
  * Consume cualquier TenantPendingInvite sin usar que matchee el email o wNumber del
- * usuario recién creado, creando membresías ACTIVE inmediatamente (a diferencia de
- * las invitaciones a usuarios ya existentes, que quedan en INVITED).
+ * usuario recién creado, creando membresías ACTIVE inmediatamente (igual que las
+ * invitaciones a usuarios ya existentes, ver `inviteMember`).
  */
 export async function redeemPendingInvitesForNewUser(
   userId: string,
@@ -62,11 +62,11 @@ async function findActiveAdminMembership(userId: string, tenantId: string) {
 }
 
 /**
- * Port de MembershipsService.inviteMember (legacy). Nota conocida heredada del
- * legacy: invitar a un usuario YA REGISTRADO crea la membresía en estado
- * INVITED y no existe ningún endpoint que la pase a ACTIVE — es un gap real
- * del sistema original, documentado y replicado tal cual (ver CLAUDE.md /
- * reporte de migración).
+ * Port de MembershipsService.inviteMember (legacy). Invitar a un usuario YA
+ * REGISTRADO crea la membresía ACTIVE en el momento. El legacy la dejaba en
+ * INVITED sin ningún endpoint para aceptarla (quedaba colgada para siempre); un
+ * paso de "aceptar" en la web tampoco sirve, porque los operarios no tienen
+ * acceso web: solo usan WhatsApp.
  */
 export async function inviteMember(
   inviter: MembershipInviterContext,
@@ -137,7 +137,8 @@ export async function inviteMember(
       userId: existingUser.id,
       tenantId: input.tenantId,
       role: input.role,
-      status: "INVITED",
+      status: "ACTIVE",
+      acceptedAt: new Date(),
     },
   });
   return { linked: true as const, membership };
