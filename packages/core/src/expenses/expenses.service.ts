@@ -42,18 +42,24 @@ async function assertCategoryBelongsToTenant(tenantId: string, categoryId: strin
   if (!category) notFound("Categoría de gasto no encontrada");
 }
 
+/** Datos de creación de un gasto (defaults de moneda e IVA incluidos). Lo usan
+ *  el dashboard y el bot de WhatsApp, que crea gastos dentro de una transacción. */
+export function expenseCreateData(tenantId: string, input: CreateExpenseInput) {
+  return {
+    tenantId,
+    categoryId: input.categoryId,
+    amount: input.amount,
+    currency: input.currency ?? "ARS",
+    date: new Date(input.date),
+    description: input.description,
+    withIva: input.withIva ?? true,
+  };
+}
+
 export async function createExpense(tenantId: string, input: CreateExpenseInput) {
   await assertCategoryBelongsToTenant(tenantId, input.categoryId);
   return prisma.expense.create({
-    data: {
-      tenantId,
-      categoryId: input.categoryId,
-      amount: input.amount,
-      currency: input.currency ?? "ARS",
-      date: new Date(input.date),
-      description: input.description,
-      withIva: input.withIva ?? true,
-    },
+    data: expenseCreateData(tenantId, input),
     include: EXPENSE_INCLUDE,
   });
 }

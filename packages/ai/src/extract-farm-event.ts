@@ -49,6 +49,23 @@ Reglas:
 export interface ExtractFarmEventInput {
   text?: string;
   image?: { base64: string; mediaType: "image/jpeg" | "image/png" | "image/webp" };
+  /** Datos reales del campo del productor, para que Claude elija entidades que
+   *  ya existen en vez de inventar nombres. */
+  context?: { expenseCategories: string[] };
+}
+
+/** Instrucción para elegir la categoría de gasto contra la lista real del campo.
+ *  El nombre elegido se busca después con coincidencia exacta normalizada, así
+ *  que tiene que venir tal cual está en la lista. */
+function buildExpenseCategoryRule(expenseCategories: string[]): string {
+  const list = expenseCategories.length > 0 ? expenseCategories.map((name) => `"${name}"`).join(", ") : "(ninguna todavía)";
+  return `
+8. Categoría del gasto: si el evento es PURCHASE, FUEL_USAGE o EXPENSE_INVOICE y tiene
+   monto, "categoria" NUNCA es null. Las categorías de gasto que ya existen en este campo
+   son: ${list}. Si alguna encaja con lo que se compró o pagó (aunque el nombre no sea
+   idéntico, ej. gasoil → "Combustible"), devolvé EXACTAMENTE ese nombre, copiado tal
+   cual. Solo si ninguna encaja, proponé un nombre nuevo, corto y genérico (ej.
+   "Combustible", "Semillas", "Sanidad"), no el nombre del producto puntual.`;
 }
 
 const FALLBACK_CLARIFICATION: ExtractedEvent = {
@@ -98,7 +115,7 @@ export async function extractFarmEvent(input: ExtractFarmEventInput): Promise<Ex
   const response = await anthropic.beta.messages.parse({
     model: CLAUDE_MODEL,
     max_tokens: 8000,
-    system: buildSystemPrompt(todayInArgentina),
+    system: buildSystemPrompt(todayInArgentina) + buildExpenseCategoryRule(input.context?.expenseCategories ?? []),
     messages: [{ role: "user", content }],
     output_format: betaZodOutputFormat(extractedEventSchema),
   });

@@ -31,3 +31,8 @@ export * from "./whatsapp/whatsapp-client";
 export * from "./whatsapp/webhook-signature";
 export * from "./whatsapp/resolve-sender";
 export * from "./whatsapp/webhook-events.service";
+export * from "./whatsapp/entity-name";
+export * from "./whatsapp/expense-event";
+export * from "./whatsapp/expense-effect.service";
+export * from "./whatsapp/pending-actions";
+export * from "./whatsapp/pending-actions.service";

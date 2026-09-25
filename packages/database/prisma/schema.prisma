@@ -110,6 +110,7 @@ model Tenant {
   cropConfigs       CropConfig[]
   supplyConfigs     SupplyConfig[]
   expenseConfigs    ExpenseConfig[]
+  pendingWhatsAppActions PendingWhatsAppAction[]
 
   @@map("tenants")
 }
@@ -136,6 +137,7 @@ model User {
   verificationCodes     VerificationCode[]
   assignedTasks         Task[]                 @relation("TaskResponsible")
   tenantInvitesCreated  TenantPendingInvite[] @relation("TenantInviteInvitedBy")
+  pendingWhatsAppActions PendingWhatsAppAction[]
 
   @@map("users")
 }
@@ -496,4 +498,27 @@ model WebhookEvent {
 
   @@index([channel, createdAt])
   @@map("webhook_events")
+}
+
+// ─── WhatsApp: acción pendiente de confirmación ──────────
+// Un mensaje de WhatsApp que necesita una respuesta del productor antes de
+// completarse (ej. "no tenés la categoría X, ¿la creo?") guarda acá lo que ya
+// extrajo Claude. `waId` es único: un número tiene como máximo UNA acción
+// pendiente; una nueva reemplaza a la anterior. Vence a las 24 hs (se descarta
+// al leerla, sin cron). Ver el plan de la Slice C de la Fase 4.
+model PendingWhatsAppAction {
+  id         String   @id @default(cuid())
+  tenantId   String
+  userId     String
+  waId       String   @unique
+  actionType String
+  payload    Json
+  question   String
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("pending_whatsapp_actions")
 }
