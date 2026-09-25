@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@repo/database";
 import { notFound } from "../errors";
 import type { CreateSupplyInput, UpdateSupplyInput } from "./supplies.schema";
+import { applyStockChange } from "./stock-movements.service";
 
 const SUPPLY_INCLUDE = { category: true } as const;
 
@@ -31,61 +32,90 @@ async function assertCategoryBelongsToTenant(tenantId: string, categoryId: strin
   if (!category) notFound("Categoría de insumo no encontrada");
 }
 
-export async function createSupply(tenantId: string, input: CreateSupplyInput) {
+/** El stock inicial entra como primer movimiento del historial. */
+export async function createSupply(tenantId: string, input: CreateSupplyInput, userId?: string) {
   await assertCategoryBelongsToTenant(tenantId, input.categoryId);
-  return prisma.supply.create({
-    data: {
-      tenantId,
-      categoryId: input.categoryId,
-      name: input.name,
-      quantity: input.quantity ?? 0,
-      unit: input.unit,
-      cost: input.cost,
-      currency: input.currency ?? "ARS",
-      supplier: input.supplier,
-      notes: input.notes,
-    },
-    include: SUPPLY_INCLUDE,
+  return prisma.$transaction(async (tx) => {
+    const supply = await tx.supply.create({
+      data: {
+        tenantId,
+        categoryId: input.categoryId,
+        name: input.name,
+        quantity: 0,
+        unit: input.unit,
+        cost: input.cost,
+        currency: input.currency ?? "ARS",
+        supplier: input.supplier,
+        notes: input.notes,
+      },
+    });
+    if (input.quantity) {
+      await applyStockChange(tx, tenantId, {
+        supplyId: supply.id,
+        direction: "in",
+        quantity: input.quantity,
+        source: "INITIAL",
+        unitCost: input.cost ?? null,
+        currency: input.currency ?? "ARS",
+        userId,
+      });
+    }
+    return tx.supply.findUniqueOrThrow({ where: { id: supply.id }, include: SUPPLY_INCLUDE });
   });
 }
 
-export async function updateSupply(tenantId: string, id: string, input: UpdateSupplyInput) {
-  await findSupply(tenantId, id);
+/** Si la edición cambia la cantidad, la diferencia queda como movimiento de ajuste. */
+export async function updateSupply(tenantId: string, id: string, input: UpdateSupplyInput, userId?: string) {
+  const current = await findSupply(tenantId, id);
   if (input.categoryId) {
     await assertCategoryBelongsToTenant(tenantId, input.categoryId);
   }
-  return prisma.supply.update({
-    where: { id },
-    data: {
-      categoryId: input.categoryId,
-      name: input.name,
-      quantity: input.quantity,
-      unit: input.unit,
-      cost: input.cost,
-      currency: input.currency,
-      supplier: input.supplier,
-      notes: input.notes,
-    },
-    include: SUPPLY_INCLUDE,
+  return prisma.$transaction(async (tx) => {
+    const delta = input.quantity === undefined ? 0 : input.quantity - current.quantity;
+    if (delta !== 0) {
+      await applyStockChange(tx, tenantId, {
+        supplyId: id,
+        direction: delta > 0 ? "in" : "out",
+        quantity: Math.abs(delta),
+        source: "EDIT",
+        userId,
+      });
+    }
+    return tx.supply.update({
+      where: { id },
+      data: {
+        categoryId: input.categoryId,
+        name: input.name,
+        unit: input.unit,
+        cost: input.cost,
+        currency: input.currency,
+        supplier: input.supplier,
+        notes: input.notes,
+      },
+      include: SUPPLY_INCLUDE,
+    });
   });
 }
 
-/** Replica el clamp del legacy: "consumo" nunca deja el stock en negativo,
- *  "ingreso" no tiene tope. No genera ningún registro de movimiento -- el legacy
- *  tampoco lo hace, solo pisa el campo `quantity` con el nuevo valor absoluto. */
+/** Ingreso o consumo desde el dashboard. Mismo clamp del legacy (un consumo no
+ *  deja el stock en negativo), pero ahora queda en el historial; un ingreso con
+ *  precio actualiza el costo del insumo. */
 export async function adjustSupplyStock(
   tenantId: string,
   id: string,
-  direction: "in" | "out",
-  amount: number,
+  change: { direction: "in" | "out"; amount: number; unitCost?: number; userId?: string },
 ) {
-  const supply = await findSupply(tenantId, id);
-  const nextQuantity =
-    direction === "in" ? supply.quantity + amount : Math.max(0, supply.quantity - amount);
-  return prisma.supply.update({
-    where: { id },
-    data: { quantity: nextQuantity },
-    include: SUPPLY_INCLUDE,
+  await findSupply(tenantId, id);
+  return prisma.$transaction(async (tx) => {
+    const { supply } = await applyStockChange(tx, tenantId, {
+      supplyId: id,
+      direction: change.direction,
+      quantity: change.amount,
+      source: "MANUAL",
+      unitCost: change.unitCost ?? null,
+      userId: change.userId,
+    });
+    return supply;
   });
 }
 

@@ -100,8 +100,32 @@ describe("stock", () => {
       direction: "in",
       quantity: 500,
       unit: "L",
+      date: "2026-09-25",
+      unitCost: null,
+      currency: null,
+      pastureId: null,
     });
     expect(plan.notes).toEqual([]);
+  });
+
+  it("una compra con monto guarda el precio por unidad", () => {
+    const plan = planMessageEffects(
+      event({ type: "PURCHASE", producto: "Gasoil", cantidad: 500, unidad: "L", movimientoStock: "INGRESO", monto: 600000, moneda: "ARS" }),
+      catalog,
+      NOW,
+    );
+    expect(plan.effects).toContainEqual(expect.objectContaining({ kind: "stock", unitCost: 1200, currency: "ARS" }));
+  });
+
+  it("un consumo en un potrero existente queda asociado a ese potrero", () => {
+    const plan = planMessageEffects(
+      event({ type: "FUEL_USAGE", producto: "Gasoil", cantidad: 200, unidad: "L", movimientoStock: "EGRESO", potrero: "potrero norte" }),
+      catalog,
+      NOW,
+    );
+    expect(plan.effects).toContainEqual(
+      expect.objectContaining({ kind: "stock", direction: "out", pastureId: "p-norte", unitCost: null }),
+    );
   });
 
   it("una compra de un insumo nuevo propone crear el insumo y su categoría, y además el gasto", () => {

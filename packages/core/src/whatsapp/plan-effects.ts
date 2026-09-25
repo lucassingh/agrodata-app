@@ -1,6 +1,7 @@
 import { findByNormalizedName, normalizeEntityName } from "./entity-name";
 import { formatMoney, formatQuantity, todayInArgentina, type FarmEvent } from "./farm-event";
 import { unitsConflict } from "./units";
+import { unitCostOf } from "../supplies/stock-math";
 
 /** Catálogo del campo (ver `loadTenantCatalog`). */
 export interface TenantCatalog {
@@ -48,7 +49,20 @@ export type Effect =
       date: string;
       description: string;
     }
-  | { kind: "stock"; supplyRef: EntityRef; supplyName: string; direction: "in" | "out"; quantity: number; unit: string | null }
+  | {
+      kind: "stock";
+      supplyRef: EntityRef;
+      supplyName: string;
+      direction: "in" | "out";
+      quantity: number;
+      unit: string | null;
+      date: string;
+      /** Precio por unidad de una compra (monto / cantidad); null en consumos o sin monto. */
+      unitCost: number | null;
+      currency: "ARS" | "USD" | null;
+      /** Potrero donde se aplicó, solo si ya existe (un consumo no crea potreros). */
+      pastureId: string | null;
+    }
   | { kind: "addCrop"; pastureRef: EntityRef; pastureName: string; crop: string; hectares: number | null; startDate: string }
   | {
       kind: "addAnimals";
@@ -190,11 +204,19 @@ function planExpense(event: FarmEvent, catalog: TenantCatalog, builder: PlanBuil
   });
 }
 
-function planStock(event: FarmEvent, catalog: TenantCatalog, builder: PlanBuilder) {
+function planStock(event: FarmEvent, catalog: TenantCatalog, builder: PlanBuilder, now: Date) {
   if (event.movimientoStock === "NINGUNO" || !event.producto || event.cantidad === null || event.cantidad <= 0) return;
 
   const supply = findByNormalizedName(catalog.supplies, event.producto);
   const direction = event.movimientoStock === "INGRESO" ? "in" : "out";
+  const quantity = event.cantidad;
+  const unitCost = direction === "in" ? unitCostOf(event.monto, quantity) : null;
+  const movement = {
+    date: eventDate(event, now),
+    unitCost,
+    currency: unitCost !== null ? (event.moneda ?? "ARS") : null,
+    pastureId: event.potrero ? (findByNormalizedName(catalog.pastures, event.potrero)?.id ?? null) : null,
+  };
 
   if (!supply) {
     if (direction === "out") {
@@ -216,8 +238,9 @@ function planStock(event: FarmEvent, catalog: TenantCatalog, builder: PlanBuilde
       supplyRef,
       supplyName: event.producto,
       direction,
-      quantity: event.cantidad,
+      quantity,
       unit: event.unidad,
+      ...movement,
     });
     return;
   }
@@ -241,8 +264,9 @@ function planStock(event: FarmEvent, catalog: TenantCatalog, builder: PlanBuilde
     supplyRef: { existingId: supply.id },
     supplyName: supply.name,
     direction,
-    quantity: event.cantidad,
+    quantity,
     unit: supply.unit ?? event.unidad,
+    ...movement,
   });
 }
 
@@ -449,7 +473,7 @@ function planTask(event: FarmEvent, catalog: TenantCatalog, builder: PlanBuilder
 export function planMessageEffects(event: FarmEvent, catalog: TenantCatalog, now: Date = new Date()): MessagePlan {
   const builder = new PlanBuilder();
   planExpense(event, catalog, builder, now);
-  planStock(event, catalog, builder);
+  planStock(event, catalog, builder, now);
   planSeeding(event, catalog, builder, now);
   planAnimals(event, catalog, builder, now);
   planTask(event, catalog, builder, now);

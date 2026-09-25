@@ -115,6 +115,7 @@ model Tenant {
   expenseConfigs    ExpenseConfig[]
   pendingWhatsAppActions PendingWhatsAppAction[]
   livestockEvents   LivestockEvent[]
+  stockMovements    StockMovement[]
 
   @@map("tenants")
 }
@@ -239,6 +240,7 @@ model Pasture {
   animals PastureAnimal[]
   taskPastures TaskPasture[]
   livestockEvents LivestockEvent[]
+  stockMovements  StockMovement[]
 
   @@index([tenantId])
   @@map("pastures")
@@ -416,6 +418,7 @@ model Supply {
 
   tenant   Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   category SupplyCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  movements StockMovement[]
 
   @@index([tenantId, categoryId])
   @@map("supplies")
@@ -563,4 +566,44 @@ model LivestockEvent {
 
   @@index([tenantId, type, date])
   @@map("livestock_events")
+}
+
+// Cada cambio de stock de un insumo: de dónde vino, cuánto, a qué costo y cómo
+// quedó el saldo. `quantity` es lo que realmente se movió (un consumo mayor al
+// stock se registra por lo que había). Base del costo de lo aplicado por lote.
+enum StockDirection {
+  IN
+  OUT
+}
+
+enum StockMovementSource {
+  INITIAL
+  MANUAL
+  EDIT
+  WHATSAPP
+}
+
+model StockMovement {
+  id        String              @id @default(cuid())
+  tenantId  String
+  supplyId  String
+  direction StockDirection
+  quantity  Float
+  balance   Float
+  unitCost  Float?
+  currency  CurrencyType?
+  source    StockMovementSource
+  pastureId String?
+  recordId  String?
+  userId    String?
+  date      DateTime            @default(now())
+  createdAt DateTime            @default(now())
+
+  tenant  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  supply  Supply   @relation(fields: [supplyId], references: [id], onDelete: Cascade)
+  pasture Pasture? @relation(fields: [pastureId], references: [id], onDelete: SetNull)
+
+  @@index([supplyId, date])
+  @@index([tenantId, date])
+  @@map("stock_movements")
 }

@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { Package, AlertTriangle, Search, Plus, Pencil, Trash2, Minus } from "lucide-react";
+import { Package, AlertTriangle, Search, Plus, Pencil, Trash2, Minus, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,6 +25,7 @@ import type { Supply, SupplyCategoryRef } from "./types";
 import { deleteSupplyAction } from "./actions";
 import { SupplyFormDialog } from "./supply-form-dialog";
 import { StockAdjustDialog } from "./stock-adjust-dialog";
+import { StockHistoryDialog } from "./stock-history-dialog";
 import { SupplySuccessDialog } from "./supply-success-dialog";
 import {
   LOW_STOCK_THRESHOLD,
@@ -39,6 +40,8 @@ const ROWS_PER_PAGE_OPTIONS = [5, 10, 25, 50];
 interface SuppliesClientProps {
   supplies: Supply[];
   categories: SupplyCategoryRef[];
+  /** Variación neta de stock por insumo en los últimos 30 días. */
+  netChange30d: Record<string, number>;
   hasActiveTenant: boolean;
   canEdit: boolean;
   canDelete: boolean;
@@ -47,6 +50,7 @@ interface SuppliesClientProps {
 export function SuppliesClient({
   supplies,
   categories,
+  netChange30d,
   hasActiveTenant,
   canEdit,
   canDelete,
@@ -62,6 +66,7 @@ export function SuppliesClient({
     null,
   );
   const [deleteTarget, setDeleteTarget] = useState<Supply | null>(null);
+  const [historyTarget, setHistoryTarget] = useState<Supply | null>(null);
   const [successInfo, setSuccessInfo] = useState<{ id: string; name: string; categoryName: string } | null>(
     null,
   );
@@ -151,13 +156,22 @@ export function SuppliesClient({
       className: "text-center",
       render: (s) => {
         const low = isLowStock(s);
+        const change = netChange30d[s.id] ?? 0;
         return (
-          <span
-            className={`inline-flex items-center gap-1 font-semibold ${low ? "text-destructive" : "text-foreground"}`}
-          >
-            {low ? <AlertTriangle size={14} /> : null}
-            {formatQuantity(s.quantity)}
-          </span>
+          <div className="flex flex-col items-center">
+            <span
+              className={`inline-flex items-center gap-1 font-semibold ${low ? "text-destructive" : "text-foreground"}`}
+            >
+              {low ? <AlertTriangle size={14} /> : null}
+              {formatQuantity(s.quantity)}
+            </span>
+            {change !== 0 ? (
+              <span className="text-xs whitespace-nowrap text-muted-foreground" title="Variación en los últimos 30 días">
+                {change > 0 ? "+" : "−"}
+                {formatQuantity(Math.abs(change))} en 30 días
+              </span>
+            ) : null}
+          </div>
         );
       },
     },
@@ -210,6 +224,15 @@ export function SuppliesClient({
       label: "",
       render: (s) => (
         <div className="flex justify-end gap-1">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            title="Historial de stock"
+            aria-label={`Historial de stock de ${s.name}`}
+            onClick={() => setHistoryTarget(s)}
+          >
+            <History size={14} />
+          </Button>
           {canEdit ? (
             <Button
               variant="ghost"
@@ -405,6 +428,8 @@ export function SuppliesClient({
           onClose={() => setStockTarget(null)}
         />
       ) : null}
+
+      {historyTarget ? <StockHistoryDialog supply={historyTarget} onClose={() => setHistoryTarget(null)} /> : null}
 
       {successInfo ? (
         <SupplySuccessDialog supply={successInfo} onClose={() => setSuccessInfo(null)} />

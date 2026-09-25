@@ -14,6 +14,7 @@ import {
   adjustSupplyStock,
   findSupply,
   createRecord,
+  listStockMovements,
   type CreateSupplyInput,
   type UpdateSupplyInput,
 } from "@repo/core";
@@ -36,8 +37,9 @@ export async function createSupplyAction(
   const parsed = createSupplySchema.safeParse(input);
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Datos inválidos.");
   try {
+    const user = await requireUser();
     const tenantId = await requireActiveTenantId();
-    const supply = await createSupply(tenantId, parsed.data);
+    const supply = await createSupply(tenantId, parsed.data, user.id);
     revalidatePath("/dashboard/supplies");
     return ok({ id: supply.id });
   } catch (error) {
@@ -53,8 +55,9 @@ export async function updateSupplyAction(
   const parsed = updateSupplySchema.safeParse(input);
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Datos inválidos.");
   try {
+    const user = await requireUser();
     const tenantId = await requireActiveTenantId();
-    await updateSupply(tenantId, id, parsed.data);
+    await updateSupply(tenantId, id, parsed.data, user.id);
     revalidatePath("/dashboard/supplies");
     return ok(undefined);
   } catch (error) {
@@ -67,12 +70,14 @@ export async function adjustSupplyStockAction(
   id: string,
   direction: "in" | "out",
   amount: number,
+  unitCost?: number,
 ): Promise<ActionResult> {
-  const parsed = adjustSupplyStockSchema.safeParse({ direction, amount });
+  const parsed = adjustSupplyStockSchema.safeParse({ direction, amount, unitCost });
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Datos inválidos.");
   try {
+    const user = await requireUser();
     const tenantId = await requireActiveTenantId();
-    await adjustSupplyStock(tenantId, id, parsed.data.direction, parsed.data.amount);
+    await adjustSupplyStock(tenantId, id, { ...parsed.data, userId: user.id });
     revalidatePath("/dashboard/supplies");
     return ok(undefined);
   } catch (error) {
@@ -117,6 +122,41 @@ export async function addSupplyPurchaseRecordAction(id: string): Promise<ActionR
       userId: user.id,
     });
     return ok(undefined);
+  } catch (error) {
+    if (error instanceof AppError) return fail(error.message);
+    throw error;
+  }
+}
+
+export interface StockMovementRow {
+  id: string;
+  date: string;
+  direction: "IN" | "OUT";
+  quantity: number;
+  balance: number;
+  unitCost: number | null;
+  currency: "ARS" | "USD" | null;
+  source: "INITIAL" | "MANUAL" | "EDIT" | "WHATSAPP";
+  pastureName: string | null;
+}
+
+export async function listStockMovementsAction(supplyId: string): Promise<ActionResult<StockMovementRow[]>> {
+  try {
+    const tenantId = await requireActiveTenantId();
+    const movements = await listStockMovements(tenantId, supplyId);
+    return ok(
+      movements.map((m) => ({
+        id: m.id,
+        date: m.date.toISOString(),
+        direction: m.direction,
+        quantity: m.quantity,
+        balance: m.balance,
+        unitCost: m.unitCost,
+        currency: m.currency,
+        source: m.source,
+        pastureName: m.pasture?.name ?? null,
+      })),
+    );
   } catch (error) {
     if (error instanceof AppError) return fail(error.message);
     throw error;

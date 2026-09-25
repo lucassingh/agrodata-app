@@ -25,6 +25,8 @@ export * from "./reports/reports.service";
 export * from "./reports/date-range";
 export * from "./supplies/supplies.schema";
 export * from "./supplies/supplies.service";
+export * from "./supplies/stock-movements.service";
+export * from "./supplies/stock-math";
 export * from "./tasks/tasks.schema";
 export * from "./tasks/tasks.service";
 export * from "./whatsapp/whatsapp.schema";

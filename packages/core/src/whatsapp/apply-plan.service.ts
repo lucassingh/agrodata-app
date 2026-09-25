@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma, type Prisma } from "@repo/database";
 import { expenseCreateData } from "../expenses/expenses.service";
+import { applyStockChange } from "../supplies/stock-movements.service";
 import { findByNormalizedName, normalizeEntityName } from "./entity-name";
 import { describeEffect, type Creation, type Effect, type EntityRef, type MessagePlan } from "./plan-effects";
 
@@ -163,11 +164,18 @@ async function applyEffect(
       return;
     }
     case "stock": {
-      const supply = await tx.supply.findFirstOrThrow({ where: { id: resolve(effect.supplyRef), tenantId } });
-      // Mismo criterio que `adjustSupplyStock` del dashboard: un egreso no deja stock negativo.
-      const quantity =
-        effect.direction === "in" ? supply.quantity + effect.quantity : Math.max(0, supply.quantity - effect.quantity);
-      await tx.supply.update({ where: { id: supply.id }, data: { quantity } });
+      await applyStockChange(tx, tenantId, {
+        supplyId: resolve(effect.supplyRef),
+        direction: effect.direction,
+        quantity: effect.quantity,
+        source: "WHATSAPP",
+        unitCost: effect.unitCost,
+        currency: effect.currency,
+        pastureId: effect.pastureId,
+        recordId,
+        userId,
+        date: eventDate(effect.date),
+      });
       return;
     }
     case "addCrop": {

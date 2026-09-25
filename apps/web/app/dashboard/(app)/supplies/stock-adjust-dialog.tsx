@@ -23,6 +23,7 @@ interface StockAdjustDialogProps {
 
 export function StockAdjustDialog({ supply, direction, onClose }: StockAdjustDialogProps) {
   const [amount, setAmount] = useState("");
+  const [unitCost, setUnitCost] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -32,9 +33,14 @@ export function StockAdjustDialog({ supply, direction, onClose }: StockAdjustDia
       setError("Ingresá una cantidad mayor a 0");
       return;
     }
+    const price = unitCost.trim() === "" ? undefined : Number(unitCost);
+    if (price !== undefined && (!Number.isFinite(price) || price <= 0)) {
+      setError("El precio tiene que ser mayor a 0");
+      return;
+    }
     setError(null);
     startTransition(async () => {
-      const result = await adjustSupplyStockAction(supply.id, direction, n);
+      const result = await adjustSupplyStockAction(supply.id, direction, n, price);
       if (!result.success) {
         toast.error(result.error ?? "No se pudo actualizar el stock");
         return;
@@ -58,8 +64,9 @@ export function StockAdjustDialog({ supply, direction, onClose }: StockAdjustDia
           </p>
 
           <div className="space-y-2">
-            <Label>Cantidad</Label>
+            <Label htmlFor="stock-amount">Cantidad</Label>
             <Input
+              id="stock-amount"
               type="number"
               min={0.01}
               step={0.01}
@@ -68,6 +75,23 @@ export function StockAdjustDialog({ supply, direction, onClose }: StockAdjustDia
               autoFocus
             />
           </div>
+
+          {direction === "in" ? (
+            <div className="space-y-2">
+              <Label htmlFor="stock-unit-cost">
+                Precio por {supply.unit || "unidad"} en {supply.currency} (opcional)
+              </Label>
+              <Input
+                id="stock-unit-cost"
+                type="number"
+                min={0.01}
+                step={0.01}
+                value={unitCost}
+                onChange={(e) => setUnitCost(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">Si lo cargás, pasa a ser el costo del insumo.</p>
+            </div>
+          ) : null}
 
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
         </div>
