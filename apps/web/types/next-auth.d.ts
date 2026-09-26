@@ -1,5 +1,5 @@
 import type { DefaultSession } from "next-auth";
-import type { Capabilities, PlatformRole } from "@repo/core";
+import type { Capabilities, FieldRole, PlatformRole } from "@repo/core";
 
 declare module "next-auth" {
   interface User {
@@ -11,10 +11,13 @@ declare module "next-auth" {
     user: {
       id: string;
       platformRole: PlatformRole;
+      /** Soporte de la plataforma (SUPER_ADMIN_EMAILS), no la marca de la base. */
       isSuperAdmin: boolean;
       activeTenantId: string | null;
+      /** Rol en el campo activo; los permisos salen de acá. */
+      fieldRole: FieldRole | null;
       capabilities: Capabilities;
-      /** Owner o Farm Manager (los Operators solo usan WhatsApp). Ver `canAccessWebApp`. */
+      /** Dueño, encargado o asesor en algún campo (los operarios solo usan WhatsApp). Ver `canAccessWeb`. */
       canAccessWeb: boolean;
     } & DefaultSession["user"];
   }

@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@repo/database";
 import { forbidden, notFound } from "../errors";
+import { isWebRole } from "../auth/field-roles";
 
 export async function findUserTenants(userId: string) {
   return prisma.userTenantMembership.findMany({
@@ -21,8 +22,8 @@ export async function setActiveTenant(
   if (!membership) {
     notFound("No tenés acceso a este campo o no está activo");
   }
-  if (!isSuperAdmin && membership.role !== "ADMIN") {
-    forbidden("Solo Farm Manager u Owner pueden cambiar el campo activo en la web.");
+  if (!isSuperAdmin && !isWebRole(membership.role)) {
+    forbidden("Los operarios usan AgroData por WhatsApp; la web es para dueños, encargados y asesores.");
   }
   const user = await prisma.user.update({
     where: { id: userId },

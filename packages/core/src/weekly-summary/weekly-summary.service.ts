@@ -23,7 +23,7 @@ export async function weeklySummaryTargets(): Promise<WeeklySummaryTarget[]> {
   const memberships = await prisma.userTenantMembership.findMany({
     where: {
       status: "ACTIVE",
-      OR: [{ role: "ADMIN" }, { user: { isSuperAdmin: true } }],
+      role: { in: ["OWNER", "ADMIN", "ADVISOR"] },
       user: { wNumber: { not: null } },
     },
     include: {

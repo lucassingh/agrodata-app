@@ -5,11 +5,12 @@ import { prisma } from "@repo/database";
 import {
   loginWithPassword,
   verifyWhatsappCode,
-  resolvePlatformRole,
-  capabilitiesForRole,
-  canAccessWebApp,
-  effectiveIsSuperAdmin,
+  platformRoleFor,
+  capabilitiesForField,
+  canAccessWeb,
+  isPlatformStaff,
   AppError,
+  type FieldRole,
 } from "@repo/core";
 import { authConfig } from "./auth.config";
 
@@ -91,34 +92,33 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           name: true,
           lastname: true,
           email: true,
-          isSuperAdmin: true,
           activeTenantId: true,
-          memberships: { where: { status: "ACTIVE" }, select: { role: true } },
+          memberships: { where: { status: "ACTIVE" }, select: { role: true, tenantId: true } },
           _count: { select: { memberships: true } },
         },
       });
       if (!user) return session;
 
-      const isSuperAdmin = effectiveIsSuperAdmin(user.isSuperAdmin, user.email);
-      const platformRole = resolvePlatformRole({
-        isSuperAdmin,
-        activeMemberships: user.memberships,
-      });
+      // Roles por campo: los permisos salen del rol en el campo activo. «Soporte» de la
+      // plataforma solo por la lista de emails (la marca isSuperAdmin de la base no da permisos).
+      const isStaff = isPlatformStaff(user.email);
+      const fieldRole = (user.memberships.find((m) => m.tenantId === user.activeTenantId)?.role ?? null) as FieldRole | null;
+      const platformRole = platformRoleFor(fieldRole, isStaff);
 
       session.user.id = user.id;
       session.user.name = `${user.name} ${user.lastname}`;
       session.user.email = user.email ?? "";
-      session.user.isSuperAdmin = isSuperAdmin;
+      session.user.isSuperAdmin = isStaff;
+      session.user.fieldRole = fieldRole;
       session.user.platformRole = platformRole;
       session.user.activeTenantId = user.activeTenantId;
-      session.user.capabilities = capabilitiesForRole(platformRole);
+      session.user.capabilities = capabilitiesForField(fieldRole, isStaff);
       // Misma regla que al iniciar sesión, recalculada en cada request: si a alguien
       // le sacan el rol de Farm Manager con la sesión abierta, pierde la web al instante.
-      session.user.canAccessWeb = canAccessWebApp({
-        isSuperAdmin: user.isSuperAdmin,
-        email: user.email,
-        activeMemberships: user.memberships,
-        totalMembershipRows: user._count.memberships,
+      session.user.canAccessWeb = canAccessWeb({
+        isStaff,
+        activeRoles: user.memberships.map((m) => m.role),
+        totalMemberships: user._count.memberships,
       });
 
       return session;

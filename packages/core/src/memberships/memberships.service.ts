@@ -2,13 +2,29 @@ import "server-only";
 import { prisma } from "@repo/database";
 import type { MembershipStatus, SystemRole } from "@repo/database";
 import { badRequest, forbidden, notFound } from "../errors";
-import { effectiveIsSuperAdmin } from "../auth/capabilities";
+import {
+  assignableRoles,
+  canChangeRole,
+  canRemoveMember,
+  FIELD_ROLE_LABEL,
+  isPlatformStaff,
+  leavesFieldWithoutOwner,
+  visibleTeam,
+  type FieldRole,
+} from "../auth/field-roles";
 import { normalizeArgWNumber, parseInviteIdentifier } from "./invite-identifier.util";
 
 export interface MembershipInviterContext {
   userId: string;
-  isSuperAdmin: boolean;
   email: string | null;
+}
+
+/** Rol de quien actúa en ese campo (null si no tiene) y si es soporte de la plataforma. */
+async function actorInField(actor: MembershipInviterContext, tenantId: string) {
+  const membership = await prisma.userTenantMembership.findFirst({
+    where: { userId: actor.userId, tenantId, status: "ACTIVE" },
+  });
+  return { role: (membership?.role ?? null) as FieldRole | null, isStaff: isPlatformStaff(actor.email) };
 }
 
 /**
@@ -55,12 +71,6 @@ export async function redeemPendingInvitesForNewUser(
   return redeemed;
 }
 
-async function findActiveAdminMembership(userId: string, tenantId: string) {
-  return prisma.userTenantMembership.findFirst({
-    where: { userId, tenantId, status: "ACTIVE", role: "ADMIN" },
-  });
-}
-
 /**
  * Port de MembershipsService.inviteMember (legacy). Invitar a un usuario YA
  * REGISTRADO crea la membresía ACTIVE en el momento. El legacy la dejaba en
@@ -72,14 +82,11 @@ export async function inviteMember(
   inviter: MembershipInviterContext,
   input: { identifier: string; tenantId: string; role: SystemRole },
 ) {
-  const canInvite = await findActiveAdminMembership(inviter.userId, input.tenantId);
-  const isOwner = effectiveIsSuperAdmin(inviter.isSuperAdmin, inviter.email);
-
-  if (!canInvite && !isOwner) {
-    forbidden("No tenés permiso para invitar a este campo.");
-  }
-  if (input.role === "ADMIN" && !isOwner) {
-    forbidden("Solo el owner puede invitar usuarios con rol Farm Manager.");
+  const actor = await actorInField(inviter, input.tenantId);
+  const allowed = assignableRoles(actor.role, actor.isStaff);
+  if (allowed.length === 0) forbidden("No tenés permiso para invitar a este campo.");
+  if (!allowed.includes(input.role as FieldRole)) {
+    forbidden(`Tu rol no puede invitar a alguien como ${FIELD_ROLE_LABEL[input.role as FieldRole] ?? input.role}.`);
   }
 
   const rawId = input.identifier.trim();
@@ -154,10 +161,14 @@ export async function updateMembershipRole(
   });
   if (!membership) notFound("Membresía no encontrada");
 
-  const canManage = await findActiveAdminMembership(inviter.userId, membership.tenantId);
-  const isOwner = effectiveIsSuperAdmin(inviter.isSuperAdmin, inviter.email);
-  if (!canManage && !isOwner) forbidden("No tenés permiso para modificar roles en este campo.");
-  if (role === "ADMIN" && !isOwner) forbidden("Solo el owner puede promover a Farm Manager.");
+  const actor = await actorInField(inviter, membership.tenantId);
+  if (!canChangeRole(actor.role, actor.isStaff, membership.role as FieldRole, role as FieldRole)) {
+    forbidden("Tu rol no puede hacer ese cambio en este campo.");
+  }
+  const members = await prisma.userTenantMembership.findMany({ where: { tenantId: membership.tenantId, status: "ACTIVE" } });
+  if (leavesFieldWithoutOwner(members, membershipId, role as FieldRole)) {
+    badRequest("El campo tiene que tener al menos un dueño. Pasá la titularidad a otra persona primero.");
+  }
 
   return prisma.userTenantMembership.update({ where: { id: membershipId }, data: { role } });
 }
@@ -171,14 +182,36 @@ export async function removeMembership(
   });
   if (!membership) notFound("Membresía no encontrada");
 
-  const canManage = await findActiveAdminMembership(inviter.userId, membership.tenantId);
-  const isOwner = effectiveIsSuperAdmin(inviter.isSuperAdmin, inviter.email);
-  if (!canManage && !isOwner) forbidden("No tenés permiso para quitar miembros de este campo.");
-  if (membership.role === "ADMIN" && !isOwner) {
-    forbidden("Solo el owner puede quitar un Farm Manager.");
+  const actor = await actorInField(inviter, membership.tenantId);
+  if (!canRemoveMember(actor.role, actor.isStaff, membership.role as FieldRole)) {
+    forbidden("Tu rol no puede quitar a esta persona del campo.");
+  }
+  const members = await prisma.userTenantMembership.findMany({ where: { tenantId: membership.tenantId, status: "ACTIVE" } });
+  if (leavesFieldWithoutOwner(members, membershipId, null)) {
+    badRequest("El campo tiene que tener al menos un dueño. Pasá la titularidad a otra persona primero.");
   }
 
   await prisma.userTenantMembership.delete({ where: { id: membershipId } });
+}
+
+/** Pasar la titularidad (ej. el asesor que creó el campo de su cliente): la otra
+ *  persona queda como dueña y quien la pasa sigue en el campo con el rol que elija
+ *  (por defecto, asesor). */
+export async function transferOwnership(
+  actor: MembershipInviterContext,
+  tenantId: string,
+  toMembershipId: string,
+  myNewRole: FieldRole = "ADVISOR",
+) {
+  const me = await prisma.userTenantMembership.findFirst({ where: { userId: actor.userId, tenantId, status: "ACTIVE" } });
+  if (!me || me.role !== "OWNER") forbidden("Solo el dueño puede pasar la titularidad.");
+  const target = await prisma.userTenantMembership.findFirst({ where: { id: toMembershipId, tenantId, status: "ACTIVE" } });
+  if (!target) notFound("Esa persona no está activa en el campo.");
+  if (target.id === me.id) badRequest("Ya sos el dueño de este campo.");
+  await prisma.$transaction([
+    prisma.userTenantMembership.update({ where: { id: target.id }, data: { role: "OWNER" } }),
+    prisma.userTenantMembership.update({ where: { id: me.id }, data: { role: myNewRole } }),
+  ]);
 }
 
 export interface TeamMemberRow {
@@ -192,8 +225,6 @@ export interface TeamMemberRow {
   role: SystemRole;
   status: MembershipStatus;
   profileType: string;
-  isSuperAdmin: boolean;
-  platformRole: string;
   invitedAt: Date;
   acceptedAt: Date | null;
   registeredAt: Date;
@@ -216,8 +247,6 @@ export async function getTeamMembers(tenantId: string): Promise<TeamMemberRow[]>
     role: m.role,
     status: m.status,
     profileType: m.user.profileType,
-    isSuperAdmin: m.user.isSuperAdmin,
-    platformRole: m.user.platformRole,
     invitedAt: m.invitedAt,
     acceptedAt: m.acceptedAt,
     registeredAt: m.user.createdAt,
@@ -238,18 +267,9 @@ export async function getTeamMembersForViewer(
   viewer: MembershipInviterContext,
   tenantId: string,
 ): Promise<TeamMemberRow[]> {
-  const access = await prisma.userTenantMembership.findFirst({
-    where: { userId: viewer.userId, tenantId, status: "ACTIVE" },
-  });
-  const isOwner = effectiveIsSuperAdmin(viewer.isSuperAdmin, viewer.email);
-  if (!access && !isOwner) forbidden("No tenés acceso a este campo.");
-
-  const all = await getTeamMembers(tenantId);
-  if (isOwner) return all;
-  if (access?.role === "ADMIN") {
-    return all.filter((m) => m.role === "USER_GENERAL" || m.userId === viewer.userId);
-  }
-  return all.filter((m) => m.userId === viewer.userId);
+  const actor = await actorInField(viewer, tenantId);
+  if (!actor.role && !actor.isStaff) forbidden("No tenés acceso a este campo.");
+  return visibleTeam(actor.role, actor.isStaff, viewer.userId, await getTeamMembers(tenantId));
 }
 
 /** Dev/QA-only, igual que el legacy: crea un Operator demo con membresía ACTIVE
@@ -262,9 +282,8 @@ export async function seedDemoOperator(
     process.env.NODE_ENV !== "production" || process.env.ALLOW_DEMO_OPERATOR_SEED === "true";
   if (!allowed) forbidden("Seed de operador demo deshabilitado en este entorno.");
 
-  const canManage = await findActiveAdminMembership(inviter.userId, tenantId);
-  const isOwner = effectiveIsSuperAdmin(inviter.isSuperAdmin, inviter.email);
-  if (!canManage && !isOwner) {
+  const actor = await actorInField(inviter, tenantId);
+  if (!assignableRoles(actor.role, actor.isStaff).includes("USER_GENERAL")) {
     forbidden("No tenés permiso para crear el operador demo en este campo.");
   }
 

@@ -18,11 +18,12 @@ import { colorForKey } from "@/lib/color-for-key";
 import type { ExchangeRateKind } from "@repo/core/economy/exchange-rates";
 import type { VatCondition } from "@repo/core/economy/vat";
 import type { FarmActivity } from "@repo/core/tenants/tenant-labels";
+import type { FieldRole } from "@repo/core/auth/field-roles";
 
 interface PreferencesTabsProps {
   memberships: Array<{
     tenantId: string;
-    role: "ADMIN" | "USER_GENERAL";
+    role: FieldRole;
     tenant: {
       id: string;
       name: string;
@@ -37,7 +38,7 @@ interface PreferencesTabsProps {
     };
   }>;
   activeTenantId: string | null;
-  isOwner: boolean;
+  canEditField: boolean;
   canManage: boolean;
   canDelete: boolean;
   animalCategories: Array<{ id: string; name: string }>;
@@ -50,7 +51,7 @@ interface PreferencesTabsProps {
 export function PreferencesTabs({
   memberships,
   activeTenantId,
-  isOwner,
+  canEditField,
   canManage,
   canDelete,
   animalCategories,
@@ -72,7 +73,7 @@ export function PreferencesTabs({
 
       <div className="mt-4">
         <TabsContent value="campo">
-          <CampoTab memberships={memberships} activeTenantId={activeTenantId} isOwner={isOwner} />
+          <CampoTab memberships={memberships} activeTenantId={activeTenantId} canEditField={canEditField} />
         </TabsContent>
 
         <TabsContent value="animales">

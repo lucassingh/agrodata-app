@@ -41,11 +41,14 @@ import { setActiveTenantAction } from "@/app/dashboard/(app)/_lib/tenant-actions
 import { cn } from "@/lib/utils";
 import type { Capabilities, PlatformRole } from "@repo/core";
 import { visibleModules } from "@repo/core/tenants/tenant-labels";
+import { isWebRole } from "@repo/core/auth/field-roles";
 
+/** Rol en el campo activo. */
 const PLATFORM_ROLE_LABEL: Record<PlatformRole, string> = {
-  OWNER: "Owner",
-  FARM_MANAGER: "Farm Manager",
-  OPERATOR: "Operator",
+  OWNER: "Dueño",
+  FARM_MANAGER: "Encargado",
+  ADVISOR: "Asesor",
+  OPERATOR: "Operario",
 };
 
 interface NavItem {
@@ -65,7 +68,7 @@ interface AppShellUser {
 
 interface Membership {
   tenantId: string;
-  role: "ADMIN" | "USER_GENERAL";
+  role: string;
   tenant: { id: string; name: string; category: string; activities: string[] };
 }
 
@@ -143,7 +146,9 @@ export function AppShell({ user, memberships, children, signOutAction }: AppShel
 
   const activeMembership = memberships.find((m) => m.tenantId === user.activeTenantId);
   const activeTenant = activeMembership?.tenant;
-  const canSwitchActiveTenant = memberships.length > 1;
+  // Los campos donde solo soy operario se usan por WhatsApp: no se eligen en la web.
+  const webMemberships = memberships.filter((m) => isWebRole(m.role));
+  const canSwitchActiveTenant = webMemberships.length > 1;
 
   const handleSwitchTenant = async (tenantId: string) => {
     if (tenantId === user.activeTenantId) return;
@@ -313,7 +318,7 @@ export function AppShell({ user, memberships, children, signOutAction }: AppShel
                   </DropdownMenuLabel>
 
                   {canSwitchActiveTenant ? (
-                    memberships.map((m) => {
+                    webMemberships.map((m) => {
                       const isActive = m.tenantId === user.activeTenantId;
                       return (
                         <DropdownMenuItem

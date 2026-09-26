@@ -11,6 +11,7 @@ import {
   updateMembershipRole,
   removeMembership,
   seedDemoOperator,
+  transferOwnership,
 } from "@repo/core";
 
 type ActionResult<T = undefined> =
@@ -27,7 +28,7 @@ function fail<T>(message: string): ActionResult<T> {
 
 async function inviterContext() {
   const user = await requireUser();
-  return { userId: user.id, isSuperAdmin: user.isSuperAdmin, email: user.email ?? null };
+  return { userId: user.id, email: user.email ?? null };
 }
 
 export async function inviteMemberAction(input: {
@@ -72,6 +73,22 @@ export async function removeMemberAction(membershipId: string): Promise<ActionRe
     const inviter = await inviterContext();
     await removeMembership(inviter, membershipId);
     revalidatePath("/dashboard/team");
+    return ok(undefined);
+  } catch (error) {
+    if (error instanceof AppError) return fail(error.message);
+    throw error;
+  }
+}
+
+export async function transferOwnershipAction(
+  tenantId: string,
+  toMembershipId: string,
+): Promise<ActionResult> {
+  try {
+    const actor = await inviterContext();
+    await transferOwnership(actor, tenantId, toMembershipId);
+    // El rol en el campo cambia los permisos de toda la app.
+    revalidatePath("/dashboard", "layout");
     return ok(undefined);
   } catch (error) {
     if (error instanceof AppError) return fail(error.message);

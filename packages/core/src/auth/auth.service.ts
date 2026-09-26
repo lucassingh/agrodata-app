@@ -2,7 +2,7 @@ import "server-only";
 import { prisma, hashPassword, verifyPassword } from "@repo/database";
 import { badRequest, conflict, notFound, unauthorized } from "../errors";
 import { redeemPendingInvitesForNewUser } from "../memberships/memberships.service";
-import { canAccessWebApp } from "./capabilities";
+import { canAccessWeb, isPlatformStaff } from "./field-roles";
 import type { RegisterInput } from "./register.schema";
 
 const VERIFICATION_CODE_TTL_MS = 10 * 60 * 1000;
@@ -26,23 +26,19 @@ async function assertWebAppAccess(userId: string): Promise<void> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
-      isSuperAdmin: true,
       email: true,
       memberships: { where: { status: "ACTIVE" }, select: { role: true } },
       _count: { select: { memberships: true } },
     },
   });
   if (!user) unauthorized("Usuario no encontrado");
-  const allowed = canAccessWebApp({
-    isSuperAdmin: user.isSuperAdmin,
-    email: user.email,
-    activeMemberships: user.memberships,
-    totalMembershipRows: user._count.memberships,
+  const allowed = canAccessWeb({
+    isStaff: isPlatformStaff(user.email),
+    activeRoles: user.memberships.map((m) => m.role),
+    totalMemberships: user._count.memberships,
   });
   if (!allowed) {
-    unauthorized(
-      "El acceso a la aplicación web es solo para Owner o Farm Manager. Operator usa WhatsApp.",
-    );
+    unauthorized("La web es para dueños, encargados y asesores. Los operarios usan AgroData por WhatsApp.");
   }
 }
 
@@ -63,7 +59,6 @@ export async function registerUser(input: RegisterInput) {
   if (existingEmail) conflict("Ya existe una cuenta con ese email.");
   if (existingPhone) conflict("Ya existe una cuenta con ese número de WhatsApp.");
 
-  const isFirstUserInDatabase = (await prisma.user.count()) === 0;
   const passwordHash = await hashPassword(input.password);
 
   let user = await prisma.user.create({
@@ -74,27 +69,18 @@ export async function registerUser(input: RegisterInput) {
       wNumber: input.wNumber,
       passwordHash,
       profileType: input.profileType ?? "OTRO",
-      isSuperAdmin: true,
-      platformRole: isFirstUserInDatabase ? "OWNER" : "OPERATOR",
+      // Los permisos son por campo: registrarse no da permisos de plataforma.
+      isSuperAdmin: false,
     },
   });
 
   const redeemed = await redeemPendingInvitesForNewUser(user.id, email, input.wNumber);
 
-  if (redeemed.length > 0 && !isFirstUserInDatabase) {
+  if (redeemed.length > 0) {
     const first = redeemed[0]!;
     user = await prisma.user.update({
       where: { id: user.id },
-      data: {
-        isSuperAdmin: false,
-        platformRole: first.role === "ADMIN" ? "FARM_MANAGER" : "OPERATOR",
-        activeTenantId: first.tenantId,
-      },
-    });
-  } else if (isFirstUserInDatabase) {
-    user = await prisma.user.update({
-      where: { id: user.id },
-      data: { isSuperAdmin: true, platformRole: "OWNER" },
+      data: { activeTenantId: first.tenantId },
     });
   }
 

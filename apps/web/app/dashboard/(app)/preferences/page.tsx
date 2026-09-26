@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { requireUser } from "@/lib/session";
-import { findUserTenants, getAllPreferences, listExpenseCategories } from "@repo/core";
+import { findUserTenants, getAllPreferences, listExpenseCategories, type FieldRole } from "@repo/core";
 import { HeroBanner } from "@/components/hero-banner";
 import { PreferencesTabs } from "./preferences-tabs";
 
@@ -35,7 +35,7 @@ export default async function PreferencesPage() {
       <PreferencesTabs
         memberships={memberships.map((m) => ({
           tenantId: m.tenantId,
-          role: m.role,
+          role: m.role as FieldRole,
           tenant: {
             id: m.tenant.id,
             name: m.tenant.name,
@@ -50,7 +50,7 @@ export default async function PreferencesPage() {
           },
         }))}
         activeTenantId={user.activeTenantId}
-        isOwner={user.isSuperAdmin}
+        canEditField={user.capabilities.canUpdateField}
         canManage={canManage}
         canDelete={canDelete}
         animalCategories={preferences.animalCategories}
