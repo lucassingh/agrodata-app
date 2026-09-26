@@ -216,6 +216,7 @@ export const PRICING = {
         "1 campo",
         "Hasta 5 personas cargando por WhatsApp",
         "Dashboard completo",
+        "Margen bruto por lote, en dólares",
         "Exportación a Excel",
       ],
     },
@@ -229,6 +230,7 @@ export const PRICING = {
       features: [
         "Hasta 10 campos",
         "Personas ilimitadas por WhatsApp",
+        "Margen bruto por lote y comparativo de campañas",
         "Reportes semanales automáticos",
         "Exportación a Excel",
         { label: "Exportación a PDF", soon: true },
@@ -341,4 +343,31 @@ export const LEGAL = {
   updatedAt: "25 de septiembre de 2026",
   responsible: "[Nombre o razón social del titular, CUIT]",
   contactEmail: "[email de contacto]",
+};
+
+export const LOT_MARGIN = {
+  eyebrow: "Economía por lote",
+  title: "Sabé cuánto te dejó cada lote, sin armar una planilla.",
+  body: "Cada aplicación, labor y gasto que cargás por WhatsApp suma al costo de su lote. Cuando cosechás y vendés, AgroData te muestra el margen bruto, el costo por hectárea y el rinde que necesitás para no perder.",
+  points: [
+    { title: "Costos que llegan solos", body: "Insumos aplicados, contratistas y gastos del lote, sin cargar nada dos veces." },
+    { title: "En dólares, al día", body: "Cada peso se convierte con el dólar de su fecha. Elegís mayorista, oficial o MEP." },
+    { title: "Rinde de indiferencia", body: "Los kilos por hectárea que cubren tus costos, antes de cosechar." },
+  ],
+  example: {
+    title: "Margen bruto por hectárea · ciclo 25/26",
+    note: "Datos de ejemplo",
+    lots: [
+      { name: "Soja · La Loma", ha: 120, margin: 414 },
+      { name: "Maíz · El Bajo", ha: 80, margin: 356 },
+      { name: "Soja · Norte", ha: 150, margin: 298 },
+      { name: "Trigo · Sur", ha: 60, margin: -38 },
+    ],
+    statsTitle: "Soja · La Loma, a US$ 300/t",
+    stats: [
+      { label: "Costo directo", value: "US$ 318/ha" },
+      { label: "Rinde", value: "2.440 kg/ha" },
+      { label: "Rinde de indiferencia", value: "1.060 kg/ha" },
+    ],
+  },
 };
