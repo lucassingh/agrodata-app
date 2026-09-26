@@ -13,6 +13,7 @@ import {
   DollarSign,
   TrendingUp,
   Milk,
+  Scale,
   Download,
   Fence,
   LogOut,
@@ -128,7 +129,10 @@ export function AppShell({ user, memberships, children, signOutAction }: AppShel
     { label: "Tareas", href: "/dashboard/tasks", icon: <ClipboardList size={18} /> },
     { label: "Gastos", href: "/dashboard/expenses", icon: <DollarSign size={18} /> },
     { label: "Economía", href: "/dashboard/economy", icon: <TrendingUp size={18} /> },
-    // Tambo solo en campos que lo tienen (Tambo o Mixto).
+    // Ganadería y Tambo, solo en los campos que los tienen.
+    ...(["GANADERO", "TAMBO", "MIXTO"].includes(memberships.find((m) => m.tenantId === user.activeTenantId)?.tenant.category ?? "")
+      ? [{ label: "Ganadería", href: "/dashboard/livestock", icon: <Scale size={18} /> }]
+      : []),
     ...(["TAMBO", "MIXTO"].includes(memberships.find((m) => m.tenantId === user.activeTenantId)?.tenant.category ?? "")
       ? [{ label: "Tambo", href: "/dashboard/dairy", icon: <Milk size={18} /> }]
       : []),

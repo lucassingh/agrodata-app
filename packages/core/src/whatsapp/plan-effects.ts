@@ -71,6 +71,15 @@ export type Effect =
       pastureId: string | null;
       cropHint: string | null;
     }
+  | {
+      kind: "weighing";
+      pastureId: string;
+      pastureName: string;
+      animalType: string;
+      headCount: number;
+      averageKg: number;
+      day: string;
+    }
   | { kind: "milkRecord"; day: string; liters: number; cowsMilking: number | null; cowsDry: number | null }
   | {
       kind: "milkSettlement";
@@ -613,6 +622,49 @@ function planGrainSale(event: FarmEvent, catalog: TenantCatalog, builder: PlanBu
   });
 }
 
+function planWeighing(event: FarmEvent, catalog: TenantCatalog, builder: PlanBuilder, now: Date) {
+  if (event.type !== "WEIGHING") return;
+  const groups =
+    event.detail?.kind === "WEIGHING" && event.detail.groups.length > 0
+      ? event.detail.groups
+      : [{ pasture: event.potrero, animalType: event.item, headCount: event.cantidad, averageKg: null }];
+
+  for (const group of groups) {
+    const pasture = group.pasture ? findByNormalizedName(catalog.pastures, group.pasture) : null;
+    if (!pasture) {
+      builder.plan.notes.push(
+        group.pasture
+          ? `No encontré el potrero «${group.pasture}»: la pesada quedó solo en el historial.`
+          : "No dijiste en qué potrero o corral fue la pesada: quedó solo en el historial.",
+      );
+      continue;
+    }
+    if (!group.animalType) {
+      builder.plan.notes.push(`No dijiste qué categoría se pesó en «${pasture.name}».`);
+      continue;
+    }
+    if (group.averageKg === null || group.averageKg <= 0) {
+      builder.plan.notes.push(`No entendí el peso promedio de la pesada en «${pasture.name}».`);
+      continue;
+    }
+    const herd = pasture.animals.find((a) => normalizeEntityName(a.animalType) === normalizeEntityName(group.animalType!));
+    const headCount = wholeCount(group.headCount) ?? herd?.quantity ?? null;
+    if (!headCount) {
+      builder.plan.notes.push(`No dijiste cuántas cabezas se pesaron en «${pasture.name}».`);
+      continue;
+    }
+    builder.plan.effects.push({
+      kind: "weighing",
+      pastureId: pasture.id,
+      pastureName: pasture.name,
+      animalType: herd?.animalType ?? builder.knownAnimalType(catalog, group.animalType) ?? group.animalType,
+      headCount,
+      averageKg: group.averageKg,
+      day: eventDate(event, now),
+    });
+  }
+}
+
 function planDairy(event: FarmEvent, builder: PlanBuilder, now: Date) {
   const detail = event.detail;
   if (event.type === "MILK_PRODUCTION") {
@@ -668,6 +720,7 @@ export function planMessageEffects(event: FarmEvent, catalog: TenantCatalog, now
   planHarvest(event, catalog, builder, now);
   planGrainSale(event, catalog, builder, now);
   planDairy(event, builder, now);
+  planWeighing(event, catalog, builder, now);
   return builder.plan;
 }
 
@@ -705,6 +758,8 @@ export function describeEffect(effect: Effect): string {
       return `Gasto de ${formatMoney(effect.amount, effect.currency)} en «${effect.categoryName}»`;
     case "stock":
       return `Stock de «${effect.supplyName}»: ${effect.direction === "in" ? "+" : "−"}${formatQuantity(effect.quantity, effect.unit)}`;
+    case "weighing":
+      return `Pesada: ${effect.headCount} ${effect.animalType} en «${effect.pastureName}», promedio ${formatQuantity(effect.averageKg, "kg")}`;
     case "milkRecord": {
       const perCow = effect.cowsMilking ? ` con ${effect.cowsMilking} vacas (${formatQuantity(Math.round((effect.liters / effect.cowsMilking) * 10) / 10, "L/vaca")})` : "";
       return `Tambo: ${formatQuantity(effect.liters, "L")}${perCow}`;

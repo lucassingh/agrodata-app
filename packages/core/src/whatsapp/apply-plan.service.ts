@@ -8,6 +8,7 @@ import { ensureCampaign } from "../economy/campaigns.service";
 import { allocateCost, resolveCampaignForPasture, type CostSource } from "../economy/allocations.service";
 import { formatMoney, formatQuantity } from "./farm-event";
 import { netOfVat, suggestVatRate } from "../economy/vat";
+import { recordWeighing } from "../livestock/weighings.service";
 
 type Tx = Prisma.TransactionClient;
 
@@ -51,9 +52,15 @@ export async function applyMessagePlan(input: {
     const lines: string[] = [];
     const costs: PendingCost[] = [];
     for (const effect of input.plan.effects) {
-      const cost = await applyEffect(tx, { tenantId: input.tenantId, userId: input.userId, recordId: record.id }, effect, resolve);
+      const extra: string[] = [];
+      const cost = await applyEffect(
+        tx,
+        { tenantId: input.tenantId, userId: input.userId, recordId: record.id, extraLines: extra },
+        effect,
+        resolve,
+      );
       if (cost) costs.push(cost);
-      lines.push(describeEffect(effect));
+      lines.push(describeEffect(effect), ...extra);
     }
     // Al final: así una campaña que abrió este mismo mensaje ya recibe sus costos.
     for (const cost of costs) lines.push(await allocatePendingCost(tx, input.tenantId, cost));
@@ -176,11 +183,13 @@ interface ApplyContext {
   tenantId: string;
   userId: string;
   recordId: string;
+  /** Datos que solo se conocen al aplicar (ej. el ADPV de una pesada), para la respuesta. */
+  extraLines: string[];
 }
 
 async function applyEffect(
   tx: Tx,
-  { tenantId, userId, recordId }: ApplyContext,
+  { tenantId, userId, recordId, extraLines }: ApplyContext,
   effect: Effect,
   resolve: (ref: EntityRef) => string,
 ): Promise<PendingCost | null> {
@@ -247,6 +256,23 @@ async function applyEffect(
             },
           }
         : null;
+    }
+    case "weighing": {
+      const result = await recordWeighing(tx, tenantId, {
+        pastureId: effect.pastureId,
+        animalType: effect.animalType,
+        day: effect.day,
+        headCount: effect.headCount,
+        averageKg: effect.averageKg,
+        source: "WHATSAPP",
+        recordId,
+      });
+      if (result.adpv !== null && result.previousDay) {
+        extraLines.push(
+          `ADPV de ${effect.animalType} en «${effect.pastureName}»: ${formatQuantity(result.adpv, "kg/día")} desde la pesada del ${result.previousDay.slice(8, 10)}/${result.previousDay.slice(5, 7)}`,
+        );
+      }
+      return null;
     }
     case "milkRecord": {
       const date = new Date(`${effect.day}T00:00:00Z`);

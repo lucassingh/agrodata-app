@@ -600,3 +600,38 @@ describe("tambo", () => {
     ]);
   });
 });
+
+describe("pesadas", () => {
+  it("una pesada por grupo en un potrero existente", () => {
+    const plan = planMessageEffects(
+      event({
+        type: "WEIGHING",
+        detail: { kind: "WEIGHING", groups: [{ pasture: "potrero norte", animalType: "novillos", headCount: 40, averageKg: 320 }] },
+      }),
+      catalog,
+      NOW,
+    );
+    expect(plan.effects).toEqual([
+      { kind: "weighing", pastureId: "p-norte", pastureName: "Potrero Norte", animalType: "Novillos", headCount: 40, averageKg: 320, day: "2026-09-25" },
+    ]);
+  });
+
+  it("sin cabezas usa las que hay en el potrero", () => {
+    const plan = planMessageEffects(
+      event({ type: "WEIGHING", detail: { kind: "WEIGHING", groups: [{ pasture: "Potrero Norte", animalType: "Novillos", headCount: null, averageKg: 320 }] } }),
+      catalog,
+      NOW,
+    );
+    expect(plan.effects).toContainEqual(expect.objectContaining({ kind: "weighing", headCount: 40 }));
+  });
+
+  it("un potrero que no existe no se inventa", () => {
+    const plan = planMessageEffects(
+      event({ type: "WEIGHING", detail: { kind: "WEIGHING", groups: [{ pasture: "Corral 9", animalType: "Terneros", headCount: 10, averageKg: 150 }] } }),
+      catalog,
+      NOW,
+    );
+    expect(plan.effects).toEqual([]);
+    expect(plan.notes[0]).toContain("No encontré el potrero «Corral 9»");
+  });
+});
