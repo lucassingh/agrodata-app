@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { FarmEvent } from "./farm-event";
-import { confirmationQuestion, planMessageEffects, resultMessage, type TenantCatalog } from "./plan-effects";
+import { confirmationQuestion, describeEffect, planMessageEffects, resultMessage, type TenantCatalog } from "./plan-effects";
 
 const NOW = new Date("2026-09-25T15:00:00Z");
 
@@ -544,5 +544,59 @@ describe("cosecha y venta de granos", () => {
     const plan = planMessageEffects(event({ type: "SALE", cultivo: "Soja", cantidad: 100, unidad: "t", monto: 30000, moneda: "USD" }), twoSoy, NOW);
     expect(plan.effects).toContainEqual(expect.objectContaining({ kind: "grainSale", campaignId: null }));
     expect(plan.notes[0]).toContain("asigná la venta desde Economía");
+  });
+});
+
+describe("tambo", () => {
+  it("los litros del día con las vacas en ordeño", () => {
+    const plan = planMessageEffects(
+      event({ type: "MILK_PRODUCTION", detail: { kind: "MILK_PRODUCTION", liters: 3200, cowsMilking: 140, cowsDry: null } }),
+      catalog,
+      NOW,
+    );
+    expect(plan.effects).toEqual([{ kind: "milkRecord", day: "2026-09-25", liters: 3200, cowsMilking: 140, cowsDry: null }]);
+    expect(resultMessage("Producción del día", plan.effects.map(describeEffect), [])).toContain("Tambo: 3.200 L con 140 vacas (22,9 L/vaca)");
+  });
+
+  it("sin litros no carga nada y lo pide", () => {
+    const plan = planMessageEffects(event({ type: "MILK_PRODUCTION", detail: null }), catalog, NOW);
+    expect(plan.effects).toEqual([]);
+    expect(plan.notes[0]).toContain("cuántos litros");
+  });
+
+  it("la liquidación calcula el precio por litro si no viene", () => {
+    const plan = planMessageEffects(
+      event({
+        type: "MILK_SETTLEMENT",
+        detail: {
+          kind: "MILK_SETTLEMENT",
+          dairy: "La Serenísima",
+          periodStart: "2026-09-01",
+          periodEnd: "2026-09-15",
+          liters: 45000,
+          fatPct: 3.6,
+          proteinPct: 3.3,
+          pricePerLiter: null,
+          totalAmount: 18_900_000,
+          currency: "ARS",
+        },
+      }),
+      catalog,
+      NOW,
+    );
+    expect(plan.effects).toEqual([
+      {
+        kind: "milkSettlement",
+        dairy: "La Serenísima",
+        periodStart: "2026-09-01",
+        periodEnd: "2026-09-15",
+        liters: 45000,
+        fatPct: 3.6,
+        proteinPct: 3.3,
+        pricePerLiter: 420,
+        totalAmount: 18_900_000,
+        currency: "ARS",
+      },
+    ]);
   });
 });

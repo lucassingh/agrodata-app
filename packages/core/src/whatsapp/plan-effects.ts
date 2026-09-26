@@ -71,6 +71,19 @@ export type Effect =
       pastureId: string | null;
       cropHint: string | null;
     }
+  | { kind: "milkRecord"; day: string; liters: number; cowsMilking: number | null; cowsDry: number | null }
+  | {
+      kind: "milkSettlement";
+      dairy: string | null;
+      periodStart: string;
+      periodEnd: string;
+      liters: number;
+      fatPct: number | null;
+      proteinPct: number | null;
+      pricePerLiter: number;
+      totalAmount: number;
+      currency: "ARS" | "USD";
+    }
   | { kind: "harvest"; campaignId: string; campaignLabel: string; totalKg: number; date: string }
   | {
       kind: "grainSale";
@@ -600,6 +613,49 @@ function planGrainSale(event: FarmEvent, catalog: TenantCatalog, builder: PlanBu
   });
 }
 
+function planDairy(event: FarmEvent, builder: PlanBuilder, now: Date) {
+  const detail = event.detail;
+  if (event.type === "MILK_PRODUCTION") {
+    const liters = detail?.kind === "MILK_PRODUCTION" ? detail.liters : event.cantidad;
+    if (liters === null || liters <= 0) {
+      builder.plan.notes.push("No entendí cuántos litros fueron: mandalo como «hoy 3200 litros con 140 vacas».");
+      return;
+    }
+    builder.plan.effects.push({
+      kind: "milkRecord",
+      day: eventDate(event, now),
+      liters,
+      cowsMilking: detail?.kind === "MILK_PRODUCTION" ? wholeCount(detail.cowsMilking) : null,
+      cowsDry: detail?.kind === "MILK_PRODUCTION" ? wholeCount(detail.cowsDry) : null,
+    });
+    return;
+  }
+  if (event.type === "MILK_SETTLEMENT") {
+    if (detail?.kind !== "MILK_SETTLEMENT" || !detail.liters || detail.liters <= 0) {
+      builder.plan.notes.push("No pude leer los litros de la liquidación: cargala desde Tambo o mandá una foto más clara.");
+      return;
+    }
+    const total = detail.totalAmount ?? (detail.pricePerLiter ? detail.pricePerLiter * detail.liters : null);
+    if (!total || total <= 0) {
+      builder.plan.notes.push("No pude leer el importe de la liquidación: cargala desde Tambo o mandá una foto más clara.");
+      return;
+    }
+    const periodEnd = detail.periodEnd ?? eventDate(event, now);
+    builder.plan.effects.push({
+      kind: "milkSettlement",
+      dairy: detail.dairy ?? event.contraparte,
+      periodStart: detail.periodStart ?? `${periodEnd.slice(0, 7)}-01`,
+      periodEnd,
+      liters: detail.liters,
+      fatPct: detail.fatPct,
+      proteinPct: detail.proteinPct,
+      pricePerLiter: detail.pricePerLiter ?? Math.round((total / detail.liters) * 10_000) / 10_000,
+      totalAmount: total,
+      currency: detail.currency ?? event.moneda ?? "ARS",
+    });
+  }
+}
+
 /** Decide todos los efectos de un mensaje sobre el campo, sin tocar la base.
  *  Función pura: mismo evento + mismo catálogo → mismo plan. */
 export function planMessageEffects(event: FarmEvent, catalog: TenantCatalog, now: Date = new Date()): MessagePlan {
@@ -611,6 +667,7 @@ export function planMessageEffects(event: FarmEvent, catalog: TenantCatalog, now
   planTask(event, catalog, builder, now);
   planHarvest(event, catalog, builder, now);
   planGrainSale(event, catalog, builder, now);
+  planDairy(event, builder, now);
   return builder.plan;
 }
 
@@ -648,6 +705,12 @@ export function describeEffect(effect: Effect): string {
       return `Gasto de ${formatMoney(effect.amount, effect.currency)} en «${effect.categoryName}»`;
     case "stock":
       return `Stock de «${effect.supplyName}»: ${effect.direction === "in" ? "+" : "−"}${formatQuantity(effect.quantity, effect.unit)}`;
+    case "milkRecord": {
+      const perCow = effect.cowsMilking ? ` con ${effect.cowsMilking} vacas (${formatQuantity(Math.round((effect.liters / effect.cowsMilking) * 10) / 10, "L/vaca")})` : "";
+      return `Tambo: ${formatQuantity(effect.liters, "L")}${perCow}`;
+    }
+    case "milkSettlement":
+      return `Liquidación de leche${effect.dairy ? ` de ${effect.dairy}` : ""}: ${formatQuantity(effect.liters, "L")} a ${formatMoney(effect.pricePerLiter, effect.currency)}/L`;
     case "harvest":
       return `Cosecha de ${formatQuantity(effect.totalKg / 1000, "t")} en la campaña ${effect.campaignLabel}`;
     case "grainSale":

@@ -20,6 +20,13 @@ const TYPE_GUIDE = `
 - EXPENSE_INVOICE (factura/gasto): una foto de factura, o un gasto que no encaja en los tipos anteriores.
 - HARVEST (cosecha): se cosechó un lote. Completá cultivo, potrero, y el rinde en cantidad + unidad tal como lo
   dice ("3200" + "kg/ha", "32" + "qq/ha", o toneladas totales "320" + "t"); hectareas si las menciona.
+- MILK_PRODUCTION (tambo): litros producidos en el día o el ordeñe ("hoy 3200 litros con 140 vacas").
+- MILK_SETTLEMENT (liquidación de leche): la liquidación o el remito de la usina/láctea, en foto o texto
+  (litros entregados, grasa, proteína, precio por litro, total). Ponés la usina en contraparte y el total en monto.
+- WEIGHING (pesada): se pesaron animales ("pesé 40 terneros del Bajo, promedio 180 kg"). item = categoría,
+  potrero = dónde están, cantidad = cabezas.
+- REPRODUCTION (reproducción): inicio de servicio o entore, tacto (preñadas y vacías) o destete. Los partos
+  y nacimientos NO van acá: son ANIMAL_BIRTH (suman los terneros al potrero).
 - QUERY (consulta): el usuario PREGUNTA por datos que ya cargó (cuánto gastó, cuánto stock le queda,
   cuántos animales hay, qué se aplicó en un potrero, cuándo vacunó). No registra nada: en summary
   poné la pregunta reformulada con claridad y dejá el resto de los campos en null (movimientoStock NINGUNO).

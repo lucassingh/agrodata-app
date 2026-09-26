@@ -182,3 +182,16 @@ export function aggregateWeighingRows(rows: WeighingRow[]) {
     averageKg: round(g.totalKg / g.heads, 1),
   }));
 }
+
+const FEED_WORDS = ["alimento", "balanceado", "silo", "rollo", "fardo", "heno", "expeller", "burlanda", "concentrado", "suplemento", "racion", "pellet", "afrechillo", "sustituto lacteo", "leche en polvo"];
+
+/** Insumo de alimentación animal: por la categoría (código ALIMENTO del legacy o
+ *  nombre) o por el nombre del insumo. Su consumo es el costo de alimentación del tambo. */
+export function isFeedSupply(input: { categoryCode: string | null; categoryName: string; supplyName: string }): boolean {
+  if (input.categoryCode === "ALIMENTO") return true;
+  const text = `${input.categoryName} ${input.supplyName}`
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "");
+  return FEED_WORDS.some((word) => text.includes(word));
+}

@@ -4,6 +4,7 @@ import {
   aggregateWeighingRows,
   feedMargin,
   groupPerformance,
+  isFeedSupply,
   litersPerCow,
   milkSummary,
   reproIndices,
@@ -119,5 +120,14 @@ describe("aggregateWeighingRows", () => {
       { pasture: "Norte", animalType: "Novillos", day: "2026-09-20", kg: 320, headCount: 10 },
     ]);
     expect(result).toEqual([{ pasture: "Norte", animalType: "Novillos", day: "2026-09-20", headCount: 40, averageKg: 305 }]);
+  });
+});
+
+describe("isFeedSupply", () => {
+  it("reconoce la alimentación por categoría o por nombre", () => {
+    expect(isFeedSupply({ categoryCode: "ALIMENTO", categoryName: "Otros", supplyName: "X" })).toBe(true);
+    expect(isFeedSupply({ categoryCode: null, categoryName: "Alimentación", supplyName: "Balanceado 18%" })).toBe(true);
+    expect(isFeedSupply({ categoryCode: null, categoryName: "Varios", supplyName: "Silo de maíz" })).toBe(true);
+    expect(isFeedSupply({ categoryCode: null, categoryName: "Combustible", supplyName: "Gasoil" })).toBe(false);
   });
 });

@@ -57,3 +57,4 @@ export * from "./economy/allocations.service";
 export * from "./economy/economy.service";
 export * from "./economy/vat";
 export * from "./livestock/livestock-math";
+export * from "./livestock/dairy.service";

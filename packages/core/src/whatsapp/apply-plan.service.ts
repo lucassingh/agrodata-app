@@ -248,6 +248,35 @@ async function applyEffect(
           }
         : null;
     }
+    case "milkRecord": {
+      const date = new Date(`${effect.day}T00:00:00Z`);
+      const data = { liters: effect.liters, cowsMilking: effect.cowsMilking, cowsDry: effect.cowsDry, recordId };
+      // Un registro por día: un mensaje nuevo del mismo día lo reemplaza.
+      await tx.milkRecord.upsert({
+        where: { tenantId_date: { tenantId, date } },
+        create: { tenantId, date, ...data },
+        update: data,
+      });
+      return null;
+    }
+    case "milkSettlement": {
+      await tx.milkSettlement.create({
+        data: {
+          tenantId,
+          periodStart: new Date(`${effect.periodStart}T00:00:00Z`),
+          periodEnd: new Date(`${effect.periodEnd}T00:00:00Z`),
+          dairy: effect.dairy,
+          liters: effect.liters,
+          fatPct: effect.fatPct,
+          proteinPct: effect.proteinPct,
+          pricePerLiter: effect.pricePerLiter,
+          totalAmount: effect.totalAmount,
+          currency: effect.currency,
+          recordId,
+        },
+      });
+      return null;
+    }
     case "harvest": {
       await tx.harvest.create({
         data: { tenantId, campaignId: effect.campaignId, date: eventDate(effect.date), totalKg: effect.totalKg, recordId },

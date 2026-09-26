@@ -11,6 +11,10 @@ import {
   Upload,
   type LucideIcon,
   Wheat,
+  Milk,
+  Receipt,
+  Scale,
+  HeartPulse,
 } from "lucide-react";
 
 export interface RecordTypeConfig {
@@ -35,6 +39,10 @@ const RECORD_TYPE_MAP: Record<string, RecordTypeConfig> = {
   TASK_COMPLETED: { icon: ShieldPlus, color: "#10B981", bg: "#E6F9F1", label: "Tarea completada" },
   FERTILIZATION: { icon: FlaskConical, color: "#10B981", bg: "#E6F9F1", label: "Fertilización" },
   HARVEST: { icon: Wheat, color: "#B7791F", bg: "#FDF4E3", label: "Cosecha" },
+  MILK_PRODUCTION: { icon: Milk, color: "#3B7DC4", bg: "#E8F1FB", label: "Tambo" },
+  MILK_SETTLEMENT: { icon: Receipt, color: "#3B7DC4", bg: "#E8F1FB", label: "Liquidación de leche" },
+  WEIGHING: { icon: Scale, color: "#7C6445", bg: "#FDF4E3", label: "Pesada" },
+  REPRODUCTION: { icon: HeartPulse, color: "#C2185B", bg: "#FCE8F0", label: "Reproducción" },
   SANITARY_TREATMENT: { icon: ShieldPlus, color: "#D97706", bg: "#FDF4E3", label: "Sanidad" },
 };
 

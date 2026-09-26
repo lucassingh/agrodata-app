@@ -26,7 +26,49 @@ export interface FarmEvent {
   dosis: string | null;
   /** Rubro del gasto o del insumo. */
   categoria: string | null;
+  /** Datos propios de tambo, pesadas y reproducción (segunda lectura del mensaje). */
+  detail?: EventDetail | null;
 }
+
+export interface MilkProductionDetail {
+  kind: "MILK_PRODUCTION";
+  liters: number | null;
+  cowsMilking: number | null;
+  cowsDry: number | null;
+}
+
+export interface MilkSettlementDetail {
+  kind: "MILK_SETTLEMENT";
+  dairy: string | null;
+  /** YYYY-MM-DD */
+  periodStart: string | null;
+  periodEnd: string | null;
+  liters: number | null;
+  fatPct: number | null;
+  proteinPct: number | null;
+  pricePerLiter: number | null;
+  totalAmount: number | null;
+  currency: "ARS" | "USD" | null;
+}
+
+export interface WeighingDetail {
+  kind: "WEIGHING";
+  groups: { pasture: string | null; animalType: string | null; headCount: number | null; averageKg: number | null }[];
+}
+
+export interface ReproductionDetail {
+  kind: "REPRODUCTION";
+  event: "SERVICE_START" | "PREGNANCY_CHECK" | "CALVING" | "WEANING" | null;
+  rodeo: string | null;
+  animalType: string | null;
+  females: number | null;
+  pregnant: number | null;
+  empty: number | null;
+  births: number | null;
+  weaned: number | null;
+}
+
+export type EventDetail = MilkProductionDetail | MilkSettlementDetail | WeighingDetail | ReproductionDetail;
 
 /** Fecha de hoy en Argentina como YYYY-MM-DD (mismo formato que un
  *  `<input type="date">` del dashboard). */

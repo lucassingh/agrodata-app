@@ -12,6 +12,7 @@ import {
   Database,
   DollarSign,
   TrendingUp,
+  Milk,
   Download,
   Fence,
   LogOut,
@@ -127,6 +128,10 @@ export function AppShell({ user, memberships, children, signOutAction }: AppShel
     { label: "Tareas", href: "/dashboard/tasks", icon: <ClipboardList size={18} /> },
     { label: "Gastos", href: "/dashboard/expenses", icon: <DollarSign size={18} /> },
     { label: "Economía", href: "/dashboard/economy", icon: <TrendingUp size={18} /> },
+    // Tambo solo en campos que lo tienen (Tambo o Mixto).
+    ...(["TAMBO", "MIXTO"].includes(memberships.find((m) => m.tenantId === user.activeTenantId)?.tenant.category ?? "")
+      ? [{ label: "Tambo", href: "/dashboard/dairy", icon: <Milk size={18} /> }]
+      : []),
     { label: "Insumos", href: "/dashboard/supplies", icon: <Package size={18} /> },
   ];
   const configItems: NavItem[] = [

@@ -15,11 +15,14 @@ import {
   applyMessagePlan,
   confirmationQuestion,
   resultMessage,
+  type EventDetail,
   type FarmEvent,
   type TenantCatalog,
 } from "@repo/core";
 import {
   answerFarmQuestion,
+  extractEventDetail,
+  hasDetail,
   extractFarmEvent,
   interpretPendingReply,
   toRecordPayload,
@@ -51,8 +54,9 @@ function toExtractionContext(catalog: TenantCatalog): ExtractionContext {
   };
 }
 
-function toFarmEvent(extracted: ExtractedEvent, type: string): FarmEvent {
+function toFarmEvent(extracted: ExtractedEvent, type: string, detail: EventDetail | null): FarmEvent {
   return {
+    detail,
     type,
     summary: extracted.summary,
     occurredAt: extracted.occurredAt,
@@ -239,7 +243,22 @@ export const processWhatsAppMessage = inngest.createFunction(
     const record = await step.run("persist-record", () => createRecord(activeTenantId, recordInput));
 
     // ── Efectos en los módulos ─────────────────────────────────────────────
-    const farmEvent = toFarmEvent(extracted, extracted.type);
+    // Tambo, pesadas y reproducción: segunda lectura con los datos propios del tipo.
+    const extractedType = extracted.type;
+    const detail = hasDetail(extractedType)
+      ? ((await step.run("extract-detail", () => {
+          const context = toExtractionContext(catalog);
+          return extractEventDetail({
+            type: extractedType,
+            text: textForExtraction,
+            image: imagePayload,
+            today: todayInArgentina(new Date()),
+            pastures: context.pastures,
+            animalTypes: context.animalTypes,
+          });
+        })) as EventDetail | null)
+      : null;
+    const farmEvent = toFarmEvent(extracted, extracted.type, detail);
     // Dentro de un paso para que la fecha de "hoy" quede fija ante reintentos.
     const plan = await step.run("plan-effects", () => planMessageEffects(farmEvent, catalog));
 

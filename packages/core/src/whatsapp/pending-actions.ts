@@ -26,6 +26,8 @@ export const farmEventSchema = z.object({
   contraparte: nullableString,
   dosis: nullableString,
   categoria: nullableString,
+  // Datos propios del tipo (tambo, pesadas, reproducción); se validan en el planificador.
+  detail: z.any().nullable().default(null),
 });
 
 /** Payload de cada tipo de acción pendiente. Se valida al leerlo de la base
