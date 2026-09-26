@@ -5,6 +5,8 @@ import {
   feedMargin,
   groupPerformance,
   isFeedSupply,
+  serviceSeasonLabel,
+  serviceYearOf,
   litersPerCow,
   milkSummary,
   reproIndices,
@@ -52,21 +54,39 @@ describe("groupPerformance", () => {
 });
 
 describe("reproIndices", () => {
-  it("preñez del tacto, parición y destete sobre las vacas en servicio", () => {
-    const result = reproIndices([
-      { type: "SERVICE_START", day: "2025-11-01", females: 100, pregnant: null, empty: null, births: null, weaned: null },
-      { type: "PREGNANCY_CHECK", day: "2026-02-15", females: null, pregnant: 85, empty: 15, births: null, weaned: null },
-      { type: "CALVING", day: "2026-08-10", females: null, pregnant: null, empty: null, births: 50, weaned: null },
-      { type: "CALVING", day: "2026-08-25", females: null, pregnant: null, empty: null, births: 30, weaned: null },
-    ]);
-    expect(result).toMatchObject({ females: 100, pregnancyPct: 85, calvingPct: 80, weaningPct: null, births: 80 });
+  const ev = (over: Partial<Parameters<typeof reproIndices>[0][number]>) => ({
+    type: "SERVICE_START" as const,
+    day: "2025-11-01",
+    rodeo: null,
+    females: null,
+    pregnant: null,
+    empty: null,
+    weaned: null,
+    ...over,
   });
 
-  it("sin inicio de servicio, las vacas son las del tacto", () => {
-    const result = reproIndices([
-      { type: "PREGNANCY_CHECK", day: "2026-02-15", females: null, pregnant: 45, empty: 5, births: null, weaned: null },
-    ]);
-    expect(result).toMatchObject({ females: 50, pregnancyPct: 90 });
+  it("preñez del tacto, parición y destete sobre las vacas en servicio", () => {
+    const result = reproIndices(
+      [
+        ev({ type: "SERVICE_START", females: 100 }),
+        ev({ type: "PREGNANCY_CHECK", day: "2026-02-15", pregnant: 85, empty: 15 }),
+        ev({ type: "WEANING", day: "2027-03-10", weaned: 70 }),
+      ],
+      80,
+    );
+    expect(result).toMatchObject({ females: 100, pregnancyPct: 85, calvingPct: 80, weaningPct: 70 });
+  });
+
+  it("suma los rodeos y usa el último tacto de cada uno", () => {
+    const result = reproIndices(
+      [
+        ev({ rodeo: "Cría", type: "PREGNANCY_CHECK", day: "2026-02-01", pregnant: 40, empty: 20 }),
+        ev({ rodeo: "Cría", type: "PREGNANCY_CHECK", day: "2026-03-01", pregnant: 50, empty: 10 }),
+        ev({ rodeo: "Vaquillonas", type: "PREGNANCY_CHECK", day: "2026-03-01", pregnant: 30, empty: 10 }),
+      ],
+      0,
+    );
+    expect(result).toMatchObject({ females: 100, pregnant: 80, empty: 20, pregnancyPct: 80, calvingPct: null });
   });
 });
 
@@ -129,5 +149,20 @@ describe("isFeedSupply", () => {
     expect(isFeedSupply({ categoryCode: null, categoryName: "Alimentación", supplyName: "Balanceado 18%" })).toBe(true);
     expect(isFeedSupply({ categoryCode: null, categoryName: "Varios", supplyName: "Silo de maíz" })).toBe(true);
     expect(isFeedSupply({ categoryCode: null, categoryName: "Combustible", supplyName: "Gasoil" })).toBe(false);
+  });
+});
+
+describe("serviceYearOf", () => {
+  it("ubica todo el ciclo de un servicio de primavera 2025 en la temporada 2025/26", () => {
+    expect(serviceYearOf("SERVICE_START", "2025-11-01")).toBe(2025);
+    expect(serviceYearOf("SERVICE_START", "2026-01-10")).toBe(2025);
+    expect(serviceYearOf("PREGNANCY_CHECK", "2026-02-20")).toBe(2025);
+    expect(serviceYearOf("CALVING", "2026-08-15")).toBe(2025);
+    expect(serviceYearOf("WEANING", "2027-03-10")).toBe(2025);
+    expect(serviceSeasonLabel(2025)).toBe("2025/26");
+  });
+
+  it("un destete precoz de fin de año va al servicio del año anterior", () => {
+    expect(serviceYearOf("WEANING", "2026-12-05")).toBe(2025);
   });
 });

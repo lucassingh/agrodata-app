@@ -59,12 +59,13 @@ export function groupPerformance(weighings: WeighingPoint[], hectares: number | 
 }
 
 export interface ReproCounts {
-  type: "SERVICE_START" | "PREGNANCY_CHECK" | "CALVING" | "WEANING";
+  type: "SERVICE_START" | "PREGNANCY_CHECK" | "WEANING";
   day: string;
+  /** Rodeo (null = sin rodeo). */
+  rodeo: string | null;
   females: number | null;
   pregnant: number | null;
   empty: number | null;
-  births: number | null;
   weaned: number | null;
 }
 
@@ -79,29 +80,42 @@ export interface ReproIndices {
   weaningPct: number | null;
 }
 
-/** Índices de una temporada de un rodeo. Vacas en servicio: las del último inicio
- *  de servicio o, si no hay, las del tacto (preñadas + vacías). */
-export function reproIndices(events: ReproCounts[]): ReproIndices {
-  const byDay = [...events].sort((a, b) => a.day.localeCompare(b.day));
-  const service = byDay.filter((e) => e.type === "SERVICE_START").at(-1);
-  const check = byDay.filter((e) => e.type === "PREGNANCY_CHECK").at(-1);
-  const births = byDay.filter((e) => e.type === "CALVING").reduce((sum, e) => sum + (e.births ?? 0), 0);
-  const weaned = byDay.filter((e) => e.type === "WEANING").reduce((sum, e) => sum + (e.weaned ?? 0), 0);
+/** Índices de una temporada de servicio del campo. Por cada rodeo cuenta el
+ *  último inicio de servicio y el último tacto, y los suma. Vacas en servicio:
+ *  las informadas o, si no, las del tacto (preñadas + vacías). Los partos vienen
+ *  aparte (son nacimientos del historial de hacienda). */
+export function reproIndices(events: ReproCounts[], births: number): ReproIndices {
+  const byRodeo = new Map<string, { service?: ReproCounts; check?: ReproCounts }>();
+  let weaned = 0;
+  for (const e of [...events].sort((x, y) => x.day.localeCompare(y.day))) {
+    const entry = byRodeo.get(e.rodeo ?? "") ?? {};
+    if (e.type === "SERVICE_START") entry.service = e;
+    if (e.type === "PREGNANCY_CHECK" && e.pregnant !== null && e.empty !== null) entry.check = e;
+    if (e.type === "WEANING") weaned += e.weaned ?? 0;
+    byRodeo.set(e.rodeo ?? "", entry);
+  }
 
-  const pregnant = check?.pregnant ?? null;
-  const empty = check?.empty ?? null;
-  const checked = pregnant !== null && empty !== null ? pregnant + empty : null;
-  const females = service?.females ?? checked;
-  const pct = (value: number | null, base: number | null) =>
-    value !== null && base && base > 0 ? round((value / base) * 100, 1) : null;
+  let females = 0;
+  let pregnant = 0;
+  let empty = 0;
+  let checked = false;
+  for (const { service, check } of byRodeo.values()) {
+    if (check) {
+      checked = true;
+      pregnant += check.pregnant!;
+      empty += check.empty!;
+    }
+    females += service?.females ?? (check ? check.pregnant! + check.empty! : 0);
+  }
+  const pct = (value: number, base: number) => (base > 0 ? round((value / base) * 100, 1) : null);
 
   return {
-    females,
-    pregnant,
-    empty,
+    females: females > 0 ? females : null,
+    pregnant: checked ? pregnant : null,
+    empty: checked ? empty : null,
     births,
     weaned,
-    pregnancyPct: pct(pregnant, checked),
+    pregnancyPct: checked ? pct(pregnant, pregnant + empty) : null,
     calvingPct: births > 0 ? pct(births, females) : null,
     weaningPct: weaned > 0 ? pct(weaned, females) : null,
   };
@@ -194,4 +208,30 @@ export function isFeedSupply(input: { categoryCode: string | null; categoryName:
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "");
   return FEED_WORDS.some((word) => text.includes(word));
+}
+
+/** Año de servicio al que pertenece un evento reproductivo (temporada de cría
+ *  «2025/26» = servicio de primavera 2025). El ciclo dura más de un año, así que
+ *  cada tipo de evento se ubica según su mes:
+ *  - inicio de servicio: de julio en adelante, ese año; antes, el anterior;
+ *  - tacto: de septiembre en adelante, ese año; antes, el anterior;
+ *  - parto: del año anterior (servicio de primavera → parición al año siguiente);
+ *  - destete: de julio en adelante, del año anterior; antes, de dos años atrás. */
+export function serviceYearOf(type: "SERVICE_START" | "PREGNANCY_CHECK" | "CALVING" | "WEANING", day: string): number {
+  const year = Number(day.slice(0, 4));
+  const month = Number(day.slice(5, 7));
+  switch (type) {
+    case "SERVICE_START":
+      return month >= 7 ? year : year - 1;
+    case "PREGNANCY_CHECK":
+      return month >= 9 ? year : year - 1;
+    case "CALVING":
+      return year - 1;
+    case "WEANING":
+      return month >= 7 ? year - 1 : year - 2;
+  }
+}
+
+export function serviceSeasonLabel(serviceYear: number): string {
+  return `${serviceYear}/${String((serviceYear + 1) % 100).padStart(2, "0")}`;
 }

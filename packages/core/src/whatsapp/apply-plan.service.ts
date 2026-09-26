@@ -9,6 +9,7 @@ import { allocateCost, resolveCampaignForPasture, type CostSource } from "../eco
 import { formatMoney, formatQuantity } from "./farm-event";
 import { netOfVat, suggestVatRate } from "../economy/vat";
 import { recordWeighing } from "../livestock/weighings.service";
+import { recordReproEvent } from "../livestock/repro.service";
 
 type Tx = Prisma.TransactionClient;
 
@@ -256,6 +257,20 @@ async function applyEffect(
             },
           }
         : null;
+    }
+    case "reproEvent": {
+      await recordReproEvent(tx, tenantId, {
+        type: effect.event,
+        day: effect.day,
+        rodeoId: effect.rodeoId ?? undefined,
+        animalType: effect.animalType ?? undefined,
+        females: effect.females ?? undefined,
+        pregnant: effect.pregnant ?? undefined,
+        empty: effect.empty ?? undefined,
+        weaned: effect.weaned ?? undefined,
+        recordId,
+      });
+      return null;
     }
     case "weighing": {
       const result = await recordWeighing(tx, tenantId, {

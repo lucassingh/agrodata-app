@@ -59,3 +59,4 @@ export * from "./economy/vat";
 export * from "./livestock/livestock-math";
 export * from "./livestock/dairy.service";
 export * from "./livestock/weighings.service";
+export * from "./livestock/repro.service";

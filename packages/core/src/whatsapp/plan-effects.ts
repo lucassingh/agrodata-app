@@ -17,6 +17,7 @@ export interface TenantCatalog {
     animals: { id: string; animalType: string; quantity: number }[];
   }[];
   animalCategories: { id: string; name: string }[];
+  rodeos: { id: string; name: string }[];
   /** Campañas en curso o cosechadas (las que pueden recibir costos, cosechas o ventas). */
   campaigns: { id: string; pastureId: string; crop: string; season: string; status: "IN_PROGRESS" | "HARVESTED" | "CLOSED"; hectares: number | null }[];
 }
@@ -78,6 +79,18 @@ export type Effect =
       animalType: string;
       headCount: number;
       averageKg: number;
+      day: string;
+    }
+  | {
+      kind: "reproEvent";
+      event: "SERVICE_START" | "PREGNANCY_CHECK" | "WEANING";
+      rodeoId: string | null;
+      rodeoName: string | null;
+      animalType: string | null;
+      females: number | null;
+      pregnant: number | null;
+      empty: number | null;
+      weaned: number | null;
       day: string;
     }
   | { kind: "milkRecord"; day: string; liters: number; cowsMilking: number | null; cowsDry: number | null }
@@ -665,6 +678,43 @@ function planWeighing(event: FarmEvent, catalog: TenantCatalog, builder: PlanBui
   }
 }
 
+function planReproduction(event: FarmEvent, catalog: TenantCatalog, builder: PlanBuilder, now: Date) {
+  if (event.type !== "REPRODUCTION") return;
+  const detail = event.detail?.kind === "REPRODUCTION" ? event.detail : null;
+  if (!detail?.event) {
+    builder.plan.notes.push("No entendí si fue un inicio de servicio, un tacto o un destete.");
+    return;
+  }
+  const rodeo = detail.rodeo ? findByNormalizedName(catalog.rodeos, detail.rodeo) : null;
+  if (detail.rodeo && !rodeo) {
+    builder.plan.notes.push(`No existe el rodeo «${detail.rodeo}»: lo cargué sin rodeo (crealo en Preferencias).`);
+  }
+  const females = wholeCount(detail.females);
+  const pregnant = wholeCount(detail.pregnant);
+  const empty = wholeCount(detail.empty);
+  const weaned = wholeCount(detail.weaned);
+  const missing =
+    (detail.event === "SERVICE_START" && !females && "cuántas vacas entraron en servicio") ||
+    (detail.event === "PREGNANCY_CHECK" && (pregnant === null || empty === null) && "cuántas preñadas y cuántas vacías dio el tacto") ||
+    (detail.event === "WEANING" && !weaned && "cuántos terneros se destetaron");
+  if (missing) {
+    builder.plan.notes.push(`No entendí ${missing}.`);
+    return;
+  }
+  builder.plan.effects.push({
+    kind: "reproEvent",
+    event: detail.event,
+    rodeoId: rodeo?.id ?? null,
+    rodeoName: rodeo?.name ?? null,
+    animalType: detail.animalType ? (builder.knownAnimalType(catalog, detail.animalType) ?? detail.animalType) : null,
+    females,
+    pregnant,
+    empty,
+    weaned,
+    day: eventDate(event, now),
+  });
+}
+
 function planDairy(event: FarmEvent, builder: PlanBuilder, now: Date) {
   const detail = event.detail;
   if (event.type === "MILK_PRODUCTION") {
@@ -721,6 +771,7 @@ export function planMessageEffects(event: FarmEvent, catalog: TenantCatalog, now
   planGrainSale(event, catalog, builder, now);
   planDairy(event, builder, now);
   planWeighing(event, catalog, builder, now);
+  planReproduction(event, catalog, builder, now);
   return builder.plan;
 }
 
@@ -758,6 +809,14 @@ export function describeEffect(effect: Effect): string {
       return `Gasto de ${formatMoney(effect.amount, effect.currency)} en «${effect.categoryName}»`;
     case "stock":
       return `Stock de «${effect.supplyName}»: ${effect.direction === "in" ? "+" : "−"}${formatQuantity(effect.quantity, effect.unit)}`;
+    case "reproEvent": {
+      const where = effect.rodeoName ? ` en el rodeo «${effect.rodeoName}»` : "";
+      if (effect.event === "SERVICE_START") return `Inicio de servicio${where}: ${effect.females} vacas`;
+      if (effect.event === "WEANING") return `Destete${where}: ${effect.weaned} terneros`;
+      const total = effect.pregnant! + effect.empty!;
+      const pct = total > 0 ? Math.round((effect.pregnant! / total) * 1000) / 10 : 0;
+      return `Tacto${where}: ${effect.pregnant} preñadas y ${effect.empty} vacías (${formatQuantity(pct, "%")} de preñez)`;
+    }
     case "weighing":
       return `Pesada: ${effect.headCount} ${effect.animalType} en «${effect.pastureName}», promedio ${formatQuantity(effect.averageKg, "kg")}`;
     case "milkRecord": {

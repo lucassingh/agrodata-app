@@ -58,13 +58,13 @@ export interface WeighingDetail {
 
 export interface ReproductionDetail {
   kind: "REPRODUCTION";
-  event: "SERVICE_START" | "PREGNANCY_CHECK" | "CALVING" | "WEANING" | null;
+  /** Los partos no son un evento reproductivo del bot: van como nacimientos. */
+  event: "SERVICE_START" | "PREGNANCY_CHECK" | "WEANING" | null;
   rodeo: string | null;
   animalType: string | null;
   females: number | null;
   pregnant: number | null;
   empty: number | null;
-  births: number | null;
   weaned: number | null;
 }
 

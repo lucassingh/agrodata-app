@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { Eye, FileSpreadsheet, Plus, Scale } from "lucide-react";
-import type { LivestockGroup } from "@repo/core";
+import type { LivestockGroup, ReproSeason } from "@repo/core";
+import { ReproSection } from "./repro-section";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
@@ -17,6 +18,8 @@ interface LivestockClientProps {
   groups: LivestockGroup[] | null;
   pastures: { id: string; name: string }[];
   categories: string[];
+  seasons: ReproSeason[];
+  rodeos: { id: string; name: string }[];
   canEdit: boolean;
 }
 
@@ -32,7 +35,7 @@ function Kpi({ label, value, caption }: { label: string; value: string; caption?
   );
 }
 
-export function LivestockClient({ groups, pastures, categories, canEdit }: LivestockClientProps) {
+export function LivestockClient({ groups, pastures, categories, seasons, rodeos, canEdit }: LivestockClientProps) {
   const [dialog, setDialog] = useState<"weighing" | "import" | null>(null);
   const [detailKey, setDetailKey] = useState<string | null>(null);
 
@@ -158,6 +161,8 @@ export function LivestockClient({ groups, pastures, categories, canEdit }: Lives
       ) : (
         <DataTable rows={groups} columns={columns} />
       )}
+
+      <ReproSection seasons={seasons} rodeos={rodeos} canEdit={canEdit} />
 
       {detail ? <GroupDialog group={detail} canEdit={canEdit} onClose={() => setDetailKey(null)} /> : null}
       {dialog === "weighing" ? <WeighingDialog pastures={pastures} categories={categories} onClose={() => setDialog(null)} /> : null}

@@ -97,8 +97,5 @@ Si un potrero o una categoría coincide con uno de estos, devolvelo EXACTAMENTE 
   });
   const parsed = response.parsed_output;
   if (!parsed) return null;
-  if (input.type === "REPRODUCTION") {
-    return { kind: input.type, births: null, ...(parsed as z.infer<typeof reproductionSchema>) };
-  }
   return { kind: input.type, ...parsed };
 }

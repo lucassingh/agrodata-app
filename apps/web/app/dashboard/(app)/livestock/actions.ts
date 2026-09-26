@@ -4,7 +4,11 @@ import { revalidatePath } from "next/cache";
 import { requireActiveTenantId } from "@/lib/session";
 import {
   AppError,
+  createReproEvent,
   createWeighing,
+  deleteReproEvent,
+  reproEventSchema,
+  type ReproEventInput,
   deleteWeighing,
   importWeighings,
   weighingImportSchema,
@@ -40,4 +44,16 @@ export async function importWeighingsAction(rows: WeighingImportRow[]) {
 
 export async function deleteWeighingAction(id: string) {
   return run((tenantId) => deleteWeighing(tenantId, id));
+}
+
+export async function createReproEventAction(input: ReproEventInput) {
+  const parsed = reproEventSchema.safeParse(input);
+  if (!parsed.success) return { success: false as const, error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
+  return run(async (tenantId) => {
+    await createReproEvent(tenantId, parsed.data);
+  });
+}
+
+export async function deleteReproEventAction(id: string) {
+  return run((tenantId) => deleteReproEvent(tenantId, id));
 }

@@ -20,6 +20,7 @@ const catalog: TenantCatalog = {
   ],
   animalCategories: [{ id: "ac1", name: "Novillos" }, { id: "ac2", name: "Terneros" }],
   campaigns: [],
+  rodeos: [{ id: "r-cria", name: "Cría" }],
 };
 
 function event(overrides: Partial<FarmEvent>): FarmEvent {
@@ -633,5 +634,54 @@ describe("pesadas", () => {
     );
     expect(plan.effects).toEqual([]);
     expect(plan.notes[0]).toContain("No encontré el potrero «Corral 9»");
+  });
+});
+
+describe("reproducción", () => {
+  const repro = (over: object) => ({
+    kind: "REPRODUCTION" as const,
+    event: null,
+    rodeo: null,
+    animalType: null,
+    females: null,
+    pregnant: null,
+    empty: null,
+    weaned: null,
+    ...over,
+  });
+
+  it("el tacto con su rodeo y su preñez", () => {
+    const plan = planMessageEffects(
+      event({ type: "REPRODUCTION", detail: repro({ event: "PREGNANCY_CHECK", rodeo: "cria", pregnant: 85, empty: 15 }) }),
+      catalog,
+      NOW,
+    );
+    expect(plan.effects).toEqual([
+      {
+        kind: "reproEvent",
+        event: "PREGNANCY_CHECK",
+        rodeoId: "r-cria",
+        rodeoName: "Cría",
+        animalType: null,
+        females: null,
+        pregnant: 85,
+        empty: 15,
+        weaned: null,
+        day: "2026-09-25",
+      },
+    ]);
+    expect(describeEffect(plan.effects[0]!)).toBe("Tacto en el rodeo «Cría»: 85 preñadas y 15 vacías (85 % de preñez)");
+  });
+
+  it("un tacto sin vacías no se carga y lo pide", () => {
+    const plan = planMessageEffects(event({ type: "REPRODUCTION", detail: repro({ event: "PREGNANCY_CHECK", pregnant: 85 }) }), catalog, NOW);
+    expect(plan.effects).toEqual([]);
+    expect(plan.notes[0]).toContain("preñadas y cuántas vacías");
+  });
+
+  it("un rodeo que no existe se carga sin rodeo y avisa", () => {
+    const plan = planMessageEffects(event({ type: "REPRODUCTION", detail: repro({ event: "WEANING", rodeo: "Norte", weaned: 70 }) }), catalog, NOW);
+    expect(plan.effects).toContainEqual(expect.objectContaining({ kind: "reproEvent", rodeoId: null, weaned: 70 }));
+    expect(plan.notes[0]).toContain("No existe el rodeo «Norte»");
   });
 });

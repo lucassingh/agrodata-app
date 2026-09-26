@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { requireUser } from "@/lib/session";
-import { getAllPreferences, getLivestockGroups, listPastures } from "@repo/core";
+import { getAllPreferences, getLivestockGroups, getReproSeasons, listPastures, listRodeos } from "@repo/core";
 import { HeroBanner } from "@/components/hero-banner";
 import { LivestockClient } from "./livestock-client";
 
@@ -11,9 +11,15 @@ export const metadata: Metadata = {
 export default async function LivestockPage() {
   const user = await requireUser();
   const tenantId = user.activeTenantId;
-  const [groups, pastures, preferences] = tenantId
-    ? await Promise.all([getLivestockGroups(tenantId), listPastures(tenantId), getAllPreferences(tenantId)])
-    : [null, [], { animalCategories: [] as { name: string }[] }];
+  const [groups, pastures, preferences, seasons, rodeos] = tenantId
+    ? await Promise.all([
+        getLivestockGroups(tenantId),
+        listPastures(tenantId),
+        getAllPreferences(tenantId),
+        getReproSeasons(tenantId),
+        listRodeos(tenantId),
+      ])
+    : [null, [], { animalCategories: [] as { name: string }[] }, [], []];
 
   const categories = [
     ...new Set([
@@ -29,6 +35,8 @@ export default async function LivestockPage() {
         groups={groups}
         pastures={pastures.map((p) => ({ id: p.id, name: p.name }))}
         categories={categories}
+        seasons={seasons}
+        rodeos={rodeos.map((r) => ({ id: r.id, name: r.name }))}
         canEdit={user.platformRole !== "OPERATOR"}
       />
     </div>
