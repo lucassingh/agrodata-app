@@ -1,6 +1,9 @@
 import "server-only";
 import { prisma } from "@repo/database";
 import { getEconomyOverview } from "../economy/economy.service";
+import { getDairyOverview } from "../livestock/dairy.service";
+import { getReproSeasons } from "../livestock/repro.service";
+import { getLivestockGroups } from "../livestock/weighings.service";
 import { OUTFLOW_TYPES, restDays } from "../pastures/herd";
 import { dateOnlyRangeFilter, dateRangeFilter } from "../reports/date-range";
 import { normalizeEntityName } from "../whatsapp/entity-name";
@@ -212,6 +215,53 @@ export function createFarmQueryHandlers(tenantId: string) {
             rindeDeIndiferenciaKgHa: c.result.breakEvenYieldKgHa,
             principalesCostos: c.costs.slice(0, 8).map((l) => ({ concepto: l.concept, usd: l.usd ? Math.round(l.usd) : null })),
           })),
+      };
+    },
+
+    async ganaderia({ lote, categoria }: { lote: string | null; categoria: string | null }) {
+      const [groups, seasons] = await Promise.all([getLivestockGroups(tenantId), getReproSeasons(tenantId)]);
+      return {
+        grupos: groups
+          .filter((g) => matches(g.pastureName, lote) && matches(g.animalType, categoria))
+          .map((g) => ({
+            grupo: `${g.animalType} en ${g.pastureName}`,
+            cabezasHoy: g.currentHeads,
+            ultimaPesada: g.performance.lastDay,
+            pesoPromedioKg: g.performance.lastAverageKg,
+            adpvKgDia: g.performance.adpv,
+            diasEntrePesadas: g.performance.periodDays,
+            kgProducidosPorHa: g.performance.kgProducedPerHa,
+            cargaKgPorHa: g.performance.liveKgPerHa,
+            cabezasPorHa: g.performance.headsPerHa,
+          })),
+        reproduccion: seasons.map((s) => ({
+          temporadaDeServicio: s.label,
+          vacasEnServicio: s.females,
+          prenezPct: s.pregnancyPct,
+          partos: s.births,
+          paricionPct: s.calvingPct,
+          destetados: s.weaned,
+          destetePct: s.weaningPct,
+        })),
+      };
+    },
+
+    async tambo({ desde, hasta }: Period) {
+      const o = await getDairyOverview(tenantId, { from: desde, to: hasta });
+      return {
+        periodo: o.period,
+        litros: o.summary.liters,
+        diasCargados: o.summary.days,
+        litrosPorDia: o.summary.litersPerDay,
+        litrosPorVacaPorDia: o.summary.litersPerCowDay,
+        precioPorLitro: o.margin.incomePerLiter,
+        precioEsDeUltimaLiquidacion: o.priceIsReference,
+        alimentoPorLitro: o.margin.feedCostPerLiter,
+        margenSobreAlimentacionPorLitro: o.margin.marginPerLiter,
+        margenSobreAlimentacionTotal: o.margin.marginTotal,
+        costosDeAlimentoConIva: o.vatCondition === "MONOTRIBUTISTA",
+        liquidaciones: o.settlements.map((s) => ({ usina: s.dairy, desde: s.periodStart, hasta: s.periodEnd, litros: s.liters, grasaPct: s.fatPct, proteinaPct: s.proteinPct, precioPorLitro: s.pricePerLiter })),
+        alimentos: o.feed.map((f) => ({ insumo: f.supply, cantidad: f.quantity, unidad: f.unit, costo: Math.round(f.costArs) })),
       };
     },
 

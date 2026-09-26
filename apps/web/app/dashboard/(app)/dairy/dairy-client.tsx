@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { deleteMilkRecordAction, deleteMilkSettlementAction, saveMilkRecordAction } from "./actions";
 import { SettlementDialog } from "./settlement-dialog";
+import { ExportButton } from "@/components/export-button";
 
 type Overview = Awaited<ReturnType<typeof getDairyOverview>>;
 
@@ -115,8 +116,9 @@ export function DairyClient({ overview, canEdit }: { overview: Overview | null; 
         <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
           Alimento {overview.vatCondition === "RESPONSABLE_INSCRIPTO" ? "sin IVA" : "con IVA"}
         </span>
+        <ExportButton className="ml-auto" href={`/dashboard/export/tambo?from=${overview.period.from}&to=${overview.period.to}`} />
         {canEdit ? (
-          <Button className="ml-auto" variant="outline" onClick={() => setSettlementOpen(true)}>
+          <Button variant="outline" onClick={() => setSettlementOpen(true)}>
             <Plus size={14} />
             Cargar liquidación
           </Button>

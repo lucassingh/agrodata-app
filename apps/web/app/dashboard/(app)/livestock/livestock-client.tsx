@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { GroupDialog } from "./group-dialog";
 import { ImportWeighingsDialog, WeighingDialog } from "./weighing-dialogs";
+import { ExportButton } from "@/components/export-button";
 
 const number = (value: number | null, digits = 0) =>
   value === null ? "—" : new Intl.NumberFormat("es-AR", { maximumFractionDigits: digits }).format(value);
@@ -128,6 +129,7 @@ export function LivestockClient({ groups, pastures, categories, seasons, rodeos,
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap justify-end gap-2">
+        <ExportButton href="/dashboard/export/ganaderia" />
         {canEdit ? (
           <>
             <Button variant="outline" onClick={() => setDialog("import")} disabled={pastures.length === 0}>

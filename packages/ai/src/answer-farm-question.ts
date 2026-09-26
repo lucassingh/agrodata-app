@@ -29,6 +29,11 @@ export const farmQueryInputs = {
     cultivo: z.string().nullable().describe("parte del nombre del cultivo; null para todos"),
     lote: z.string().nullable().describe("parte del nombre del lote; null para todos"),
   }),
+  ganaderia: z.object({
+    lote: z.string().nullable().describe("parte del nombre del potrero o corral; null para todos"),
+    categoria: z.string().nullable().describe("parte del nombre de la categoría de animal; null para todas"),
+  }),
+  tambo: z.object(period),
   registros: z.object({
     ...period,
     texto: z.string().nullable().describe("palabra a buscar en el registro o el mensaje original; null para todos"),
@@ -52,6 +57,10 @@ const DESCRIPTIONS: Record<FarmQueryTool, string> = {
   tareas: "Tareas (sanidad, siembra, pulverización, fertilización) con fecha en un período.",
   economia:
     "Economía por lote: cada campaña (cultivo × lote × ciclo) con costos directos, costo por ha, rinde, ingresos, margen bruto y margen por ha en dólares, y el rinde de indiferencia. Úsala para preguntas de costos, márgenes, rindes o qué lote dejó más.",
+  ganaderia:
+    "Ganadería: por grupo (categoría en un potrero o corral) cabezas, último peso, ADPV (aumento diario de peso), kg producidos por ha y carga; y los índices reproductivos por temporada de servicio (preñez, parición, destete).",
+  tambo:
+    "Tambo en un período: litros, litros por día y por vaca, liquidaciones de la usina (precio por litro, grasa, proteína), costo de alimentación por litro y margen sobre alimentación por litro. Montos en pesos.",
   registros:
     "Historial de todo lo que se cargó (por WhatsApp o la web) en un período, con el mensaje original. Sirve para lo que no está en los otros módulos.",
 };

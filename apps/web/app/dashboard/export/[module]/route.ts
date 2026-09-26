@@ -1,5 +1,8 @@
 import {
   AppError,
+  getDairyOverview,
+  getLivestockGroups,
+  getReproSeasons,
   getEconomyOverview,
   listExpenses,
   listPastures,
@@ -292,6 +295,117 @@ async function economia(tenantId: string, params: URLSearchParams): Promise<Shee
   ];
 }
 
+async function ganaderia(tenantId: string): Promise<Sheet[]> {
+  const [groups, seasons] = await Promise.all([getLivestockGroups(tenantId), getReproSeasons(tenantId)]);
+  const day = (iso: string | null) => (iso ? { day: iso } : null);
+  const REPRO_LABEL: Record<string, string> = { SERVICE_START: "Inicio de servicio", PREGNANCY_CHECK: "Tacto", CALVING: "Partos", WEANING: "Destete" };
+  return [
+    {
+      name: "Grupos",
+      columns: ["Potrero", "Categoría", "Cabezas hoy", "Última pesada", "Peso promedio (kg)", "ADPV (kg/día)", "Días entre pesadas", "Kg producidos por ha", "Carga (kg/ha)", "Cabezas por ha"],
+      rows: groups.map((g) => ({
+        Potrero: g.pastureName,
+        Categoría: g.animalType,
+        "Cabezas hoy": g.currentHeads,
+        "Última pesada": day(g.performance.lastDay),
+        "Peso promedio (kg)": g.performance.lastAverageKg,
+        "ADPV (kg/día)": g.performance.adpv,
+        "Días entre pesadas": g.performance.periodDays,
+        "Kg producidos por ha": g.performance.kgProducedPerHa,
+        "Carga (kg/ha)": g.performance.liveKgPerHa,
+        "Cabezas por ha": g.performance.headsPerHa,
+      })),
+    },
+    {
+      name: "Pesadas",
+      columns: ["Fecha", "Potrero", "Categoría", "Cabezas", "Peso promedio (kg)", "Origen"],
+      rows: groups.flatMap((g) =>
+        g.weighings.map((w) => ({
+          Fecha: { day: w.day },
+          Potrero: g.pastureName,
+          Categoría: g.animalType,
+          Cabezas: w.headCount,
+          "Peso promedio (kg)": w.averageKg,
+          Origen: w.source === "WHATSAPP" ? "WhatsApp" : w.source === "EXCEL" ? "Planilla" : "Dashboard",
+        })),
+      ),
+    },
+    {
+      name: "Reproducción",
+      columns: ["Temporada de servicio", "Vacas en servicio", "Preñez (%)", "Partos", "Parición (%)", "Destetados", "Destete (%)"],
+      rows: seasons.map((s) => ({
+        "Temporada de servicio": s.label,
+        "Vacas en servicio": s.females,
+        "Preñez (%)": s.pregnancyPct,
+        Partos: s.births,
+        "Parición (%)": s.calvingPct,
+        Destetados: s.weaned,
+        "Destete (%)": s.weaningPct,
+      })),
+    },
+    {
+      name: "Eventos reproductivos",
+      columns: ["Fecha", "Temporada", "Evento", "Rodeo", "Vacas", "Preñadas", "Vacías", "Destetados"],
+      rows: seasons.flatMap((s) =>
+        s.events.map((e) => ({
+          Fecha: { day: e.day },
+          Temporada: s.label,
+          Evento: REPRO_LABEL[e.type] ?? e.type,
+          Rodeo: e.rodeo,
+          Vacas: e.females,
+          Preñadas: e.pregnant,
+          Vacías: e.empty,
+          Destetados: e.weaned,
+        })),
+      ),
+    },
+  ];
+}
+
+async function tambo(tenantId: string, params: URLSearchParams): Promise<Sheet[]> {
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Argentina/Buenos_Aires" }).format(new Date());
+  const valid = (v: string | null) => (v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null);
+  const to = valid(params.get("to")) ?? today;
+  const from = valid(params.get("from")) ?? new Date(Date.parse(`${to}T12:00:00Z`) - 29 * 86_400_000).toISOString().slice(0, 10);
+  const o = await getDairyOverview(tenantId, { from, to });
+  return [
+    {
+      name: "Producción diaria",
+      columns: ["Fecha", "Litros", "Vacas en ordeño", "Vacas secas", "Litros por vaca"],
+      rows: o.days.map((d) => ({ Fecha: { day: d.day }, Litros: d.liters, "Vacas en ordeño": d.cowsMilking, "Vacas secas": d.cowsDry, "Litros por vaca": d.litersPerCow })),
+    },
+    {
+      name: "Liquidaciones",
+      columns: ["Desde", "Hasta", "Usina", "Litros", "Grasa (%)", "Proteína (%)", "Precio por litro", "Total", "Moneda"],
+      rows: o.settlements.map((s) => ({
+        Desde: { day: s.periodStart },
+        Hasta: { day: s.periodEnd },
+        Usina: s.dairy,
+        Litros: s.liters,
+        "Grasa (%)": s.fatPct,
+        "Proteína (%)": s.proteinPct,
+        "Precio por litro": s.pricePerLiter,
+        Total: s.totalAmount,
+        Moneda: s.currency,
+      })),
+    },
+    {
+      name: "Resultado",
+      columns: ["Concepto", "Valor"],
+      rows: [
+        { Concepto: "Período", Valor: `${from} a ${to}` },
+        { Concepto: "Litros", Valor: o.summary.liters },
+        { Concepto: "Litros por vaca por día", Valor: o.summary.litersPerCowDay },
+        { Concepto: "Precio por litro ($)", Valor: o.margin.incomePerLiter },
+        { Concepto: `Alimento por litro ($, ${o.vatCondition === "RESPONSABLE_INSCRIPTO" ? "sin IVA" : "con IVA"})`, Valor: o.margin.feedCostPerLiter },
+        { Concepto: "Margen sobre alimentación por litro ($)", Valor: o.margin.marginPerLiter },
+        { Concepto: "Margen sobre alimentación del período ($)", Valor: o.margin.marginTotal },
+        ...o.feed.map((f) => ({ Concepto: `Alimento: ${f.supply} (${f.quantity} ${f.unit ?? ""})`, Valor: Math.round(f.costArs) })),
+      ],
+    },
+  ];
+}
+
 const MODULES: Record<
   string,
   {
@@ -305,6 +419,8 @@ const MODULES: Record<
   tareas: { file: "tareas", build: tareas },
   datos: { file: "datos", build: datos },
   economia: { file: "economia", build: economia },
+  ganaderia: { file: "ganaderia", build: ganaderia },
+  tambo: { file: "tambo", build: tambo },
 };
 
 /** Descarga de un módulo del campo activo como planilla de Excel. */

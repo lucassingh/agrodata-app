@@ -9,6 +9,7 @@ import { LandingMotion } from "@/components/landing/landing-motion";
 import { LandingFooter } from "@/components/landing/landing-footer";
 import { LandingNav } from "@/components/landing/landing-nav";
 import { LotMargin } from "@/components/landing/lot-margin";
+import { LivestockDairy } from "@/components/landing/livestock-dairy";
 import { MultiField } from "@/components/landing/multi-field";
 import { Pricing } from "@/components/landing/pricing";
 import { Problem } from "@/components/landing/problem";
@@ -47,6 +48,7 @@ export default function MarketingHomePage() {
           <HowItWorks />
           <FeaturesBento />
           <LotMargin />
+          <LivestockDairy />
           <MultiField />
           <ProductShowcase />
           <Profiles />

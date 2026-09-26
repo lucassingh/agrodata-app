@@ -217,6 +217,7 @@ export const PRICING = {
         "Hasta 5 personas cargando por WhatsApp",
         "Dashboard completo",
         "Margen bruto por lote, en dólares",
+        "Pesadas, ADPV, reproducción y tambo",
         "Exportación a Excel",
       ],
     },
@@ -231,6 +232,7 @@ export const PRICING = {
         "Hasta 10 campos",
         "Personas ilimitadas por WhatsApp",
         "Margen bruto por lote y comparativo de campañas",
+        "Ganadería y tambo: ADPV, preñez y margen por litro",
         "Reportes semanales automáticos",
         "Exportación a Excel",
         { label: "Exportación a PDF", soon: true },
@@ -370,4 +372,34 @@ export const LOT_MARGIN = {
       { label: "Rinde de indiferencia", value: "1.060 kg/ha" },
     ],
   },
+};
+
+export const LIVESTOCK_DAIRY = {
+  eyebrow: "Ganadería y tambo",
+  title: "Kilos, preñez y litros: los números que definen si el campo gana plata.",
+  body: "Mandá la pesada, el tacto o los litros del día por WhatsApp. AgroData calcula lo que un veterinario o un tambero mira todas las semanas, sin planillas aparte.",
+  note: "Datos de ejemplo",
+  cards: [
+    {
+      id: "ganaderia",
+      title: "Engorde",
+      stat: "0,85 kg/día",
+      statLabel: "ADPV de los terneros del corral 1",
+      points: ["Pesadas por grupo, por WhatsApp o con una planilla", "Kilos producidos por hectárea y carga", "Cada grupo con su evolución de peso"],
+    },
+    {
+      id: "reproduccion",
+      title: "Reproducción",
+      stat: "85 %",
+      statLabel: "de preñez en el tacto del rodeo de cría",
+      points: ["Servicio, tacto, partos y destete", "Preñez, parición y destete por temporada", "La próxima dosis sanitaria queda agendada"],
+    },
+    {
+      id: "tambo",
+      title: "Tambo",
+      stat: "$ 285 por litro",
+      statLabel: "de margen sobre alimentación ($ 420 de precio − $ 135 de alimento)",
+      points: ["Litros del día y litros por vaca", "Liquidación de la usina con una foto", "Grasa, proteína y precio por litro"],
+    },
+  ],
 };
