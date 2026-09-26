@@ -19,6 +19,7 @@ import {
   TENANT_TIMEZONES,
   BASE_CURRENCIES,
 } from "@repo/core/tenants/tenant-labels";
+import { FIELD_ROLE_LABEL, isWebRole, type FieldRole } from "@repo/core/auth/field-roles";
 import { updateTenantConfigAction } from "./actions";
 import { setActiveTenantAction } from "@/app/dashboard/(app)/_lib/tenant-actions";
 import { EXCHANGE_RATE_KINDS, EXCHANGE_RATE_LABEL, type ExchangeRateKind } from "@repo/core/economy/exchange-rates";
@@ -38,7 +39,7 @@ const EXCHANGE_RATE_ITEMS = EXCHANGE_RATE_KINDS.map((kind) => ({
 
 interface TenantMembership {
   tenantId: string;
-  role: "ADMIN" | "USER_GENERAL";
+  role: FieldRole;
   tenant: {
     id: string;
     name: string;
@@ -56,7 +57,8 @@ interface TenantMembership {
 interface CampoTabProps {
   memberships: TenantMembership[];
   activeTenantId: string | null;
-  isOwner: boolean;
+  /** Si puedo editar el campo activo (solo su dueño). */
+  canEditField: boolean;
 }
 
 interface TenantFormValues {
@@ -268,9 +270,9 @@ function TenantConfigForm({
   );
 }
 
-export function CampoTab({ memberships, activeTenantId, isOwner }: CampoTabProps) {
+export function CampoTab({ memberships, activeTenantId, canEditField }: CampoTabProps) {
   const [switchingId, setSwitchingId] = useState<string | null>(null);
-  const canSwitchActiveTenant = isOwner && memberships.length > 1;
+  const webFields = memberships.filter((m) => isWebRole(m.role)).length;
 
   const handleSetActive = (tenantId: string) => {
     setSwitchingId(tenantId);
@@ -314,12 +316,12 @@ export function CampoTab({ memberships, activeTenantId, isOwner }: CampoTabProps
                   ) : null}
                 </div>
               </div>
-              <Badge variant={m.role === "ADMIN" ? "secondary" : "outline"}>
-                {m.role === "ADMIN" ? "Admin" : "Usuario"}
+              <Badge variant={m.role === "OWNER" ? "secondary" : "outline"}>
+                {FIELD_ROLE_LABEL[m.role]}
               </Badge>
             </div>
 
-            {canSwitchActiveTenant ? (
+            {webFields > 1 && isWebRole(m.role) ? (
               <label className="mt-3 flex items-center gap-2 text-sm">
                 <Checkbox
                   checked={isActive}
@@ -335,7 +337,7 @@ export function CampoTab({ memberships, activeTenantId, isOwner }: CampoTabProps
             ) : null}
 
             {isActive ? (
-              <TenantConfigForm tenant={m.tenant} readOnly={!isOwner} />
+              <TenantConfigForm tenant={m.tenant} readOnly={!canEditField} />
             ) : null}
           </div>
         );

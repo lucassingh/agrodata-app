@@ -6,6 +6,7 @@ import {
   createTenantForUser,
   setActiveTenant,
   createTenantSchema,
+  assertCanCreateField,
   AppError,
   type CreateTenantInput,
 } from "@repo/core";
@@ -20,6 +21,7 @@ export async function createTenantAction(input: CreateTenantInput) {
     };
   }
   try {
+    assertCanCreateField(user.capabilities);
     const tenant = await createTenantForUser(user.id, parsed.data);
     revalidatePath("/dashboard", "layout");
     return { success: true as const, tenant };

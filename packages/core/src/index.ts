@@ -1,5 +1,6 @@
 export * from "./errors";
 export * from "./auth/capabilities";
+export * from "./auth/field-roles";
 export * from "./auth/types";
 export * from "./auth/register.schema";
 export * from "./auth/auth.service";

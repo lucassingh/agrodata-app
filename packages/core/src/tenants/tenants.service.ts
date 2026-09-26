@@ -4,13 +4,14 @@ import { forbidden, notFound } from "../errors";
 import type { CreateTenantInput, UpdateTenantInput } from "./tenants.schema";
 import { activitiesFromCategory, categoryFromActivities, type FarmActivity, type TenantCategoryCode } from "./tenant-labels";
 
+/** Editar o dar de baja un campo es del dueño. */
 async function assertTenantAdmin(userId: string, tenantId: string, action: string) {
   const membership = await prisma.userTenantMembership.findFirst({
     where: { userId, tenantId, status: "ACTIVE" },
   });
   if (!membership) notFound("Campo no encontrado");
-  if (membership.role !== "ADMIN") {
-    forbidden(`Solo administradores pueden ${action} este campo`);
+  if (membership.role !== "OWNER") {
+    forbidden(`Solo el dueño puede ${action} este campo`);
   }
 }
 
@@ -52,7 +53,8 @@ export async function createTenantForUser(userId: string, input: CreateTenantInp
       data: {
         userId,
         tenantId: tenant.id,
-        role: "ADMIN",
+        // Quien crea el campo es su dueño (un asesor puede pasarle la titularidad al productor).
+        role: "OWNER",
         status: "ACTIVE",
         acceptedAt: new Date(),
       },
@@ -61,7 +63,7 @@ export async function createTenantForUser(userId: string, input: CreateTenantInp
       where: { id: userId },
       data: { activeTenantId: tenant.id },
     });
-    return { ...tenant, myRole: "ADMIN" as const };
+    return { ...tenant, myRole: "OWNER" as const };
   });
 }
 

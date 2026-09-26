@@ -20,8 +20,13 @@ enum PlatformRole {
   OPERATOR
 }
 
+// Rol de una persona en un campo (Etapa 4: los roles son por campo, no globales).
+// OWNER = Dueño, ADMIN = Encargado (el Farm Manager del legacy), ADVISOR = Asesor,
+// USER_GENERAL = Operario (solo WhatsApp).
 enum SystemRole {
+  OWNER
   ADMIN
+  ADVISOR
   USER_GENERAL
 }
 
