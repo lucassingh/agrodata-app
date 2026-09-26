@@ -21,6 +21,7 @@ import {
   Package,
   PieChart,
   Plus,
+  Briefcase,
   Settings,
   Users,
 } from "lucide-react";
@@ -118,7 +119,13 @@ export function AppShell({ user, memberships, children, signOutAction }: AppShel
   }, [pathname]);
 
   const modules = visibleModules(memberships.find((m) => m.tenantId === user.activeTenantId)?.tenant.activities ?? []);
+  // Los campos donde solo soy operario se usan por WhatsApp: no se eligen en la web.
+  const webMemberships = memberships.filter((m) => isWebRole(m.role));
   const campoItems: NavItem[] = [
+    // Con dos o más campos, la cartera los compara (modo asesor).
+    ...(webMemberships.length > 1
+      ? [{ label: "Cartera", href: "/dashboard/portfolio", icon: <Briefcase size={18} /> }]
+      : []),
     { label: "Cómo empezar", href: "/dashboard/how-start", icon: <BookOpen size={18} /> },
     { label: "Resumen", href: "/dashboard/summary", icon: <PieChart size={18} /> },
     {
@@ -146,8 +153,6 @@ export function AppShell({ user, memberships, children, signOutAction }: AppShel
 
   const activeMembership = memberships.find((m) => m.tenantId === user.activeTenantId);
   const activeTenant = activeMembership?.tenant;
-  // Los campos donde solo soy operario se usan por WhatsApp: no se eligen en la web.
-  const webMemberships = memberships.filter((m) => isWebRole(m.role));
   const canSwitchActiveTenant = webMemberships.length > 1;
 
   const handleSwitchTenant = async (tenantId: string) => {

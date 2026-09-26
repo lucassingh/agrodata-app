@@ -61,3 +61,5 @@ export * from "./livestock/livestock-math";
 export * from "./livestock/dairy.service";
 export * from "./livestock/weighings.service";
 export * from "./livestock/repro.service";
+export * from "./portfolio/portfolio-math";
+export * from "./portfolio/portfolio.service";
