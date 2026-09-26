@@ -1,5 +1,6 @@
 import {
   AppError,
+  getEconomyOverview,
   listExpenses,
   listPastures,
   listSupplies,
@@ -20,6 +21,7 @@ import {
   formatRecordSource,
 } from "../../(app)/data/record-format";
 import { getRecordConfig } from "../../(app)/data/record-constants";
+import { CAMPAIGN_STATUS_LABEL } from "../../(app)/economy/economy-format";
 
 const STOCK_SOURCE_LABEL = {
   INITIAL: "Saldo inicial",
@@ -244,6 +246,52 @@ async function datos(tenantId: string): Promise<Sheet[]> {
   ];
 }
 
+async function economia(tenantId: string, params: URLSearchParams): Promise<Sheet[]> {
+  const overview = await getEconomyOverview(tenantId, params.get("season") || undefined);
+  const day = (iso: string | null) => (iso ? { day: iso } : null);
+  return [
+    {
+      name: "Campañas",
+      columns: ["Ciclo", "Lote", "Cultivo", "Estado", "Hectáreas", "Siembra", "Costos directos (US$)", "Costo por ha (US$)", "Cosechado (kg)", "Rinde (kg/ha)", "Ingresos (US$)", "Ingreso estimado", "Margen bruto (US$)", "Margen por ha (US$)", "Precio (US$/t)", "Rinde de indiferencia (kg/ha)"],
+      rows: overview.campaigns.map((c) => ({
+        Ciclo: c.season,
+        Lote: c.pastureName,
+        Cultivo: c.crop,
+        Estado: CAMPAIGN_STATUS_LABEL[c.status],
+        Hectáreas: c.hectares,
+        Siembra: day(c.sowingDate),
+        "Costos directos (US$)": c.result.costUsd,
+        "Costo por ha (US$)": c.result.costPerHaUsd,
+        "Cosechado (kg)": c.harvestedKg,
+        "Rinde (kg/ha)": c.result.yieldKgHa,
+        "Ingresos (US$)": c.result.incomeUsd,
+        "Ingreso estimado": c.result.estimated ? "Sí (precio de referencia)" : "No",
+        "Margen bruto (US$)": c.result.marginUsd,
+        "Margen por ha (US$)": c.result.marginPerHaUsd,
+        "Precio (US$/t)": c.result.priceUsdPerTon,
+        "Rinde de indiferencia (kg/ha)": c.result.breakEvenYieldKgHa,
+      })),
+    },
+    {
+      name: "Costos e ingresos",
+      columns: ["Fecha", "Campaña", "Tipo", "Concepto", "Monto", "Moneda", "Dólar usado", "US$", "$"],
+      rows: overview.campaigns.flatMap((c) =>
+        [...c.costs.map((l) => ({ ...l, kind: "Costo" })), ...c.incomes.map((l) => ({ ...l, kind: "Ingreso" }))].map((l) => ({
+          Fecha: { day: l.date },
+          Campaña: `${c.crop} ${c.season} · ${c.pastureName}`,
+          Tipo: l.kind,
+          Concepto: l.concept,
+          Monto: l.amount,
+          Moneda: l.currency,
+          "Dólar usado": l.rate,
+          "US$": l.usd,
+          "$": l.ars,
+        })),
+      ),
+    },
+  ];
+}
+
 const MODULES: Record<
   string,
   {
@@ -256,6 +304,7 @@ const MODULES: Record<
   potreros: { file: "potreros", build: potreros },
   tareas: { file: "tareas", build: tareas },
   datos: { file: "datos", build: datos },
+  economia: { file: "economia", build: economia },
 };
 
 /** Descarga de un módulo del campo activo como planilla de Excel. */

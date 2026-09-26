@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@repo/database";
+import { getEconomyOverview } from "../economy/economy.service";
 import { OUTFLOW_TYPES, restDays } from "../pastures/herd";
 import { dateOnlyRangeFilter, dateRangeFilter } from "../reports/date-range";
 import { normalizeEntityName } from "../whatsapp/entity-name";
@@ -188,6 +189,30 @@ export function createFarmQueryHandlers(tenantId: string) {
         animales: t.animals.map((a) => `${a.quantity} ${a.animalType}`),
         descripcion: t.description,
       }));
+    },
+
+    async economia({ ciclo, cultivo, lote }: { ciclo: string | null; cultivo: string | null; lote: string | null }) {
+      const overview = await getEconomyOverview(tenantId, ciclo ?? undefined);
+      return {
+        dolarUsado: overview.rateLabel,
+        campañas: overview.campaigns
+          .filter((c) => matches(c.crop, cultivo) && matches(c.pastureName, lote))
+          .map((c) => ({
+            campaña: `${c.crop} ${c.season}`,
+            lote: c.pastureName,
+            estado: c.status === "IN_PROGRESS" ? "en curso" : c.status === "HARVESTED" ? "cosechada" : "cerrada",
+            hectareas: c.hectares,
+            costosDirectosUsd: c.result.costUsd,
+            costoPorHaUsd: c.result.costPerHaUsd,
+            rindeKgHa: c.result.yieldKgHa,
+            ingresosUsd: c.result.incomeUsd,
+            ingresoEstimado: c.result.estimated,
+            margenBrutoUsd: c.result.marginUsd,
+            margenPorHaUsd: c.result.marginPerHaUsd,
+            rindeDeIndiferenciaKgHa: c.result.breakEvenYieldKgHa,
+            principalesCostos: c.costs.slice(0, 8).map((l) => ({ concepto: l.concept, usd: l.usd ? Math.round(l.usd) : null })),
+          })),
+      };
     },
 
     async registros({ desde, hasta, texto }: Period & { texto: string | null }) {

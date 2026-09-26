@@ -11,6 +11,7 @@ import {
   ClipboardList,
   Database,
   DollarSign,
+  TrendingUp,
   Download,
   Fence,
   LogOut,
@@ -125,6 +126,7 @@ export function AppShell({ user, memberships, children, signOutAction }: AppShel
     { label: "Potreros", href: "/dashboard/pastures", icon: <Fence size={18} /> },
     { label: "Tareas", href: "/dashboard/tasks", icon: <ClipboardList size={18} /> },
     { label: "Gastos", href: "/dashboard/expenses", icon: <DollarSign size={18} /> },
+    { label: "Economía", href: "/dashboard/economy", icon: <TrendingUp size={18} /> },
     { label: "Insumos", href: "/dashboard/supplies", icon: <Package size={18} /> },
   ];
   const configItems: NavItem[] = [

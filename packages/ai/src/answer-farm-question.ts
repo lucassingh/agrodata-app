@@ -24,6 +24,11 @@ export const farmQueryInputs = {
   movimientos_hacienda: z.object(period),
   potreros: z.object({}),
   tareas: z.object(period),
+  economia: z.object({
+    ciclo: z.string().nullable().describe("ciclo agrícola, ej. \"26/27\" (julio a junio); null para todos"),
+    cultivo: z.string().nullable().describe("parte del nombre del cultivo; null para todos"),
+    lote: z.string().nullable().describe("parte del nombre del lote; null para todos"),
+  }),
   registros: z.object({
     ...period,
     texto: z.string().nullable().describe("palabra a buscar en el registro o el mensaje original; null para todos"),
@@ -45,6 +50,8 @@ const DESCRIPTIONS: Record<FarmQueryTool, string> = {
     "Nacimientos, compras, ventas, mortandad, traslados y ajustes de hacienda en un período, con kilos y montos si los hay.",
   potreros: "Potreros con hectáreas, cultivos, animales y días de descanso.",
   tareas: "Tareas (sanidad, siembra, pulverización, fertilización) con fecha en un período.",
+  economia:
+    "Economía por lote: cada campaña (cultivo × lote × ciclo) con costos directos, costo por ha, rinde, ingresos, margen bruto y margen por ha en dólares, y el rinde de indiferencia. Úsala para preguntas de costos, márgenes, rindes o qué lote dejó más.",
   registros:
     "Historial de todo lo que se cargó (por WhatsApp o la web) en un período, con el mensaje original. Sirve para lo que no está en los otros módulos.",
 };
@@ -59,7 +66,9 @@ Reglas:
   fertilizaciones y sanidad); no prometas funciones que no existen (por ejemplo, lluvias).
 - Si la pregunta no dice el período, usá el que tenga sentido ("este mes" por defecto para
   gastos y consumos) y decí cuál usaste.
-- Pesos y dólares van por separado; nunca los sumes.
+- Pesos y dólares van por separado; nunca los sumes. En economía por lote los resultados ya vienen
+  en dólares (convertidos con el dólar que eligió el campo): usalos así.
+- Si un ingreso es estimado (precio de referencia, sin ventas), decilo.
 - Respondé corto, en castellano rioplatense, como un mensaje de WhatsApp: una o dos frases y,
   si hace falta, una lista breve. Resaltá los números clave con *asteriscos* (formato de
   WhatsApp). Nada de encabezados ni tablas.`;
