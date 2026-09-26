@@ -101,6 +101,8 @@ model Tenant {
   exchangeRateKind ExchangeRateKind @default(MAYORISTA)
   /// Condición frente al IVA: define si los márgenes cuentan los costos con o sin IVA.
   vatCondition     VatCondition     @default(RESPONSABLE_INSCRIPTO)
+  /// Actividades del campo (agricultura, ganadería, tambo): definen qué módulos se ven.
+  activities       FarmActivity[]   @default([])
   category     TenantCategory       @default(MIXTO)
   location     String?
   totalHa      Float?
@@ -877,4 +879,10 @@ model MilkSettlement {
 
   @@index([tenantId, periodEnd])
   @@map("milk_settlements")
+}
+
+enum FarmActivity {
+  AGRICULTURA
+  GANADERIA
+  TAMBO
 }

@@ -34,6 +34,7 @@ export default async function DashboardShellLayout({
             id: m.tenant.id,
             name: m.tenant.name,
             category: m.tenant.category,
+            activities: m.tenant.activities,
           },
         }))}
         signOutAction={signOutAction}

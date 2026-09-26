@@ -40,6 +40,7 @@ export default async function PreferencesPage() {
             id: m.tenant.id,
             name: m.tenant.name,
             category: m.tenant.category,
+            activities: m.tenant.activities,
             timezone: m.tenant.timezone,
             baseCurrency: m.tenant.baseCurrency,
             exchangeRateKind: m.tenant.exchangeRateKind,

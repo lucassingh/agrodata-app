@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { EXCHANGE_RATE_KINDS } from "../economy/exchange-rates";
+import { FARM_ACTIVITIES } from "./tenant-labels";
 
 export const tenantCategorySchema = z.enum([
   "FIELD_AGRICOLA",
@@ -13,6 +14,7 @@ export const createTenantSchema = z.object({
   timezone: z.string().max(60).optional(),
   baseCurrency: z.string().max(10).optional(),
   category: tenantCategorySchema.optional(),
+  activities: z.array(z.enum(FARM_ACTIVITIES)).min(1, "Elegí al menos una actividad").optional(),
 });
 
 export const updateTenantSchema = createTenantSchema.partial().extend({

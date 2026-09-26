@@ -16,15 +16,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  TENANT_CATEGORY_LABELS,
   TENANT_TIMEZONES,
   BASE_CURRENCIES,
-  tenantCategoryLabel,
 } from "@repo/core/tenants/tenant-labels";
 import { updateTenantConfigAction } from "./actions";
 import { setActiveTenantAction } from "@/app/dashboard/(app)/_lib/tenant-actions";
 import { EXCHANGE_RATE_KINDS, EXCHANGE_RATE_LABEL, type ExchangeRateKind } from "@repo/core/economy/exchange-rates";
 import { VAT_CONDITION_LABEL, type VatCondition } from "@repo/core/economy/vat";
+import { ActivityPicker } from "@/components/activity-picker";
+import { activitiesLabel, type FarmActivity } from "@repo/core/tenants/tenant-labels";
 
 const VAT_CONDITION_ITEMS = (Object.keys(VAT_CONDITION_LABEL) as VatCondition[]).map((value) => ({
   value,
@@ -47,6 +47,7 @@ interface TenantMembership {
     baseCurrency: string;
     exchangeRateKind: ExchangeRateKind;
     vatCondition: VatCondition;
+    activities: FarmActivity[];
     location: string | null;
     totalHa: number | null;
   };
@@ -65,6 +66,7 @@ interface TenantFormValues {
   baseCurrency: string;
   exchangeRateKind: ExchangeRateKind;
   vatCondition: VatCondition;
+  activities: FarmActivity[];
   location: string;
   totalHa: string;
 }
@@ -77,6 +79,7 @@ function toFormValues(tenant: TenantMembership["tenant"]): TenantFormValues {
     baseCurrency: tenant.baseCurrency,
     exchangeRateKind: tenant.exchangeRateKind,
     vatCondition: tenant.vatCondition,
+    activities: tenant.activities,
     location: tenant.location ?? "",
     totalHa: tenant.totalHa?.toString() ?? "",
   };
@@ -95,6 +98,10 @@ function TenantConfigForm({
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     if (!values.name.trim()) return;
+    if (values.activities.length === 0) {
+      toast.error("Elegí al menos una actividad del campo.");
+      return;
+    }
     startTransition(async () => {
       const result = await updateTenantConfigAction(tenant.id, {
         name: values.name.trim(),
@@ -103,6 +110,7 @@ function TenantConfigForm({
         baseCurrency: values.baseCurrency,
         exchangeRateKind: values.exchangeRateKind,
         vatCondition: values.vatCondition,
+        activities: values.activities,
         location: values.location.trim() || undefined,
         totalHa: values.totalHa ? Number(values.totalHa) : undefined,
       });
@@ -132,25 +140,12 @@ function TenantConfigForm({
             onChange={(e) => setValues((p) => ({ ...p, name: e.target.value }))}
           />
         </div>
-        <div className="space-y-2">
-          <Label>Rubro</Label>
-          <Select
-            items={Object.entries(TENANT_CATEGORY_LABELS).map(([value, label]) => ({ value, label }))}
-            value={values.category}
+        <div className="sm:col-span-2">
+          <ActivityPicker
+            value={values.activities}
             disabled={readOnly}
-            onValueChange={(v: string | null) => v && setValues((p) => ({ ...p, category: v }))}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(TENANT_CATEGORY_LABELS).map(([value, label]) => (
-                <SelectItem key={value} value={value}>
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            onChange={(activities) => setValues((p) => ({ ...p, activities }))}
+          />
         </div>
         <div className="space-y-2">
           <Label>Zona horaria</Label>
@@ -312,7 +307,7 @@ export function CampoTab({ memberships, activeTenantId, isOwner }: CampoTabProps
                 <div>
                   <p className="font-heading text-base font-semibold">{m.tenant.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    Rubro: {tenantCategoryLabel(m.tenant.category)} · ID: {m.tenant.id}
+                    {activitiesLabel(m.tenant.activities)} · ID: {m.tenant.id}
                   </p>
                   {m.tenant.location ? (
                     <p className="text-xs text-muted-foreground">{m.tenant.location}</p>

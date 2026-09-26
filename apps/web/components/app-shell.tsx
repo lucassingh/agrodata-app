@@ -40,6 +40,7 @@ import { CreateTenantDialog } from "@/components/create-tenant-dialog";
 import { setActiveTenantAction } from "@/app/dashboard/(app)/_lib/tenant-actions";
 import { cn } from "@/lib/utils";
 import type { Capabilities, PlatformRole } from "@repo/core";
+import { visibleModules } from "@repo/core/tenants/tenant-labels";
 
 const PLATFORM_ROLE_LABEL: Record<PlatformRole, string> = {
   OWNER: "Owner",
@@ -65,7 +66,7 @@ interface AppShellUser {
 interface Membership {
   tenantId: string;
   role: "ADMIN" | "USER_GENERAL";
-  tenant: { id: string; name: string; category: string };
+  tenant: { id: string; name: string; category: string; activities: string[] };
 }
 
 interface AppShellProps {
@@ -113,6 +114,7 @@ export function AppShell({ user, memberships, children, signOutAction }: AppShel
     if (pathname === "/dashboard/data") setDataBadge(0);
   }, [pathname]);
 
+  const modules = visibleModules(memberships.find((m) => m.tenantId === user.activeTenantId)?.tenant.activities ?? []);
   const campoItems: NavItem[] = [
     { label: "Cómo empezar", href: "/dashboard/how-start", icon: <BookOpen size={18} /> },
     { label: "Resumen", href: "/dashboard/summary", icon: <PieChart size={18} /> },
@@ -128,14 +130,10 @@ export function AppShell({ user, memberships, children, signOutAction }: AppShel
     { label: "Potreros", href: "/dashboard/pastures", icon: <Fence size={18} /> },
     { label: "Tareas", href: "/dashboard/tasks", icon: <ClipboardList size={18} /> },
     { label: "Gastos", href: "/dashboard/expenses", icon: <DollarSign size={18} /> },
-    { label: "Economía", href: "/dashboard/economy", icon: <TrendingUp size={18} /> },
-    // Ganadería y Tambo, solo en los campos que los tienen.
-    ...(["GANADERO", "TAMBO", "MIXTO"].includes(memberships.find((m) => m.tenantId === user.activeTenantId)?.tenant.category ?? "")
-      ? [{ label: "Ganadería", href: "/dashboard/livestock", icon: <Scale size={18} /> }]
-      : []),
-    ...(["TAMBO", "MIXTO"].includes(memberships.find((m) => m.tenantId === user.activeTenantId)?.tenant.category ?? "")
-      ? [{ label: "Tambo", href: "/dashboard/dairy", icon: <Milk size={18} /> }]
-      : []),
+    // Los módulos de cada actividad, solo si el campo la tiene (el tambo incluye Ganadería).
+    ...(modules.economy ? [{ label: "Economía", href: "/dashboard/economy", icon: <TrendingUp size={18} /> }] : []),
+    ...(modules.livestock ? [{ label: "Ganadería", href: "/dashboard/livestock", icon: <Scale size={18} /> }] : []),
+    ...(modules.dairy ? [{ label: "Tambo", href: "/dashboard/dairy", icon: <Milk size={18} /> }] : []),
     { label: "Insumos", href: "/dashboard/supplies", icon: <Package size={18} /> },
   ];
   const configItems: NavItem[] = [

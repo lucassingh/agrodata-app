@@ -21,12 +21,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  TENANT_CATEGORY_LABELS,
   TENANT_TIMEZONES,
   BASE_CURRENCIES,
 } from "@repo/core/tenants/tenant-labels";
 import type { CreateTenantInput } from "@repo/core/tenants/tenants.schema";
 import { createTenantAction } from "@/app/dashboard/(app)/_lib/tenant-actions";
+import { ActivityPicker } from "@/components/activity-picker";
 
 interface CreateTenantDialogProps {
   open: boolean;
@@ -38,7 +38,7 @@ const DEFAULT_VALUES: CreateTenantInput = {
   name: "",
   timezone: "America/Argentina/Buenos_Aires",
   baseCurrency: "ARS",
-  category: "MIXTO",
+  activities: [],
 };
 
 export function CreateTenantDialog({ open, onClose, onCreated }: CreateTenantDialogProps) {
@@ -50,6 +50,10 @@ export function CreateTenantDialog({ open, onClose, onCreated }: CreateTenantDia
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     if (!values.name.trim()) return;
+    if (!values.activities?.length) {
+      setError("Elegí al menos una actividad del campo.");
+      return;
+    }
     setError(null);
     startTransition(async () => {
       const result = await createTenantAction(values);
@@ -93,28 +97,14 @@ export function CreateTenantDialog({ open, onClose, onCreated }: CreateTenantDia
               />
             </div>
 
-            <div className="space-y-2">
-              <Label>Rubro</Label>
-              <Select
-                items={Object.entries(TENANT_CATEGORY_LABELS).map(([value, label]) => ({ value, label }))}
-                value={values.category}
-                onValueChange={(v: string | null) =>
-                  v &&
-                  setValues((p) => ({ ...p, category: v as CreateTenantInput["category"] }))
-                }
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(TENANT_CATEGORY_LABELS).map(([value, label]) => (
-                    <SelectItem key={value} value={value}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <ActivityPicker
+              stacked
+              value={values.activities ?? []}
+              onChange={(activities) => {
+                setValues((p) => ({ ...p, activities }));
+                setError(null);
+              }}
+            />
 
             <div className="space-y-2">
               <Label>Zona horaria</Label>

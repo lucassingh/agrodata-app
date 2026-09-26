@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@repo/database";
 import { forbidden, notFound } from "../errors";
 import type { CreateTenantInput, UpdateTenantInput } from "./tenants.schema";
+import { activitiesFromCategory, categoryFromActivities, type FarmActivity, type TenantCategoryCode } from "./tenant-labels";
 
 async function assertTenantAdmin(userId: string, tenantId: string, action: string) {
   const membership = await prisma.userTenantMembership.findFirst({
@@ -31,9 +32,22 @@ export async function findTenantForUser(userId: string, tenantId: string) {
   return { ...membership.tenant, myRole: membership.role };
 }
 
+/** Actividades y rubro van juntos: el rubro (legacy) se deriva de las actividades. */
+function withActivities<T extends { activities?: FarmActivity[]; category?: TenantCategoryCode }>(input: T) {
+  if (input.activities) return { ...input, category: categoryFromActivities(input.activities) };
+  if (input.category) return { ...input, activities: activitiesFromCategory(input.category) };
+  return input;
+}
+
+/** Alta: sin actividades ni rubro, Mixto con las tres (el default de la base). */
+function newTenantData(input: CreateTenantInput) {
+  const data = withActivities(input);
+  return data.activities ? data : { ...data, category: "MIXTO" as const, activities: activitiesFromCategory("MIXTO") };
+}
+
 export async function createTenantForUser(userId: string, input: CreateTenantInput) {
   return prisma.$transaction(async (tx) => {
-    const tenant = await tx.tenant.create({ data: input });
+    const tenant = await tx.tenant.create({ data: newTenantData(input) });
     await tx.userTenantMembership.create({
       data: {
         userId,
@@ -57,7 +71,7 @@ export async function updateTenant(
   input: UpdateTenantInput,
 ) {
   await assertTenantAdmin(userId, tenantId, "editar");
-  return prisma.tenant.update({ where: { id: tenantId }, data: input });
+  return prisma.tenant.update({ where: { id: tenantId }, data: withActivities(input) });
 }
 
 export async function deleteTenant(userId: string, tenantId: string) {
