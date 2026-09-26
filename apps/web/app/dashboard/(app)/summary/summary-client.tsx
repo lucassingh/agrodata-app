@@ -22,6 +22,7 @@ import {
   BarChart3,
   Sprout,
   Minus,
+  Syringe,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -233,6 +234,31 @@ export function SummaryClient({ dashboard, hasActiveTenant, from, to }: SummaryC
         </Card>
 
         <div className="space-y-4">
+          {dashboard.sanitaryDue.length > 0 ? (
+            <Card className="rounded-2xl border-l-4 border-l-[#C2185B] shadow-soft">
+              <CardContent className="space-y-3">
+                <p className="flex items-center gap-1.5 font-heading text-sm font-bold">
+                  <Syringe size={16} className="text-[#C2185B]" aria-hidden />
+                  Sanidad por vencer
+                </p>
+                <ul className="space-y-2">
+                  {dashboard.sanitaryDue.map((t) => {
+                    const overdue = t.day < new Intl.DateTimeFormat("en-CA", { timeZone: "America/Argentina/Buenos_Aires" }).format(new Date());
+                    return (
+                      <li key={t.id} className="flex items-center justify-between gap-2 text-sm">
+                        <span>{t.name}</span>
+                        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${overdue ? "bg-destructive/10 text-destructive" : "bg-[#FCE8F0] text-[#C2185B]"}`}>
+                          {overdue ? "Vencida · " : ""}
+                          {t.day.slice(8, 10)}/{t.day.slice(5, 7)}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </CardContent>
+            </Card>
+          ) : null}
+
           {dashboard.supplyAlerts.length > 0 ? (
             <Card className="rounded-2xl border-l-4 border-l-warning shadow-soft">
               <CardContent className="space-y-3">

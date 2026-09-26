@@ -55,7 +55,17 @@ const reproductionSchema = z.object({
   weaned: n("terneros destetados"),
 });
 
+const sanitarySchema = z.object({
+  nextDose: z
+    .string()
+    .nullable()
+    .describe(
+      "fecha de la próxima dosis o refuerzo, YYYY-MM-DD, solo si el mensaje la menciona (resolvé «en 6 meses» o «en 21 días» desde la fecha del tratamiento); si no, null",
+    ),
+});
+
 const SCHEMAS = {
+  SANITARY_TREATMENT: sanitarySchema,
   MILK_PRODUCTION: milkProductionSchema,
   MILK_SETTLEMENT: milkSettlementSchema,
   WEIGHING: weighingSchema,

@@ -16,6 +16,12 @@ export interface WeeklySummaryData {
   tasks: { completed: number; pending: number };
   records: { total: number; fromWhatsApp: number };
   lowStock: { supply: string; quantity: number; unit: string | null }[];
+  /** Tambo: litros de la semana y L/vaca/día (null si no hay registros). */
+  milk: { liters: number; litersPerCowDay: number | null } | null;
+  /** Pesadas de la semana con su ADPV contra la anterior del grupo. */
+  weighings: { group: string; adpv: number | null }[];
+  /** Tratamientos sanitarios pendientes que vencen pronto o ya vencieron. */
+  sanitaryDue: { name: string; day: string }[];
 }
 
 const dayMonth = (isoDay: string) => `${isoDay.slice(8, 10)}/${isoDay.slice(5, 7)}`;
@@ -36,7 +42,10 @@ export function hasActivity(data: WeeklySummaryData): boolean {
     l.births + l.purchases + l.sales + l.deaths > 0 ||
     data.tasks.completed + data.tasks.pending > 0 ||
     data.records.total > 0 ||
-    data.lowStock.length > 0
+    data.lowStock.length > 0 ||
+    data.milk !== null ||
+    data.weighings.length > 0 ||
+    data.sanitaryDue.length > 0
   );
 }
 
@@ -82,6 +91,20 @@ export function weeklySummaryText(data: WeeklySummaryData): string {
     lines.push(`📝 Cargas: ${data.records.total} (${data.records.fromWhatsApp} por WhatsApp)`);
   }
 
+  if (data.milk) {
+    const perCow = data.milk.litersPerCowDay !== null ? ` (${formatQuantity(data.milk.litersPerCowDay, "L")} por vaca por día)` : "";
+    lines.push(`🥛 Tambo: ${formatQuantity(data.milk.liters, "L")}${perCow}`);
+  }
+
+  if (data.weighings.length > 0) {
+    const items = data.weighings.map((w) => (w.adpv !== null ? `${w.group} ${formatQuantity(w.adpv, "kg/día")}` : w.group));
+    lines.push(`⚖️ Pesadas: ${items.join(" · ")}`);
+  }
+
+  if (data.sanitaryDue.length > 0) {
+    lines.push(`💉 Sanidad por vencer: ${data.sanitaryDue.map((s) => `${s.name} (${dayMonth(s.day)})`).join(", ")}`);
+  }
+
   if (data.lowStock.length > 0) {
     lines.push(`⚠️ Stock bajo: ${data.lowStock.map((s) => `${s.supply} (${formatQuantity(s.quantity, s.unit)})`).join(", ")}`);
   }
@@ -98,6 +121,9 @@ export function weeklySummaryOneLine(data: WeeklySummaryData): string {
   parts.push(...livestockParts(data.livestock));
   if (data.tasks.completed > 0) parts.push(`${data.tasks.completed} tareas completadas`);
   if (data.records.total > 0) parts.push(`${data.records.total} cargas`);
+  if (data.milk) parts.push(`${formatQuantity(data.milk.liters, "L")} de leche`);
+  if (data.weighings.length > 0) parts.push(`${data.weighings.length} pesadas`);
+  if (data.sanitaryDue.length > 0) parts.push(`sanidad por vencer: ${data.sanitaryDue.map((s) => s.name).join(", ")}`);
   if (data.lowStock.length > 0) parts.push(`stock bajo en ${data.lowStock.map((s) => s.supply).join(", ")}`);
   return parts.join(" · ") || "sin movimientos";
 }

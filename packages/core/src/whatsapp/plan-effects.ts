@@ -169,6 +169,8 @@ export type Effect =
       pastures: { ref: EntityRef; name: string; hectares: number | null }[];
       products: { name: string; dosis: string | null; unit: string | null }[];
       animals: { animalType: string; quantity: number }[];
+      /** Sanidad: fecha de la próxima dosis (queda como tarea pendiente). */
+      nextDose: string | null;
     };
 
 /** Todo lo que un mensaje provoca en el sistema. `creations` son las entidades
@@ -561,6 +563,10 @@ function planTask(event: FarmEvent, catalog: TenantCatalog, builder: PlanBuilder
     pastures,
     products: event.producto ? [{ name: event.producto, dosis: event.dosis, unit: event.unidad }] : [],
     animals,
+    nextDose:
+      taskType === "TRATAMIENTO_SANITARIO" && event.detail?.kind === "SANITARY_TREATMENT" && event.detail.nextDose && /^\d{4}-\d{2}-\d{2}$/.test(event.detail.nextDose)
+        ? event.detail.nextDose
+        : null,
   });
 }
 

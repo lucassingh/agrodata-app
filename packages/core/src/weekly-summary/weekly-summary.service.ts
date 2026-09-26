@@ -5,6 +5,9 @@ import { LOW_STOCK_THRESHOLD } from "../supplies/stock-math";
 import { waIdFromWNumber } from "../whatsapp/wa-id";
 import { OUTSIDE_24H_WINDOW, sendWhatsAppTemplate, sendWhatsAppText, WhatsAppSendError } from "../whatsapp/whatsapp-client";
 import { weeklySummaryOneLine, weeklySummaryText, type WeeklySummaryData } from "./weekly-summary";
+import { milkSummary } from "../livestock/livestock-math";
+import { getLivestockGroups } from "../livestock/weighings.service";
+import { normalizeEntityName } from "../whatsapp/entity-name";
 
 type Currency = "ARS" | "USD";
 
@@ -54,7 +57,9 @@ export async function gatherWeeklySummary(
   const moment = dateRangeFilter(period);
   const dateOnly = dateOnlyRangeFilter(period);
 
-  const [expenses, consumptions, livestock, tasks, records, fromWhatsApp, lowStock] = await Promise.all([
+  const dueUntil = new Date(`${period.to}T00:00:00Z`);
+  dueUntil.setUTCDate(dueUntil.getUTCDate() + 15);
+  const [expenses, consumptions, livestock, tasks, records, fromWhatsApp, lowStock, milkDays, weekWeighings, sanitaryDue] = await Promise.all([
     prisma.expense.findMany({ where: { tenantId, date: dateOnly }, include: { category: { select: { name: true } } } }),
     prisma.stockMovement.findMany({
       where: { tenantId, direction: "OUT", source: { not: "INITIAL" }, date: moment },
@@ -65,7 +70,21 @@ export async function gatherWeeklySummary(
     prisma.record.count({ where: { tenantId, occurredAt: moment } }),
     prisma.record.count({ where: { tenantId, occurredAt: moment, source: "WHATSAPP" } }),
     prisma.supply.findMany({ where: { tenantId, quantity: { lte: LOW_STOCK_THRESHOLD } }, orderBy: { quantity: "asc" }, take: 5 }),
+    prisma.milkRecord.findMany({ where: { tenantId, date: dateOnly } }),
+    prisma.weighing.findMany({ where: { tenantId, date: moment }, select: { pastureId: true, animalType: true } }),
+    // Sanidad pendiente que vence en las dos semanas siguientes (o ya venció).
+    prisma.task.findMany({
+      where: { tenantId, type: "TRATAMIENTO_SANITARIO", status: "PENDING", deadline: { lte: dueUntil } },
+      orderBy: { deadline: "asc" },
+      take: 5,
+    }),
   ]);
+
+  const milk = milkDays.length > 0 ? milkSummary(milkDays.map((m) => ({ day: m.date.toISOString().slice(0, 10), liters: m.liters, cowsMilking: m.cowsMilking }))) : null;
+  const weighedGroups = weekWeighings.length > 0 ? await getLivestockGroups(tenantId) : [];
+  const weighings = weighedGroups
+    .filter((g) => weekWeighings.some((w) => w.pastureId === g.pastureId && normalizeEntityName(w.animalType) === normalizeEntityName(g.animalType)))
+    .map((g) => ({ group: `${g.animalType} · ${g.pastureName}`, adpv: g.performance.adpv }));
 
   const byCurrency: Partial<Record<Currency, number>> = {};
   const byCategory = new Map<string, { name: string; amount: number; currency: Currency }>();
@@ -118,6 +137,9 @@ export async function gatherWeeklySummary(
     },
     records: { total: records, fromWhatsApp },
     lowStock: lowStock.map((s) => ({ supply: s.name, quantity: s.quantity, unit: s.unit })),
+    milk: milk ? { liters: milk.liters, litersPerCowDay: milk.litersPerCowDay } : null,
+    weighings,
+    sanitaryDue: sanitaryDue.map((t) => ({ name: t.treatment ?? t.description ?? "Tratamiento", day: t.deadline.toISOString().slice(0, 10) })),
   };
 }
 

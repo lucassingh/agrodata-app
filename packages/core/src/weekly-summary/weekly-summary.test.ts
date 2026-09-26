@@ -11,6 +11,9 @@ const empty: WeeklySummaryData = {
   tasks: { completed: 0, pending: 0 },
   records: { total: 0, fromWhatsApp: 0 },
   lowStock: [],
+  milk: null,
+  weighings: [],
+  sanitaryDue: [],
 };
 
 const busy: WeeklySummaryData = {
@@ -64,5 +67,21 @@ describe("previousWeek", () => {
 
   it("cruza bien el fin de mes", () => {
     expect(previousWeek("2026-10-05")).toEqual({ from: "2026-09-28", to: "2026-10-04" });
+  });
+});
+
+describe("resumen semanal: ganadería y tambo", () => {
+  it("suma tambo, pesadas y sanidad por vencer", () => {
+    const data = {
+      ...empty,
+      milk: { liters: 22_000, litersPerCowDay: 22.5 },
+      weighings: [{ group: "Terneros · Corral 1", adpv: 0.9 }],
+      sanitaryDue: [{ name: "Vacuna antiaftosa", day: "2026-10-02" }],
+    };
+    expect(hasActivity(data)).toBe(true);
+    const text = weeklySummaryText(data);
+    expect(text).toContain("🥛 Tambo: 22.000 L (22,5 L por vaca por día)");
+    expect(text).toContain("⚖️ Pesadas: Terneros · Corral 1 0,9 kg/día");
+    expect(text).toContain("💉 Sanidad por vencer: Vacuna antiaftosa (02/10)");
   });
 });

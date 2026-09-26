@@ -685,3 +685,31 @@ describe("reproducción", () => {
     expect(plan.notes[0]).toContain("No existe el rodeo «Norte»");
   });
 });
+
+describe("sanidad con próxima dosis", () => {
+  it("la tarea lleva la fecha de la próxima dosis", () => {
+    const plan = planMessageEffects(
+      event({
+        type: "SANITARY_TREATMENT",
+        summary: "Vacunación antiaftosa",
+        item: "Novillos",
+        cantidad: 40,
+        producto: "Vacuna antiaftosa",
+        occurredAt: "2026-09-25",
+        detail: { kind: "SANITARY_TREATMENT", nextDose: "2027-03-25" },
+      }),
+      catalog,
+      NOW,
+    );
+    expect(plan.effects).toContainEqual(expect.objectContaining({ kind: "task", taskType: "TRATAMIENTO_SANITARIO", nextDose: "2027-03-25" }));
+  });
+
+  it("sin próxima dosis no queda nada pendiente", () => {
+    const plan = planMessageEffects(
+      event({ type: "SANITARY_TREATMENT", summary: "Desparasitación", item: "Novillos", cantidad: 40, producto: "Ivermectina" }),
+      catalog,
+      NOW,
+    );
+    expect(plan.effects).toContainEqual(expect.objectContaining({ kind: "task", nextDose: null }));
+  });
+});

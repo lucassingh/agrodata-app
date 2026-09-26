@@ -448,6 +448,24 @@ async function applyEffect(
           animals: { create: effect.animals },
         },
       });
+      if (effect.nextDose) {
+        await tx.task.create({
+          data: {
+            tenantId,
+            type: "TRATAMIENTO_SANITARIO",
+            status: "PENDING",
+            deadline: new Date(effect.nextDose),
+            treatment: effect.treatment,
+            description: `Próxima dosis: ${effect.description}`.slice(0, 500),
+            responsibleId: userId,
+            products: { create: effect.products.map((p) => ({ productName: p.name, dosis: p.dosis, unit: p.unit })) },
+            animals: { create: effect.animals },
+          },
+        });
+        extraLines.push(
+          `Próxima dosis: ${effect.nextDose.slice(8, 10)}/${effect.nextDose.slice(5, 7)}/${effect.nextDose.slice(0, 4)} (quedó como tarea pendiente)`,
+        );
+      }
       return null;
     }
   }

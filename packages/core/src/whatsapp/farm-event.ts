@@ -68,7 +68,13 @@ export interface ReproductionDetail {
   weaned: number | null;
 }
 
-export type EventDetail = MilkProductionDetail | MilkSettlementDetail | WeighingDetail | ReproductionDetail;
+export interface SanitaryDetail {
+  kind: "SANITARY_TREATMENT";
+  /** Próxima dosis o refuerzo, YYYY-MM-DD, si el mensaje la menciona. */
+  nextDose: string | null;
+}
+
+export type EventDetail = MilkProductionDetail | MilkSettlementDetail | WeighingDetail | ReproductionDetail | SanitaryDetail;
 
 /** Fecha de hoy en Argentina como YYYY-MM-DD (mismo formato que un
  *  `<input type="date">` del dashboard). */
