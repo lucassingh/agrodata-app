@@ -95,6 +95,8 @@ model Tenant {
   baseCurrency String               @default("ARS")
   /// Dólar con el que este campo convierte sus márgenes (Preferencias).
   exchangeRateKind ExchangeRateKind @default(MAYORISTA)
+  /// Condición frente al IVA: define si los márgenes cuentan los costos con o sin IVA.
+  vatCondition     VatCondition     @default(RESPONSABLE_INSCRIPTO)
   category     TenantCategory       @default(MIXTO)
   location     String?
   totalHa      Float?
@@ -384,6 +386,8 @@ model Expense {
   withIva     Boolean      @default(true)
   /// Tipo de cambio de la factura, si lo trae (manda sobre la cotización del día).
   exchangeRate Float?
+  /// Alícuota de IVA del gasto (0.21, 0.105, 0.27, 0 = exento). Null: la sugerida por la categoría.
+  vatRate     Float?
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
@@ -423,6 +427,8 @@ model Supply {
   cost        Float?
   currency    CurrencyType @default(ARS)
   supplier    String?
+  /// Alícuota de IVA de sus compras (el costo se guarda sin IVA).
+  vatRate     Float?
   notes       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -692,8 +698,11 @@ model CostAllocation {
   campaignId      String
   expenseId       String?
   stockMovementId String?
+  /// Monto sin IVA.
   amount          Float
   currency        CurrencyType
+  /// Alícuota que corresponde a ese costo (para sumarla si el campo es monotributista).
+  vatRate         Float?
   date            DateTime
   concept         String
   createdAt       DateTime     @default(now())
@@ -754,4 +763,9 @@ model Income {
   @@index([tenantId, date])
   @@index([campaignId])
   @@map("incomes")
+}
+
+enum VatCondition {
+  RESPONSABLE_INSCRIPTO
+  MONOTRIBUTISTA
 }

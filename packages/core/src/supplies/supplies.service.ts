@@ -4,6 +4,7 @@ import { notFound } from "../errors";
 import type { CreateSupplyInput, UpdateSupplyInput } from "./supplies.schema";
 import { applyStockChange } from "./stock-movements.service";
 import { allocateCost } from "../economy/allocations.service";
+import { suggestVatRate } from "../economy/vat";
 
 const SUPPLY_INCLUDE = { category: true } as const;
 
@@ -31,15 +32,17 @@ export async function findSupply(tenantId: string, id: string) {
 async function assertCategoryBelongsToTenant(tenantId: string, categoryId: string) {
   const category = await prisma.supplyCategory.findFirst({ where: { id: categoryId, tenantId } });
   if (!category) notFound("Categoría de insumo no encontrada");
+  return category;
 }
 
 /** El stock inicial entra como primer movimiento del historial. */
 export async function createSupply(tenantId: string, input: CreateSupplyInput, userId?: string) {
-  await assertCategoryBelongsToTenant(tenantId, input.categoryId);
+  const category = await assertCategoryBelongsToTenant(tenantId, input.categoryId);
   return prisma.$transaction(async (tx) => {
     const supply = await tx.supply.create({
       data: {
         tenantId,
+        vatRate: suggestVatRate(category.name, input.name),
         categoryId: input.categoryId,
         name: input.name,
         quantity: 0,
@@ -128,6 +131,7 @@ export async function adjustSupplyStock(
       await allocateCost(tx, tenantId, [campaign.id], {
         stockMovementId: movement.id,
         amount: Math.round(movement.quantity * movement.unitCost * 100) / 100,
+        vatRate: current.vatRate ?? suggestVatRate(current.category.name, current.name),
         currency: movement.currency,
         date: movement.date,
         concept: `${current.name}: ${movement.quantity} ${current.unit ?? ""}`.trim(),

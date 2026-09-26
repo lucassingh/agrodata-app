@@ -43,6 +43,7 @@ export default async function PreferencesPage() {
             timezone: m.tenant.timezone,
             baseCurrency: m.tenant.baseCurrency,
             exchangeRateKind: m.tenant.exchangeRateKind,
+            vatCondition: m.tenant.vatCondition,
             location: m.tenant.location,
             totalHa: m.tenant.totalHa,
           },

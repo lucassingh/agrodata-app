@@ -7,6 +7,8 @@ export const createExpenseSchema = z.object({
   date: z.string().min(1, "Elegí una fecha"),
   description: z.string().trim().max(500).optional(),
   withIva: z.boolean().optional(),
+  /** Alícuota de IVA (0.21, 0.105, 0.27 o 0 = exento). */
+  vatRate: z.number().min(0).max(0.27).optional(),
 });
 export type CreateExpenseInput = z.infer<typeof createExpenseSchema>;
 
@@ -17,6 +19,7 @@ export const updateExpenseSchema = z.object({
   date: z.string().optional(),
   description: z.string().trim().optional(),
   withIva: z.boolean().optional(),
+  vatRate: z.number().min(0).max(0.27).nullable().optional(),
 });
 export type UpdateExpenseInput = z.infer<typeof updateExpenseSchema>;
 

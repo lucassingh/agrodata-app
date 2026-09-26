@@ -12,6 +12,7 @@ export interface Expense {
   date: Date;
   description: string | null;
   withIva: boolean;
+  vatRate: number | null;
   category: ExpenseCategoryRef;
 }
 

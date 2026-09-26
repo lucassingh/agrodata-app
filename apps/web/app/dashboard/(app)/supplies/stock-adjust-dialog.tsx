@@ -92,7 +92,7 @@ export function StockAdjustDialog({ supply, direction, campaignOptions, onClose 
           {direction === "in" ? (
             <div className="space-y-2">
               <Label htmlFor="stock-unit-cost">
-                Precio por {supply.unit || "unidad"} en {supply.currency} (opcional)
+                Precio por {supply.unit || "unidad"} sin IVA, en {supply.currency} (opcional)
               </Label>
               <Input
                 id="stock-unit-cost"

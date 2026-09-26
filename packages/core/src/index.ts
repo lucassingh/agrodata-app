@@ -55,3 +55,4 @@ export * from "./economy/campaigns.schema";
 export * from "./economy/campaigns.service";
 export * from "./economy/allocations.service";
 export * from "./economy/economy.service";
+export * from "./economy/vat";

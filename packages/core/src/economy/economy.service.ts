@@ -5,6 +5,7 @@ import { campaignResult, inBothCurrencies, rateOn, type CampaignResult, type Cur
 import { EXCHANGE_RATE_LABEL, type ExchangeRateKind } from "./exchange-rates";
 import { ratesForKind } from "./exchange-rates.service";
 import { z } from "zod";
+import { costForCondition, type VatCondition } from "./vat";
 
 /** Día de una fecha para buscar su cotización: los campos de solo fecha se
  *  guardan a medianoche UTC (su día es el UTC); los momentos, en día argentino. */
@@ -46,16 +47,19 @@ export interface CampaignEconomy {
   result: CampaignResult;
 }
 
-async function tenantRateKind(tenantId: string): Promise<ExchangeRateKind> {
-  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { exchangeRateKind: true } });
-  return tenant?.exchangeRateKind ?? "MAYORISTA";
+async function tenantSettings(tenantId: string): Promise<{ kind: ExchangeRateKind; vatCondition: VatCondition }> {
+  const tenant = await prisma.tenant.findUnique({
+    where: { id: tenantId },
+    select: { exchangeRateKind: true, vatCondition: true },
+  });
+  return { kind: tenant?.exchangeRateKind ?? "MAYORISTA", vatCondition: tenant?.vatCondition ?? "RESPONSABLE_INSCRIPTO" };
 }
 
 /** Campañas con costos e ingresos convertidos al dólar elegido por el campo, en
  *  la fecha de cada uno, y su resultado. Cada línea lleva su cotización, así cada
  *  número del módulo Economía se puede rastrear. */
 export async function getEconomyOverview(tenantId: string, season?: string) {
-  const kind = await tenantRateKind(tenantId);
+  const { kind, vatCondition } = await tenantSettings(tenantId);
   const campaigns = await prisma.campaign.findMany({
     where: { tenantId, ...(season ? { season } : {}) },
     include: {
@@ -104,7 +108,8 @@ export async function getEconomyOverview(tenantId: string, season?: string) {
         date: a.date,
         concept: a.concept,
         origin: a.expenseId ? "expense" : a.stockMovementId ? "stock" : "other",
-        amount: a.amount,
+        // Responsable inscripto: sin IVA (lo recupera). Monotributista: con IVA (es costo).
+        amount: costForCondition(a.amount, a.vatRate, vatCondition),
         currency: a.currency,
         documentRate: a.expense?.exchangeRate ?? null,
       }),
@@ -151,6 +156,7 @@ export async function getEconomyOverview(tenantId: string, season?: string) {
   return {
     rateKind: kind,
     rateLabel: EXCHANGE_RATE_LABEL[kind],
+    vatCondition,
     latestRate: latest ? { day: latest.date.toISOString().slice(0, 10), sell: latest.sell, updatedAt: latest.updatedAt.toISOString() } : null,
     campaigns: rows,
   };

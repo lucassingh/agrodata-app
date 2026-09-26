@@ -164,7 +164,7 @@ export function SupplyFormDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>Costo</Label>
+              <Label>Costo unitario sin IVA</Label>
               <Input
                 type="number"
                 min={0}

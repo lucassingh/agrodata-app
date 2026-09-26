@@ -24,6 +24,12 @@ import {
 import { updateTenantConfigAction } from "./actions";
 import { setActiveTenantAction } from "@/app/dashboard/(app)/_lib/tenant-actions";
 import { EXCHANGE_RATE_KINDS, EXCHANGE_RATE_LABEL, type ExchangeRateKind } from "@repo/core/economy/exchange-rates";
+import { VAT_CONDITION_LABEL, type VatCondition } from "@repo/core/economy/vat";
+
+const VAT_CONDITION_ITEMS = (Object.keys(VAT_CONDITION_LABEL) as VatCondition[]).map((value) => ({
+  value,
+  label: VAT_CONDITION_LABEL[value],
+}));
 
 const EXCHANGE_RATE_ITEMS = EXCHANGE_RATE_KINDS.map((kind) => ({
   value: kind,
@@ -40,6 +46,7 @@ interface TenantMembership {
     timezone: string;
     baseCurrency: string;
     exchangeRateKind: ExchangeRateKind;
+    vatCondition: VatCondition;
     location: string | null;
     totalHa: number | null;
   };
@@ -57,6 +64,7 @@ interface TenantFormValues {
   timezone: string;
   baseCurrency: string;
   exchangeRateKind: ExchangeRateKind;
+  vatCondition: VatCondition;
   location: string;
   totalHa: string;
 }
@@ -68,6 +76,7 @@ function toFormValues(tenant: TenantMembership["tenant"]): TenantFormValues {
     timezone: tenant.timezone,
     baseCurrency: tenant.baseCurrency,
     exchangeRateKind: tenant.exchangeRateKind,
+    vatCondition: tenant.vatCondition,
     location: tenant.location ?? "",
     totalHa: tenant.totalHa?.toString() ?? "",
   };
@@ -93,6 +102,7 @@ function TenantConfigForm({
         timezone: values.timezone,
         baseCurrency: values.baseCurrency,
         exchangeRateKind: values.exchangeRateKind,
+        vatCondition: values.vatCondition,
         location: values.location.trim() || undefined,
         totalHa: values.totalHa ? Number(values.totalHa) : undefined,
       });
@@ -207,6 +217,29 @@ function TenantConfigForm({
           </Select>
           <p className="text-xs text-muted-foreground">
             Con este dólar se pasan a dólares los costos e ingresos de cada lote. Se actualiza solo.
+          </p>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="vat-condition">Condición frente al IVA</Label>
+          <Select
+            items={VAT_CONDITION_ITEMS}
+            value={values.vatCondition}
+            disabled={readOnly}
+            onValueChange={(v: string | null) => v && setValues((p) => ({ ...p, vatCondition: v as VatCondition }))}
+          >
+            <SelectTrigger id="vat-condition" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {VAT_CONDITION_ITEMS.map((c) => (
+                <SelectItem key={c.value} value={c.value}>
+                  {c.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            Responsable inscripto: los márgenes cuentan los costos sin IVA (lo recuperás). Monotributista: con IVA.
           </p>
         </div>
         <div className="space-y-2">

@@ -19,6 +19,7 @@ export const updateTenantSchema = createTenantSchema.partial().extend({
   location: z.string().max(500).optional(),
   totalHa: z.number().nonnegative().optional(),
   exchangeRateKind: z.enum(EXCHANGE_RATE_KINDS).optional(),
+  vatCondition: z.enum(["RESPONSABLE_INSCRIPTO", "MONOTRIBUTISTA"]).optional(),
 });
 
 export type CreateTenantInput = z.infer<typeof createTenantSchema>;

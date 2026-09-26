@@ -168,6 +168,9 @@ export function EconomyClient({ overview, seasons, season, pastures, unassignedI
             ))}
           </SelectContent>
         </Select>
+        <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+          {overview.vatCondition === "RESPONSABLE_INSCRIPTO" ? "Costos sin IVA (responsable inscripto)" : "Costos con IVA (monotributista)"}
+        </span>
         {overview.latestRate ? (
           <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
             Dólar {overview.rateLabel}: {formatMoney(overview.latestRate.sell, "ARS")} ({formatDay(overview.latestRate.day)})

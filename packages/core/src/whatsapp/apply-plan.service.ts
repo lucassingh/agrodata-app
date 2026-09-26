@@ -7,6 +7,7 @@ import { describeEffect, type Creation, type Effect, type EntityRef, type Messag
 import { ensureCampaign } from "../economy/campaigns.service";
 import { allocateCost, resolveCampaignForPasture, type CostSource } from "../economy/allocations.service";
 import { formatMoney, formatQuantity } from "./farm-event";
+import { netOfVat, suggestVatRate } from "../economy/vat";
 
 type Tx = Prisma.TransactionClient;
 
@@ -89,7 +90,14 @@ async function applyCreations(tx: Tx, tenantId: string, creations: Creation[]): 
         const created =
           existing ??
           (await tx.supply.create({
-            data: { tenantId, name: creation.name, unit: creation.unit, quantity: 0, categoryId: refId(creation.categoryRef) },
+            data: {
+              tenantId,
+              name: creation.name,
+              unit: creation.unit,
+              quantity: 0,
+              categoryId: refId(creation.categoryRef),
+              vatRate: suggestVatRate(creation.categoryName, creation.name),
+            },
           }));
         ids.set(creation.key, created.id);
         break;
@@ -178,6 +186,7 @@ async function applyEffect(
 ): Promise<PendingCost | null> {
   switch (effect.kind) {
     case "expense": {
+      const vatRate = suggestVatRate(effect.categoryName, effect.description);
       const expense = await tx.expense.create({
         data: expenseCreateData(tenantId, {
           categoryId: resolve(effect.categoryRef),
@@ -185,6 +194,7 @@ async function applyEffect(
           currency: effect.currency,
           date: effect.date,
           description: effect.description,
+          vatRate,
         }),
       });
       return effect.pastureId
@@ -193,7 +203,9 @@ async function applyEffect(
             cropHint: effect.cropHint,
             source: {
               expenseId: expense.id,
-              amount: effect.amount,
+              // Los importes por WhatsApp se toman con IVA incluido (lo habitual en una factura).
+              amount: netOfVat(effect.amount, true, vatRate),
+              vatRate,
               currency: effect.currency,
               date: expense.date,
               concept: effect.description,
@@ -202,12 +214,18 @@ async function applyEffect(
         : null;
     }
     case "stock": {
+      const supply = await tx.supply.findFirstOrThrow({
+        where: { id: resolve(effect.supplyRef), tenantId },
+        include: { category: { select: { name: true } } },
+      });
+      const vatRate = supply.vatRate ?? suggestVatRate(supply.category.name, supply.name);
       const { movement } = await applyStockChange(tx, tenantId, {
-        supplyId: resolve(effect.supplyRef),
+        supplyId: supply.id,
         direction: effect.direction,
         quantity: effect.quantity,
         source: "WHATSAPP",
-        unitCost: effect.unitCost,
+        // El costo de stock se guarda sin IVA; el precio del mensaje lo trae incluido.
+        unitCost: effect.unitCost !== null ? netOfVat(effect.unitCost, true, vatRate) : null,
         currency: effect.currency,
         pastureId: effect.pastureId,
         recordId,
@@ -222,6 +240,7 @@ async function applyEffect(
             source: {
               stockMovementId: movement.id,
               amount: Math.round(movement.quantity * movement.unitCost * 100) / 100,
+              vatRate,
               currency: movement.currency,
               date: movement.date,
               concept: `${effect.supplyName}: ${formatQuantity(movement.quantity, effect.unit)}`,

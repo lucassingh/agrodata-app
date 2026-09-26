@@ -53,6 +53,7 @@ export function expenseCreateData(tenantId: string, input: CreateExpenseInput) {
     date: new Date(input.date),
     description: input.description,
     withIva: input.withIva ?? true,
+    vatRate: input.vatRate ?? null,
   };
 }
 
@@ -78,6 +79,7 @@ export async function updateExpense(tenantId: string, id: string, input: UpdateE
       date: input.date ? new Date(input.date) : undefined,
       description: input.description,
       withIva: input.withIva,
+      vatRate: input.vatRate,
     },
     include: EXPENSE_INCLUDE,
   });

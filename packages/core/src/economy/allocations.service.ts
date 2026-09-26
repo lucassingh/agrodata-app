@@ -3,13 +3,17 @@ import { prisma, type Prisma } from "@repo/database";
 import { notFound } from "../errors";
 import { normalizeEntityName } from "../whatsapp/entity-name";
 import { splitByHectares } from "./economy-math";
+import { netOfVat, suggestVatRate } from "./vat";
 
 type Db = Prisma.TransactionClient | typeof prisma;
 
 export interface CostSource {
   expenseId?: string;
   stockMovementId?: string;
+  /** Sin IVA. */
   amount: number;
+  /** Alícuota que corresponde a ese costo (se suma si el campo es monotributista). */
+  vatRate?: number | null;
   currency: "ARS" | "USD";
   date: Date;
   concept: string;
@@ -47,6 +51,7 @@ export async function allocateCost(db: Db, tenantId: string, campaignIds: string
       expenseId: source.expenseId ?? null,
       stockMovementId: source.stockMovementId ?? null,
       amount: part.amount,
+      vatRate: source.vatRate ?? null,
       currency: source.currency,
       date: source.date,
       concept: source.concept,
@@ -55,15 +60,22 @@ export async function allocateCost(db: Db, tenantId: string, campaignIds: string
   return parts;
 }
 
+/** Alícuota de un gasto: la cargada o, si no hay, la sugerida por su categoría. */
+export function expenseVatRate(expense: { vatRate: number | null; category: { name: string }; description?: string | null }) {
+  return expense.vatRate ?? suggestVatRate(expense.category.name, expense.description);
+}
+
 /** Reemplaza las campañas a las que va un gasto (alta o edición desde la web). */
 export async function setExpenseCampaigns(tenantId: string, expenseId: string, campaignIds: string[]) {
   const expense = await prisma.expense.findFirst({ where: { id: expenseId, tenantId }, include: { category: true } });
   if (!expense) notFound("Gasto no encontrado");
   await prisma.$transaction(async (tx) => {
     await tx.costAllocation.deleteMany({ where: { tenantId, expenseId } });
+    const rate = expenseVatRate(expense);
     await allocateCost(tx, tenantId, campaignIds, {
       expenseId,
-      amount: expense.amount,
+      amount: netOfVat(expense.amount, expense.withIva, rate),
+      vatRate: rate,
       currency: expense.currency,
       date: expense.date,
       concept: expense.description || expense.category.name,

@@ -16,6 +16,7 @@ import {
 } from "./actions";
 import { colorForKey } from "@/lib/color-for-key";
 import type { ExchangeRateKind } from "@repo/core/economy/exchange-rates";
+import type { VatCondition } from "@repo/core/economy/vat";
 
 interface PreferencesTabsProps {
   memberships: Array<{
@@ -28,6 +29,7 @@ interface PreferencesTabsProps {
       timezone: string;
       baseCurrency: string;
       exchangeRateKind: ExchangeRateKind;
+      vatCondition: VatCondition;
       location: string | null;
       totalHa: number | null;
     };

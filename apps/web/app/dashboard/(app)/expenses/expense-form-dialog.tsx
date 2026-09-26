@@ -24,6 +24,7 @@ import {
 import { createExpenseAction, updateExpenseAction } from "./actions";
 import type { Expense, ExpenseCategoryRef } from "./types";
 import { CampaignPicker, type CampaignOption } from "@/components/campaign-picker";
+import { suggestVatRate, VAT_RATE_LABEL, VAT_RATES } from "@repo/core/economy/vat";
 
 interface ExpenseFormDialogProps {
   mode: "create" | "edit";
@@ -38,6 +39,8 @@ interface ExpenseFormDialogProps {
   ivaMode: "con" | "sin";
   onClose: () => void;
 }
+
+const VAT_ITEMS = VAT_RATES.map((rate) => ({ value: String(rate), label: VAT_RATE_LABEL[String(rate)]! }));
 
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
@@ -64,6 +67,14 @@ export function ExpenseFormDialog({
   const [date, setDate] = useState(expense ? dateInputValue(expense.date) : todayISO());
   const [description, setDescription] = useState(expense?.description ?? "");
   const [withIva, setWithIva] = useState(expense ? expense.withIva : ivaMode === "con");
+  const categoryName = (id: string) => categories.find((c) => c.id === id)?.name ?? "";
+  const [vatRate, setVatRate] = useState(String(expense?.vatRate ?? suggestVatRate(categoryName(categoryId))));
+  // Mientras no se elija a mano, la alícuota sigue a la categoría.
+  const [vatTouched, setVatTouched] = useState(expense?.vatRate != null);
+  const chooseCategory = (id: string) => {
+    setCategoryId(id);
+    if (!vatTouched) setVatRate(String(suggestVatRate(categoryName(id))));
+  };
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -90,6 +101,7 @@ export function ExpenseFormDialog({
       date,
       description: description.trim() || undefined,
       withIva,
+      vatRate: Number(vatRate),
     };
 
     startTransition(async () => {
@@ -127,7 +139,7 @@ export function ExpenseFormDialog({
             <Select
               items={categories.map((c) => ({ value: c.id, label: c.name }))}
               value={categoryId}
-              onValueChange={(v: string | null) => v && setCategoryId(v)}
+              onValueChange={(v: string | null) => v && chooseCategory(v)}
             >
               <SelectTrigger className="w-full">
                 <SelectValue />
@@ -194,6 +206,34 @@ export function ExpenseFormDialog({
             <Checkbox checked={withIva} onCheckedChange={(checked: boolean) => setWithIva(checked)} />
             El importe incluye IVA
           </label>
+
+          <div className="space-y-2">
+            <Label htmlFor="expense-vat-rate">Alícuota de IVA</Label>
+            <Select
+              items={VAT_ITEMS}
+              value={vatRate}
+              onValueChange={(v: string | null) => {
+                if (!v) return;
+                setVatRate(v);
+                setVatTouched(true);
+              }}
+            >
+              <SelectTrigger id="expense-vat-rate" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {VAT_ITEMS.map((item) => (
+                  <SelectItem key={item.value} value={item.value}>
+                    {item.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Sugerida según la categoría (maquinaria y labores 10,5 %, servicios públicos 27 %, el resto 21 %).
+              Confirmala con tu contador.
+            </p>
+          </div>
 
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
         </div>
