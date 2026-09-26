@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { requireUser } from "@/lib/session";
-import { getDashboardSummary } from "@repo/core";
+import { findUserTenants, getDashboardSummary, getSignature } from "@repo/core";
 import { SummaryClient } from "./summary-client";
 import { ZERO_DASHBOARD } from "./types";
 
@@ -16,11 +16,20 @@ export default async function SummaryPage({ searchParams }: SummaryPageProps) {
   const user = await requireUser();
   const { from = "", to = "" } = await searchParams;
 
-  const dashboard = user.activeTenantId
-    ? await getDashboardSummary(user.activeTenantId, { from, to })
-    : ZERO_DASHBOARD;
+  const [dashboard, memberships, signature] = await Promise.all([
+    user.activeTenantId ? getDashboardSummary(user.activeTenantId, { from, to }) : ZERO_DASHBOARD,
+    findUserTenants(user.id),
+    getSignature(user.id),
+  ]);
+  const active = memberships.find((m) => m.tenantId === user.activeTenantId);
 
   return (
-    <SummaryClient dashboard={dashboard} hasActiveTenant={Boolean(user.activeTenantId)} from={from} to={to} />
+    <SummaryClient
+      dashboard={dashboard}
+      hasActiveTenant={Boolean(user.activeTenantId)}
+      from={from}
+      to={to}
+      report={active ? { tenantId: active.tenantId, tenantName: active.tenant.name, signature } : null}
+    />
   );
 }

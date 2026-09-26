@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { setActiveTenantAction } from "@/app/dashboard/(app)/_lib/tenant-actions";
+import { ReportButton, type ReportSignature } from "@/components/report-dialog";
 import { formatArs, formatUsd } from "@/app/dashboard/(app)/economy/economy-format";
 
 type Field = Omit<PortfolioField, "lastEntryAt"> & { lastEntryAt: string | null };
@@ -67,7 +68,15 @@ function Comparison({
   );
 }
 
-export function PortfolioClient({ fields, activeTenantId }: { fields: Field[]; activeTenantId: string | null }) {
+export function PortfolioClient({
+  fields,
+  activeTenantId,
+  signature,
+}: {
+  fields: Field[];
+  activeTenantId: string | null;
+  signature: ReportSignature;
+}) {
   const router = useRouter();
   const [entering, startEnter] = useTransition();
 
@@ -193,10 +202,13 @@ export function PortfolioClient({ fields, activeTenantId }: { fields: Field[]; a
       label: "",
       className: "text-right",
       render: (f) => (
-        <Button size="sm" variant="outline" disabled={entering} onClick={() => enter(f)} aria-label={`Entrar a ${f.name}`}>
-          Entrar
-          <ArrowRight size={14} />
-        </Button>
+        <div className="flex justify-end gap-2">
+          <ReportButton tenantId={f.tenantId} tenantName={f.name} signature={signature} size="sm" variant="outline" />
+          <Button size="sm" disabled={entering} onClick={() => enter(f)} aria-label={`Entrar a ${f.name}`}>
+            Entrar
+            <ArrowRight size={14} />
+          </Button>
+        </div>
       ),
     },
   ];

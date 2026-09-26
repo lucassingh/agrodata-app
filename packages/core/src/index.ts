@@ -63,3 +63,5 @@ export * from "./livestock/weighings.service";
 export * from "./livestock/repro.service";
 export * from "./portfolio/portfolio-math";
 export * from "./portfolio/portfolio.service";
+export * from "./reports/report-period";
+export * from "./reports/field-report.service";

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { requireUser } from "@/lib/session";
-import { getPortfolio } from "@repo/core";
+import { getPortfolio, getSignature } from "@repo/core";
 import { HeroBanner } from "@/components/hero-banner";
 import { PortfolioClient } from "./portfolio-client";
 
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default async function PortfolioPage() {
   const user = await requireUser();
-  const fields = await getPortfolio(user.id);
+  const [fields, signature] = await Promise.all([getPortfolio(user.id), getSignature(user.id)]);
 
   return (
     <div className="space-y-6">
@@ -21,6 +21,7 @@ export default async function PortfolioPage() {
       <PortfolioClient
         fields={fields.map((f) => ({ ...f, lastEntryAt: f.lastEntryAt?.toISOString() ?? null }))}
         activeTenantId={user.activeTenantId}
+        signature={signature}
       />
     </div>
   );
