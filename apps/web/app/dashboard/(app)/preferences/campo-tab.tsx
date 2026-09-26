@@ -27,7 +27,7 @@ import { EXCHANGE_RATE_KINDS, EXCHANGE_RATE_LABEL, type ExchangeRateKind } from 
 
 const EXCHANGE_RATE_ITEMS = EXCHANGE_RATE_KINDS.map((kind) => ({
   value: kind,
-  label: kind === "MAYORISTA" ? `${EXCHANGE_RATE_LABEL[kind]} (el de referencia para granos)` : EXCHANGE_RATE_LABEL[kind],
+  label: kind === "MAYORISTA" ? `${EXCHANGE_RATE_LABEL[kind]} (oficial del BCRA, Com. A 3500)` : EXCHANGE_RATE_LABEL[kind],
 }));
 
 interface TenantMembership {

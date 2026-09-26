@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseCurrentRates, parseHistoricalRates } from "./exchange-rates";
+import { parseBcraRates, parseCurrentRates, parseHistoricalRates } from "./exchange-rates";
 
 describe("parseCurrentRates", () => {
   it("toma los tipos conocidos con el día argentino", () => {
@@ -32,5 +32,23 @@ describe("parseHistoricalRates", () => {
       { casa: "bolsa", compra: 100, venta: 101, fecha: "03/01/2020" },
     ]);
     expect(rates).toEqual([{ kind: "MAYORISTA", day: "2011-01-03", buy: 3.97, sell: 3.98 }]);
+  });
+});
+
+describe("parseBcraRates", () => {
+  it("toma el dólar de cada día como mayorista (A 3500)", () => {
+    const rates = parseBcraRates({
+      status: 200,
+      results: [
+        { fecha: "2026-09-25", detalle: [{ codigoMoneda: "USD", descripcion: "DOLAR E.E.U.U.", tipoPase: 0, tipoCotizacion: 1525.5 }] },
+        { fecha: "2026-09-24", detalle: [{ codigoMoneda: "EUR", tipoCotizacion: 1700 }] },
+        { fecha: "2026-09-23", detalle: [{ codigoMoneda: "USD", tipoCotizacion: 0 }] },
+      ],
+    });
+    expect(rates).toEqual([{ kind: "MAYORISTA", day: "2026-09-25", buy: 1525.5, sell: 1525.5 }]);
+  });
+
+  it("una respuesta de error no rompe nada", () => {
+    expect(parseBcraRates({ status: 400, errorMessages: ["x"] })).toEqual([]);
   });
 });

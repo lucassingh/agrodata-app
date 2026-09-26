@@ -50,3 +50,18 @@ export function parseHistoricalRates(json: unknown): ParsedRate[] {
     return [{ kind, day, buy: isRate(row.compra) ? row.compra : row.venta, sell: row.venta }];
   });
 }
+
+/** API oficial del BCRA (Estadísticas Cambiarias, /Cotizaciones/USD): el dólar
+ *  mayorista de referencia (Comunicación A 3500), un valor por día hábil. */
+export function parseBcraRates(json: unknown): ParsedRate[] {
+  const results = (json as { results?: unknown })?.results;
+  if (!Array.isArray(results)) return [];
+  return results.flatMap((row: { fecha?: unknown; detalle?: unknown }) => {
+    const day = typeof row.fecha === "string" && /^\d{4}-\d{2}-\d{2}$/.test(row.fecha) ? row.fecha : null;
+    const usd = Array.isArray(row.detalle)
+      ? (row.detalle as { codigoMoneda?: unknown; tipoCotizacion?: unknown }[]).find((d) => d.codigoMoneda === "USD")
+      : undefined;
+    if (!day || !usd || !isRate(usd.tipoCotizacion)) return [];
+    return [{ kind: "MAYORISTA" as const, day, buy: usd.tipoCotizacion, sell: usd.tipoCotizacion }];
+  });
+}
