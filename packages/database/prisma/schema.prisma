@@ -60,6 +60,10 @@ enum RecordType {
   ANIMAL_DEATH
   FERTILIZATION
   HARVEST
+  WEIGHING
+  REPRODUCTION
+  MILK_PRODUCTION
+  MILK_SETTLEMENT
 }
 
 enum TaskType {
@@ -125,6 +129,10 @@ model Tenant {
   costAllocations   CostAllocation[]
   harvests          Harvest[]
   incomes           Income[]
+  weighings         Weighing[]
+  reproEvents       ReproEvent[]
+  milkRecords       MilkRecord[]
+  milkSettlements   MilkSettlement[]
 
   @@map("tenants")
 }
@@ -251,6 +259,7 @@ model Pasture {
   livestockEvents LivestockEvent[]
   stockMovements  StockMovement[]
   campaigns       Campaign[]
+  weighings       Weighing[]
 
   @@index([tenantId])
   @@map("pastures")
@@ -463,7 +472,9 @@ model Rodeo {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  weighings   Weighing[]
+  reproEvents ReproEvent[]
 
   @@unique([tenantId, name])
   @@map("rodeos")
@@ -768,4 +779,102 @@ model Income {
 enum VatCondition {
   RESPONSABLE_INSCRIPTO
   MONOTRIBUTISTA
+}
+
+// ─── Ganadería productiva y tambo (Etapa 3) ──────────────
+
+// Pesada de un grupo: una categoría de animal en un potrero (o corral), con rodeo
+// opcional. Se guarda el promedio; de dos pesadas del mismo grupo sale el ADPV.
+model Weighing {
+  id         String   @id @default(cuid())
+  tenantId   String
+  pastureId  String?
+  animalType String
+  rodeoId    String?
+  date       DateTime
+  headCount  Int
+  averageKg  Float
+  /// WHATSAPP, WEB o EXCEL.
+  source     String
+  recordId   String?
+  createdAt  DateTime @default(now())
+
+  tenant  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  pasture Pasture? @relation(fields: [pastureId], references: [id], onDelete: SetNull)
+  rodeo   Rodeo?   @relation(fields: [rodeoId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, pastureId, animalType, date])
+  @@map("weighings")
+}
+
+// Eventos reproductivos por conteo (no por animal): inicio de servicio (vacas
+// entoradas), tacto (preñadas y vacías), partos y destete.
+enum ReproEventType {
+  SERVICE_START
+  PREGNANCY_CHECK
+  CALVING
+  WEANING
+}
+
+model ReproEvent {
+  id         String         @id @default(cuid())
+  tenantId   String
+  rodeoId    String?
+  animalType String?
+  type       ReproEventType
+  date       DateTime
+  females    Int?
+  pregnant   Int?
+  empty      Int?
+  births     Int?
+  weaned     Int?
+  recordId   String?
+  createdAt  DateTime       @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  rodeo  Rodeo? @relation(fields: [rodeoId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, date])
+  @@map("repro_events")
+}
+
+// Producción diaria del tambo: un registro por día (un mensaje nuevo del mismo
+// día lo reemplaza).
+model MilkRecord {
+  id          String   @id @default(cuid())
+  tenantId    String
+  date        DateTime @db.Date
+  liters      Float
+  cowsMilking Int?
+  cowsDry     Int?
+  recordId    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, date])
+  @@map("milk_records")
+}
+
+// Liquidación de la usina por un período.
+model MilkSettlement {
+  id            String       @id @default(cuid())
+  tenantId      String
+  periodStart   DateTime     @db.Date
+  periodEnd     DateTime     @db.Date
+  dairy         String?
+  liters        Float
+  fatPct        Float?
+  proteinPct    Float?
+  pricePerLiter Float?
+  totalAmount   Float
+  currency      CurrencyType @default(ARS)
+  recordId      String?
+  createdAt     DateTime     @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, periodEnd])
+  @@map("milk_settlements")
 }
