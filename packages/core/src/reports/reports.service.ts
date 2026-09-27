@@ -1,6 +1,5 @@
 import "server-only";
 import { prisma } from "@repo/database";
-import { LOW_STOCK_THRESHOLD } from "../supplies/stock-math";
 import { dateOnlyRangeFilter, dateRangeFilter, type DateRange } from "./date-range";
 
 
@@ -36,7 +35,6 @@ export async function getDashboardSummary(tenantId: string, range: DateRange = {
     animalsByTypeRaw,
     cropSummaryRaw,
     expensesByCategoryRaw,
-    supplyAlerts,
     expenseCategories,
     deathsAgg,
     usdExpensesAgg,
@@ -61,25 +59,10 @@ export async function getDashboardSummary(tenantId: string, range: DateRange = {
     }),
     prisma.pastureCrop.groupBy({ by: ["crop"], where: { pasture: { tenantId } }, _count: true }),
     prisma.expense.groupBy({ by: ["categoryId"], where: { ...expenses, currency: "ARS" }, _sum: { amount: true }, _count: true }),
-    prisma.supply.findMany({
-      where: { tenantId, quantity: { lte: LOW_STOCK_THRESHOLD } },
-      include: { category: true },
-      take: 10,
-      orderBy: { quantity: "asc" },
-    }),
     prisma.expenseCategory.findMany({ where: { tenantId } }),
     prisma.livestockEvent.aggregate({ where: deaths, _sum: { quantity: true } }),
     prisma.expense.aggregate({ where: { ...expenses, currency: "USD" }, _sum: { amount: true } }),
   ]);
-
-  // Sanidad pendiente que vence en los próximos 30 días (o ya venció). No depende del período.
-  const dueUntil = new Date();
-  dueUntil.setUTCDate(dueUntil.getUTCDate() + 30);
-  const sanitaryDue = await prisma.task.findMany({
-    where: { tenantId, type: "TRATAMIENTO_SANITARIO", status: "PENDING", deadline: { lte: dueUntil } },
-    orderBy: { deadline: "asc" },
-    take: 5,
-  });
 
   const categoryMap = new Map(expenseCategories.map((c) => [c.id, c]));
   const expensesByCategory = expensesByCategoryRaw.map((e) => ({
@@ -120,12 +103,6 @@ export async function getDashboardSummary(tenantId: string, range: DateRange = {
     animalsByType: animalsByTypeRaw.map((a) => ({ type: a.animalType, count: a._sum.quantity ?? 0 })),
     cropSummary: cropSummaryRaw.map((c) => ({ name: c.crop, count: c._count })),
     expensesByCategory,
-    supplyAlerts,
-    sanitaryDue: sanitaryDue.map((t) => ({
-      id: t.id,
-      name: t.treatment ?? t.description ?? "Tratamiento sanitario",
-      day: t.deadline.toISOString().slice(0, 10),
-    })),
   };
 }
 

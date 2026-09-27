@@ -16,18 +16,18 @@ import {
   Fence,
   Package,
   Wallet,
-  AlertTriangle,
   MapPin,
   Upload,
   BarChart3,
   Sprout,
   Minus,
-  Syringe,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { HeroBanner } from "@/components/hero-banner";
 import { ReportButton, type ReportSignature } from "@/components/report-dialog";
+import { AlertsPanel } from "@/components/alerts-panel";
+import type { FieldAlert } from "@repo/core/alerts/alert-rules";
 import { CowHeadIcon } from "@/components/cow-head-icon";
 import { getRecordConfig } from "../data/record-constants";
 import { formatRecordDescription, formatRecordSource } from "../data/record-format";
@@ -53,9 +53,12 @@ interface SummaryClientProps {
   to: string;
   /** Informe PDF del campo activo. */
   report: { tenantId: string; tenantName: string; signature: ReportSignature } | null;
+  /** Avisos del campo activo (Etapa 5). */
+  alerts: FieldAlert[];
+  canConfigureAlerts: boolean;
 }
 
-export function SummaryClient({ dashboard, hasActiveTenant, from, to, report }: SummaryClientProps) {
+export function SummaryClient({ dashboard, hasActiveTenant, from, to, report, alerts, canConfigureAlerts }: SummaryClientProps) {
   const router = useRouter();
 
   if (!hasActiveTenant) {
@@ -90,6 +93,8 @@ export function SummaryClient({ dashboard, hasActiveTenant, from, to, report }: 
         subtitle="Indicadores según tus registros, actividad reciente y estado operativo."
         actions={report ? <ReportButton {...report} variant="outline" /> : undefined}
       />
+
+      <AlertsPanel alerts={alerts} canConfigure={canConfigureAlerts} />
 
       <PeriodFilter from={from} to={to} />
 
@@ -238,56 +243,6 @@ export function SummaryClient({ dashboard, hasActiveTenant, from, to, report }: 
         </Card>
 
         <div className="space-y-4">
-          {dashboard.sanitaryDue.length > 0 ? (
-            <Card className="rounded-2xl border-l-4 border-l-[#C2185B] shadow-soft">
-              <CardContent className="space-y-3">
-                <p className="flex items-center gap-1.5 font-heading text-sm font-bold">
-                  <Syringe size={16} className="text-[#C2185B]" aria-hidden />
-                  Sanidad por vencer
-                </p>
-                <ul className="space-y-2">
-                  {dashboard.sanitaryDue.map((t) => {
-                    const overdue = t.day < new Intl.DateTimeFormat("en-CA", { timeZone: "America/Argentina/Buenos_Aires" }).format(new Date());
-                    return (
-                      <li key={t.id} className="flex items-center justify-between gap-2 text-sm">
-                        <span>{t.name}</span>
-                        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${overdue ? "bg-destructive/10 text-destructive" : "bg-[#FCE8F0] text-[#C2185B]"}`}>
-                          {overdue ? "Vencida · " : ""}
-                          {t.day.slice(8, 10)}/{t.day.slice(5, 7)}
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </CardContent>
-            </Card>
-          ) : null}
-
-          {dashboard.supplyAlerts.length > 0 ? (
-            <Card className="rounded-2xl border-l-4 border-l-warning shadow-soft">
-              <CardContent className="space-y-3">
-                <p className="flex items-center gap-1.5 font-heading text-sm font-bold">
-                  <AlertTriangle size={16} className="text-warning" />
-                  Insumos con stock bajo
-                </p>
-                <ul className="space-y-2">
-                  {dashboard.supplyAlerts.map((s) => (
-                    <li key={s.id} className="flex items-center justify-between gap-2 text-sm">
-                      <span className="flex items-center gap-1.5">
-                        <Package size={14} />
-                        {s.name}
-                        {s.category ? <span className="text-xs text-muted-foreground">({s.category.name})</span> : null}
-                      </span>
-                      <span className="rounded-full bg-warning/15 px-2 py-0.5 text-xs font-medium text-warning">
-                        {s.quantity} {s.unit ?? "u."}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          ) : null}
-
           <Card className="rounded-2xl shadow-soft">
             <CardContent className="space-y-2">
               <p className="font-heading text-sm font-bold">Resumen operativo</p>
