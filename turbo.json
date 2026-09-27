@@ -9,6 +9,7 @@
       "outputs": ["dist/**", ".next/**", "!.next/cache/**", "!.next/dev/**"],
       "env": [
         "DATABASE_URL",
+        "DIRECT_URL",
         "AUTH_SECRET",
         "AUTH_URL",
         "WHATSAPP_ACCESS_TOKEN",
