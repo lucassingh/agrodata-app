@@ -112,12 +112,12 @@ export const FEATURES_TITLE = "Todo el campo, en un solo lugar";
 
 export const MULTI_FIELD = {
   title: "Varios campos, un solo equipo",
-  body: "Cambiás de establecimiento en un clic. Cada persona ve solo lo que le toca.",
+  body: "Cambiás de establecimiento en un clic. Cada persona tiene su rol en cada campo y ve solo lo que le toca.",
   roles: [
     {
       id: "owner",
       name: "Dueño",
-      summary: "Ve y administra todos los campos, el equipo y la facturación.",
+      summary: "Administra sus campos, su equipo y la facturación.",
       channel: "Web y WhatsApp",
       fields: ["esperanza", "ombu", "sanmartin", "alamos"],
     },
@@ -127,6 +127,13 @@ export const MULTI_FIELD = {
       summary: "Gestiona los campos que tiene a cargo e invita a su equipo.",
       channel: "Web y WhatsApp",
       fields: ["esperanza", "ombu"],
+    },
+    {
+      id: "advisor",
+      name: "Asesor",
+      summary: "Atiende los campos de sus clientes: los compara y arma el informe de cada uno.",
+      channel: "Web y WhatsApp",
+      fields: ["ombu", "sanmartin", "alamos"],
     },
     {
       id: "operator",
@@ -165,7 +172,7 @@ export const PROFILES = {
       headline: "Todos tus campos en una sola cuenta",
       body: "Seguí labores, insumos, stock y costos de cada establecimiento sin cambiar de usuario.",
       points: [
-        "Comparás campos y consolidás reportes en minutos",
+        "Comparás tus campos y mandás el informe mensual en PDF",
         "Tu equipo carga las labores desde WhatsApp",
         "Trazabilidad de cada pulverización y fertilización",
       ],
@@ -180,7 +187,7 @@ export const PROFILES = {
       points: [
         "Historial sanitario por rodeo y por establecimiento",
         "Nacimientos, tratamientos y vacunas cargados al momento",
-        "Reportes claros para cada productor",
+        "Un informe en PDF para cada productor, con tu firma",
       ],
       sampleMessage: "Nacieron 3 terneras en el tambo 2, todas bien",
       image: { src: "/landing/perfil-veterinario.jpg", width: 1400, height: 933, alt: "Vacas Holando pastando en un campo verde a pleno sol" },
@@ -222,21 +229,20 @@ export const PRICING = {
       ],
     },
     {
-      id: "profesional",
-      name: "Profesional",
-      audience: "Para agrónomos y veterinarios",
+      id: "asesor",
+      name: "Asesor",
+      audience: "Para agrónomos y veterinarios con cartera",
       monthly: 79,
       custom: false,
       highlighted: true,
       features: [
-        "Hasta 10 campos",
+        "Hasta 10 campos de tus clientes",
+        "Cartera: todos tus campos y sus comparativos en una pantalla",
+        "Informe en PDF por cliente, con tu firma y tu comentario",
+        "Cargás por WhatsApp nombrando el campo",
+        "Margen por lote, ADPV, preñez y margen por litro",
         "Personas ilimitadas por WhatsApp",
-        "Margen bruto por lote y comparativo de campañas",
-        "Ganadería y tambo: ADPV, preñez y margen por litro",
-        "Reportes semanales automáticos",
-        "Exportación a Excel",
-        { label: "Exportación a PDF", soon: true },
-        "Consultas por chat en lenguaje natural",
+        "Reportes semanales, consultas por chat y Excel",
       ],
     },
     {
@@ -282,7 +288,7 @@ export const FAQ = {
     {
       id: "campos",
       q: "¿Puedo manejar varios campos?",
-      a: "Sí. Con una sola cuenta administrás todos tus establecimientos y cambiás de uno a otro en un clic.",
+      a: "Sí. Con una sola cuenta ves todos tus campos y cambiás de uno a otro en un clic. Si asesorás a otros productores, ellos te suman a su campo (o lo creás vos y les pasás la titularidad) y los comparás a todos en la Cartera.",
     },
     {
       id: "datos",
