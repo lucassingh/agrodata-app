@@ -27,6 +27,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { HeroBanner } from "@/components/hero-banner";
+import { ReportButton, type ReportSignature } from "@/components/report-dialog";
 import { CowHeadIcon } from "@/components/cow-head-icon";
 import { getRecordConfig } from "../data/record-constants";
 import { formatRecordDescription, formatRecordSource } from "../data/record-format";
@@ -50,9 +51,11 @@ interface SummaryClientProps {
   hasActiveTenant: boolean;
   from: string;
   to: string;
+  /** Informe PDF del campo activo. */
+  report: { tenantId: string; tenantName: string; signature: ReportSignature } | null;
 }
 
-export function SummaryClient({ dashboard, hasActiveTenant, from, to }: SummaryClientProps) {
+export function SummaryClient({ dashboard, hasActiveTenant, from, to, report }: SummaryClientProps) {
   const router = useRouter();
 
   if (!hasActiveTenant) {
@@ -85,6 +88,7 @@ export function SummaryClient({ dashboard, hasActiveTenant, from, to }: SummaryC
       <HeroBanner
         title="Resumen del campo"
         subtitle="Indicadores según tus registros, actividad reciente y estado operativo."
+        actions={report ? <ReportButton {...report} variant="outline" /> : undefined}
       />
 
       <PeriodFilter from={from} to={to} />

@@ -13,6 +13,7 @@
   "dependencies": {
     "@base-ui/react": "^1.7.0",
     "@hookform/resolvers": "^3.10.0",
+    "@react-pdf/renderer": "^4.9.0",
     "@repo/ai": "workspace:*",
     "@repo/core": "workspace:*",
     "@repo/database": "workspace:*",

@@ -1,5 +1,9 @@
 import {
   resolveSenderByWaId,
+  setLastUsedField,
+  routeMessage,
+  fieldHeader,
+  fieldList,
   sendWhatsAppText,
   downloadWhatsAppMedia,
   createRecordSchema,
@@ -41,7 +45,7 @@ function toClaudeImageMimeType(mimeType: string): "image/jpeg" | "image/png" | "
 }
 
 /** Lo que Claude necesita saber del campo para elegir nombres que ya existen. */
-function toExtractionContext(catalog: TenantCatalog): ExtractionContext {
+function toExtractionContext(catalog: TenantCatalog, fieldName?: string): ExtractionContext {
   const animalTypes = new Set([
     ...catalog.animalCategories.map((category) => category.name),
     ...catalog.pastures.flatMap((pasture) => pasture.animals.map((animal) => animal.animalType)),
@@ -51,6 +55,7 @@ function toExtractionContext(catalog: TenantCatalog): ExtractionContext {
     supplies: catalog.supplies.map((supply) => ({ name: supply.name, unit: supply.unit })),
     pastures: catalog.pastures.map((pasture) => pasture.name),
     animalTypes: [...animalTypes],
+    fieldName,
   };
 }
 
@@ -137,16 +142,21 @@ export const processWhatsAppMessage = inngest.createFunction(
       return { status: "unregistered-sender" as const };
     }
 
-    if (!sender.activeTenantId) {
+    if (sender.fields.length === 0) {
       await step.run("reply-no-active-tenant", () =>
         sendWhatsAppText(
           waId,
-          "Tu cuenta no tiene un campo activo seleccionado. Entrá al dashboard y elegí un establecimiento primero.",
+          "Tu cuenta todavía no está en ningún campo. Creá el tuyo en el dashboard o pedile al dueño que te invite desde Equipo.",
         ),
       );
       return { status: "no-active-tenant" as const };
     }
-    const activeTenantId = sender.activeTenantId;
+    // Con varios campos, cada respuesta arranca diciendo en cuál se cargó.
+    const multiField = sender.fields.length > 1;
+    const headerFor = (tenantId: string) => {
+      const field = sender.fields.find((f) => f.tenantId === tenantId);
+      return multiField && field ? fieldHeader(field.name) : "";
+    };
 
     let textForExtraction = textBody;
     let imagePayload: { base64: string; mediaType: ReturnType<typeof toClaudeImageMimeType> } | undefined;
@@ -176,7 +186,7 @@ export const processWhatsAppMessage = inngest.createFunction(
 
       if (intent === "confirm") {
         const confirmation = await step.run("execute-pending-action", () => executePendingAction(pending));
-        await step.run("reply-pending-confirmed", () => sendWhatsAppText(waId, confirmation));
+        await step.run("reply-pending-confirmed", () => sendWhatsAppText(waId, headerFor(pending.tenantId) + confirmation));
         return { status: "pending-confirmed" as const };
       }
 
@@ -194,6 +204,32 @@ export const processWhatsAppMessage = inngest.createFunction(
       notice = "(Dejé sin cargar lo que te había preguntado antes.)\n";
     }
 
+    // ── ¿En qué campo? Nombrado en el mensaje, «cambiá a…» o el último usado ──
+    const route = routeMessage(textForExtraction, sender.fields, sender.activeTenantId);
+    if (route.kind === "switch") {
+      await step.run("switch-field", () => setLastUsedField(sender.userId, route.field.tenantId));
+      await step.run("reply-switched", () =>
+        sendWhatsAppText(
+          waId,
+          `${notice}Listo, ahora cargo todo en ${route.field.name}. Para pasar a otro campo, decime «cambiá a» y el nombre.`,
+        ),
+      );
+      return { status: "field-switched" as const };
+    }
+    if (route.kind === "switch-unknown" || route.kind === "ask") {
+      const intro =
+        route.kind === "ask"
+          ? "Tenés varios campos y no sé en cuál cargar. Decime «cambiá a» y el nombre, o nombralo en el mensaje:"
+          : `No encontré un campo «${route.target}». Tus campos son:`;
+      await step.run("reply-which-field", () => sendWhatsAppText(waId, `${notice}${intro}\n${fieldList(sender.fields)}`));
+      return { status: "needs-field" as const };
+    }
+    const activeTenantId = route.field.tenantId;
+    if (activeTenantId !== sender.activeTenantId) {
+      await step.run("remember-field", () => setLastUsedField(sender.userId, activeTenantId));
+    }
+    notice = headerFor(activeTenantId) + notice;
+
     if (!textForExtraction && !imagePayload) {
       const message = isAudioMessage
         ? "No pude entender el audio -- ¿podés mandarlo de nuevo o escribirlo como texto?"
@@ -206,7 +242,11 @@ export const processWhatsAppMessage = inngest.createFunction(
     const catalog = await step.run("load-tenant-catalog", () => loadTenantCatalog(activeTenantId));
 
     const extracted: ExtractedEvent = await step.run("extract-event", () =>
-      extractFarmEvent({ text: textForExtraction, image: imagePayload, context: toExtractionContext(catalog) }),
+      extractFarmEvent({
+        text: textForExtraction,
+        image: imagePayload,
+        context: toExtractionContext(catalog, multiField ? route.field.name : undefined),
+      }),
     );
 
     if (!extracted.recognized || !extracted.type || !extracted.summary) {
