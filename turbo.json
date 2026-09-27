@@ -27,6 +27,7 @@
         "SENTRY_ORG",
         "SENTRY_PROJECT",
         "NEXT_RUNTIME",
+        "VERCEL_ENV",
         "CI",
         "WHATSAPP_WEEKLY_SUMMARY_TEMPLATE",
         "WHATSAPP_WEEKLY_SUMMARY_TEMPLATE_LANG"

@@ -1,0 +1,23 @@
+name: PR a main
+
+# A main (producción) solo se llega desde develop, o desde una rama hotfix/*
+# para una urgencia. La regla de GitHub sobre main exige que este chequeo pase.
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  origen:
+    name: Solo desde develop o hotfix
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verificar la rama de origen
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          if [ "$HEAD_REF" = "develop" ] || [[ "$HEAD_REF" == hotfix/* ]]; then
+            echo "Origen válido: $HEAD_REF"
+          else
+            echo "::error::A main solo se llega desde develop o desde una rama hotfix/*. Este PR viene de «$HEAD_REF»: abrilo contra develop."
+            exit 1
+          fi
