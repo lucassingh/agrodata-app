@@ -66,3 +66,5 @@ export * from "./portfolio/portfolio-math";
 export * from "./portfolio/portfolio.service";
 export * from "./reports/report-period";
 export * from "./reports/field-report.service";
+export * from "./alerts/alert-settings";
+export * from "./alerts/alert-rules";
