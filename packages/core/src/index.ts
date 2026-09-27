@@ -69,3 +69,5 @@ export * from "./reports/field-report.service";
 export * from "./alerts/alert-settings";
 export * from "./alerts/alert-rules";
 export * from "./alerts/alerts.service";
+export * from "./alerts/alert-digest";
+export * from "./alerts/alert-delivery.service";
