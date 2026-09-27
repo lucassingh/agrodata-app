@@ -6,7 +6,7 @@
 import { adpv, milkSummary, type MilkDay, type WeighingPoint } from "../livestock/livestock-math";
 import type { AlertKind, AlertSettings } from "./alert-settings";
 
-/** critical: vencido, sin stock o perdiendo peso · warning: para esta semana · info: para mirar. */
+/** critical: vencido, sin stock o perdiendo peso · warning: requiere atención · info: para mirar. */
 export type AlertSeverity = "critical" | "warning" | "info";
 
 export const SEVERITY_ORDER: Record<AlertSeverity, number> = { critical: 0, warning: 1, info: 2 };
