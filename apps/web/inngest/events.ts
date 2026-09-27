@@ -20,7 +20,9 @@ export const whatsappMessageReceivedSchema = z.object({
  *  usa como trigger tipado en `createFunction` y para construir el evento
  *  validado que se manda con `inngest.send()` -- una sola definición para
  *  ambos lados. */
-export const whatsappMessageReceived = eventType("whatsapp/message.received", {
+// Con el prefijo de la app: dos apps en el mismo entorno de Inngest con el mismo
+// nombre de evento dispararían las funciones de las dos.
+export const whatsappMessageReceived = eventType("agrodata/whatsapp.message-received", {
   schema: whatsappMessageReceivedSchema,
 });
 
