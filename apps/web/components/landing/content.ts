@@ -232,7 +232,7 @@ export const PRICING = {
       id: "asesor",
       name: "Asesor",
       audience: "Para agrónomos y veterinarios con cartera",
-      monthly: 79,
+      monthly: 199,
       custom: false,
       highlighted: true,
       features: [
