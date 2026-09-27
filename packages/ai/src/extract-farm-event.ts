@@ -80,6 +80,8 @@ export interface ExtractionContext {
   supplies: { name: string; unit: string | null }[];
   pastures: string[];
   animalTypes: string[];
+  /** Nombre del campo (establecimiento): el mensaje lo puede nombrar y no es un potrero. */
+  fieldName?: string;
 }
 
 const EMPTY_CONTEXT: ExtractionContext = { expenseCategories: [], supplies: [], pastures: [], animalTypes: [] };
@@ -108,7 +110,13 @@ nombre nuevo corto y claro.
 10. "categoria" es el rubro: NUNCA null si hay monto en una compra/combustible/factura o
     si entra un insumo nuevo al stock. Elegí una categoría de gasto de la lista si encaja
     con lo comprado; si ninguna encaja, proponé un rubro corto y genérico (ej.
-    "Combustible", "Semillas", "Sanidad", "Fertilizantes"), no el nombre del producto.`;
+    "Combustible", "Semillas", "Sanidad", "Fertilizantes"), no el nombre del producto.${
+    context.fieldName
+      ? `
+11. El establecimiento se llama "${context.fieldName}". Si el mensaje lo nombra, es el
+    campo, NO un potrero: no lo devuelvas en "potrero" ni en "destinoPotrero".`
+      : ""
+  }`;
 }
 
 export interface ExtractFarmEventInput {

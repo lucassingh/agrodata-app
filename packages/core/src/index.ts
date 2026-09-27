@@ -35,6 +35,7 @@ export * from "./whatsapp/whatsapp.schema";
 export * from "./whatsapp/whatsapp-client";
 export * from "./whatsapp/webhook-signature";
 export * from "./whatsapp/resolve-sender";
+export * from "./whatsapp/field-routing";
 export * from "./whatsapp/webhook-events.service";
 export * from "./whatsapp/entity-name";
 export * from "./whatsapp/farm-event";
