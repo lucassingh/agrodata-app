@@ -78,6 +78,8 @@ interface AppShellProps {
   memberships: Membership[];
   children: ReactNode;
   signOutAction: () => Promise<void>;
+  /** Entorno que no es producción («Prueba», «Local»), para no confundirlos. */
+  environmentLabel: string | null;
 }
 
 function getInitials(name: string): string {
@@ -96,7 +98,7 @@ function getTenantInitials(name: string): string {
     .join("");
 }
 
-export function AppShell({ user, memberships, children, signOutAction }: AppShellProps) {
+export function AppShell({ user, memberships, children, signOutAction, environmentLabel }: AppShellProps) {
   const { collapsed, setCollapsed } = useSidebar();
   const pathname = usePathname();
   const router = useRouter();
@@ -263,6 +265,12 @@ export function AppShell({ user, memberships, children, signOutAction }: AppShel
           >
             {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
           </Button>
+
+          {environmentLabel ? (
+            <span className="rounded-full border border-[#D97706]/40 bg-[#FDF4E3] px-3 py-1 text-xs font-semibold text-[#8A5A12]">
+              Entorno: {environmentLabel}
+            </span>
+          ) : null}
 
           <div className="flex items-center gap-1">
             <a

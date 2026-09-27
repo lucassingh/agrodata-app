@@ -4,6 +4,14 @@ import { findUserTenants } from "@repo/core";
 import { AppShell } from "@/components/app-shell";
 import { SidebarProvider } from "@/context/sidebar-context";
 
+/** Vercel marca cada deploy: producción no lleva cartel; develop (Preview) y la
+ *  máquina de cada uno sí, para no cargar datos en el lugar equivocado. */
+function environmentLabel(): string | null {
+  if (process.env.VERCEL_ENV === "production") return null;
+  if (process.env.VERCEL_ENV === "preview") return "Prueba (develop)";
+  return "Local";
+}
+
 export default async function DashboardShellLayout({
   children,
 }: {
@@ -38,6 +46,7 @@ export default async function DashboardShellLayout({
           },
         }))}
         signOutAction={signOutAction}
+        environmentLabel={environmentLabel()}
       >
         {children}
       </AppShell>
