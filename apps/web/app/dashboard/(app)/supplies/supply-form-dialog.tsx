@@ -52,6 +52,7 @@ export function SupplyFormDialog({
   const [cost, setCost] = useState(supply?.cost?.toString() ?? "");
   const [currency, setCurrency] = useState<"ARS" | "USD">(supply?.currency ?? "ARS");
   const [supplier, setSupplier] = useState(supply?.supplier ?? "");
+  const [minStock, setMinStock] = useState(supply?.minStock?.toString() ?? "");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -68,6 +69,10 @@ export function SupplyFormDialog({
       setError("Elegí una categoría");
       return;
     }
+    if (minStock && Number(minStock) < 0) {
+      setError("El mínimo no puede ser negativo");
+      return;
+    }
     setError(null);
 
     const payload = {
@@ -78,6 +83,7 @@ export function SupplyFormDialog({
       cost: cost ? Number(cost) : undefined,
       currency,
       supplier: supplier.trim() || undefined,
+      minStock: minStock ? Number(minStock) : null,
     };
 
     startTransition(async () => {
@@ -193,6 +199,22 @@ export function SupplyFormDialog({
           <div className="space-y-2">
             <Label>Proveedor</Label>
             <Input value={supplier} onChange={(e) => setSupplier(e.target.value)} />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="supply-min-stock">Stock mínimo (opcional)</Label>
+            <Input
+              id="supply-min-stock"
+              type="number"
+              min={0}
+              step="any"
+              value={minStock}
+              onChange={(e) => setMinStock(e.target.value)}
+              aria-describedby="supply-min-stock-hint"
+            />
+            <p id="supply-min-stock-hint" className="text-xs text-muted-foreground">
+              Si queda por debajo, aparece en Avisos. Sin mínimo, avisamos según el consumo del último mes.
+            </p>
           </div>
 
           {error ? <p className="text-sm text-destructive">{error}</p> : null}

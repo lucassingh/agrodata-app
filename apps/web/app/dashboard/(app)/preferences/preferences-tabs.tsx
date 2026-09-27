@@ -19,6 +19,7 @@ import type { ExchangeRateKind } from "@repo/core/economy/exchange-rates";
 import type { VatCondition } from "@repo/core/economy/vat";
 import type { FarmActivity } from "@repo/core/tenants/tenant-labels";
 import type { FieldRole } from "@repo/core/auth/field-roles";
+import { AlertsTab, type AlertsTabProps } from "./alerts-tab";
 
 interface PreferencesTabsProps {
   memberships: Array<{
@@ -38,6 +39,9 @@ interface PreferencesTabsProps {
     };
   }>;
   activeTenantId: string | null;
+  /** Pestaña que abre (?tab=…, ej. el link «Configurar» del panel de avisos). */
+  defaultTab?: string;
+  alerts: AlertsTabProps;
   canEditField: boolean;
   canManage: boolean;
   canDelete: boolean;
@@ -48,9 +52,13 @@ interface PreferencesTabsProps {
   expenseCategories: Array<{ id: string; name: string; color: string }>;
 }
 
+const TAB_VALUES = ["campo", "animales", "rodeos", "cultivos", "insumos", "gastos", "avisos"];
+
 export function PreferencesTabs({
   memberships,
   activeTenantId,
+  defaultTab,
+  alerts,
   canEditField,
   canManage,
   canDelete,
@@ -61,7 +69,7 @@ export function PreferencesTabs({
   expenseCategories,
 }: PreferencesTabsProps) {
   return (
-    <Tabs defaultValue="campo">
+    <Tabs defaultValue={defaultTab && TAB_VALUES.includes(defaultTab) ? defaultTab : "campo"}>
       <TabsList className="w-full flex-wrap justify-start rounded-xl border border-border bg-card p-1 shadow-soft sm:w-auto">
         <TabsTrigger value="campo">Campo</TabsTrigger>
         <TabsTrigger value="animales">Animales</TabsTrigger>
@@ -69,6 +77,7 @@ export function PreferencesTabs({
         <TabsTrigger value="cultivos">Cultivos</TabsTrigger>
         <TabsTrigger value="insumos">Insumos</TabsTrigger>
         <TabsTrigger value="gastos">Gastos</TabsTrigger>
+        <TabsTrigger value="avisos">Avisos</TabsTrigger>
       </TabsList>
 
       <div className="mt-4">
@@ -137,6 +146,10 @@ export function PreferencesTabs({
             onCreate={(name) => createExpenseCategoryAction(name, colorForKey(name))}
             onDelete={removeExpenseCategoryAction}
           />
+        </TabsContent>
+
+        <TabsContent value="avisos">
+          <AlertsTab {...alerts} />
         </TabsContent>
       </div>
     </Tabs>

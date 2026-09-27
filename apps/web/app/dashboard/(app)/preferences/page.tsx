@@ -1,6 +1,14 @@
 import type { Metadata } from "next";
 import { requireUser } from "@/lib/session";
-import { findUserTenants, getAllPreferences, listExpenseCategories, type FieldRole } from "@repo/core";
+import {
+  DEFAULT_ALERT_SETTINGS,
+  findUserTenants,
+  getAlertSettings,
+  getAllPreferences,
+  getMemberAlertPreference,
+  listExpenseCategories,
+  type FieldRole,
+} from "@repo/core";
 import { HeroBanner } from "@/components/hero-banner";
 import { PreferencesTabs } from "./preferences-tabs";
 
@@ -8,18 +16,27 @@ export const metadata: Metadata = {
   title: "Preferencias — AgroData",
 };
 
-export default async function PreferencesPage() {
+interface PreferencesPageProps {
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export default async function PreferencesPage({ searchParams }: PreferencesPageProps) {
   const user = await requireUser();
+  const { tab } = await searchParams;
   const memberships = await findUserTenants(user.id);
 
-  const [preferences, expenseCategories] = user.activeTenantId
+  const [preferences, expenseCategories, alertSettings, alertPreference] = user.activeTenantId
     ? await Promise.all([
         getAllPreferences(user.activeTenantId),
         listExpenseCategories(user.activeTenantId),
+        getAlertSettings(user.activeTenantId),
+        getMemberAlertPreference(user.id, user.activeTenantId),
       ])
     : [
         { animalCategories: [], rodeos: [], cropConfigs: [], supplyCategories: [] },
         [],
+        DEFAULT_ALERT_SETTINGS,
+        { whatsappAlerts: false, hasWhatsapp: false },
       ];
 
   const canManage = user.platformRole !== "OPERATOR";
@@ -50,6 +67,13 @@ export default async function PreferencesPage() {
           },
         }))}
         activeTenantId={user.activeTenantId}
+        defaultTab={tab}
+        alerts={{
+          settings: alertSettings,
+          canConfigure: user.isSuperAdmin || user.fieldRole === "OWNER" || user.fieldRole === "ADMIN",
+          whatsappAlerts: alertPreference.whatsappAlerts,
+          hasWhatsapp: alertPreference.hasWhatsapp,
+        }}
         canEditField={user.capabilities.canUpdateField}
         canManage={canManage}
         canDelete={canDelete}

@@ -4,7 +4,7 @@ import { getLivestockGroups } from "../livestock/weighings.service";
 import { dateOnlyRangeFilter, dateRangeFilter } from "../reports/date-range";
 import { visibleModules } from "../tenants/tenant-labels";
 import { evaluateAlerts, type FieldAlert, type FieldAlertInput, type PendingTaskInput } from "./alert-rules";
-import { resolveAlertSettings, type AlertSettings } from "./alert-settings";
+import { alertSettingsSchema, resolveAlertSettings, type AlertSettings } from "./alert-settings";
 
 const argentinaDay = (date: Date) =>
   new Intl.DateTimeFormat("en-CA", { timeZone: "America/Argentina/Buenos_Aires" }).format(date);
@@ -27,6 +27,27 @@ const TASK_NAME: Record<string, string> = {
 export async function getAlertSettings(tenantId: string): Promise<AlertSettings> {
   const row = await prisma.alertSettings.findUnique({ where: { tenantId } });
   return resolveAlertSettings(row?.settings ?? null);
+}
+
+export async function saveAlertSettings(tenantId: string, settings: AlertSettings) {
+  const data = alertSettingsSchema.parse(settings);
+  await prisma.alertSettings.upsert({ where: { tenantId }, create: { tenantId, settings: data }, update: { settings: data } });
+}
+
+/** Si esta persona recibe los avisos del campo por WhatsApp, y si tiene número cargado. */
+export async function getMemberAlertPreference(userId: string, tenantId: string) {
+  const membership = await prisma.userTenantMembership.findUnique({
+    where: { userId_tenantId: { userId, tenantId } },
+    select: { whatsappAlerts: true, user: { select: { wNumber: true } } },
+  });
+  return { whatsappAlerts: membership?.whatsappAlerts ?? false, hasWhatsapp: Boolean(membership?.user.wNumber) };
+}
+
+export async function setMemberWhatsappAlerts(userId: string, tenantId: string, enabled: boolean) {
+  await prisma.userTenantMembership.update({
+    where: { userId_tenantId: { userId, tenantId } },
+    data: { whatsappAlerts: enabled },
+  });
 }
 
 /** Todo lo que las reglas necesitan de un campo, en una lectura. Lo de ganadería
