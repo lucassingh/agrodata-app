@@ -20,7 +20,8 @@ export function HeroBanner({ title, subtitle, actions }: HeroBannerProps) {
             <p className="mt-1 max-w-xl text-sm text-white/80">{subtitle}</p>
           ) : null}
         </div>
-        {actions ? <div className="flex items-center gap-2">{actions}</div> : null}
+        {/* text-foreground: los botones claros (outline) no heredan el blanco del banner. */}
+        {actions ? <div className="flex items-center gap-2 text-foreground">{actions}</div> : null}
       </div>
     </div>
   );

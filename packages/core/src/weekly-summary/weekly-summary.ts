@@ -22,6 +22,8 @@ export interface WeeklySummaryData {
   weighings: { group: string; adpv: number | null }[];
   /** Tratamientos sanitarios pendientes que vencen pronto o ya vencieron. */
   sanitaryDue: { name: string; day: string }[];
+  /** Conclusiones escritas por Claude y controladas (ver weekly-insights.ts). */
+  insights?: string[];
 }
 
 const dayMonth = (isoDay: string) => `${isoDay.slice(8, 10)}/${isoDay.slice(5, 7)}`;
@@ -107,6 +109,10 @@ export function weeklySummaryText(data: WeeklySummaryData): string {
 
   if (data.lowStock.length > 0) {
     lines.push(`⚠️ Stock bajo: ${data.lowStock.map((s) => `${s.supply} (${formatQuantity(s.quantity, s.unit)})`).join(", ")}`);
+  }
+
+  if (data.insights && data.insights.length > 0) {
+    lines.push("", "💡 *Para tener en cuenta*", ...data.insights.map((insight) => `• ${insight}`));
   }
 
   lines.push("", 'Preguntame lo que necesites, por ejemplo "¿cuánto gasté este mes?".');

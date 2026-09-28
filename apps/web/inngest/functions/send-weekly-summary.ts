@@ -1,8 +1,12 @@
 import * as Sentry from "@sentry/nextjs";
+import { writeWeeklyInsights } from "@repo/ai";
 import {
   deliverWeeklySummary,
   gatherWeeklySummary,
+  getFieldAlerts,
   hasActivity,
+  insightFacts,
+  keepGroundedInsights,
   previousWeek,
   todayInArgentina,
   weeklySummaryTargets,
@@ -11,7 +15,8 @@ import { inngest } from "../client";
 import { weeklySummaryRequested } from "../events";
 
 /** Resumen de la semana por WhatsApp, los lunes a las 8 (hora argentina), a
- *  quienes administran cada campo. Un campo sin movimientos no recibe nada.
+ *  quienes administran cada campo, con conclusiones escritas por Claude y
+ *  controladas. Un campo sin movimientos no recibe nada.
  *  Cada envío es un paso propio: si falla uno, los demás igual salen.
  *  El evento `weeklySummaryRequested` permite dispararlo a mano (pruebas). */
 export const sendWeeklySummary = inngest.createFunction(
@@ -31,10 +36,18 @@ export const sendWeeklySummary = inngest.createFunction(
       );
       if (!hasActivity(data)) continue;
 
+      // Conclusiones de Claude sobre los números ya calculados y los avisos abiertos;
+      // se descarta cualquiera que traiga un número que no está en esos datos.
+      const insights = await step.run(`insights-${target.tenantId}`, async () => {
+        const facts = insightFacts(data, await getFieldAlerts(target.tenantId));
+        return keepGroundedInsights(await writeWeeklyInsights({ fieldName: target.fieldName, facts }), facts);
+      });
+      const withInsights = { ...data, insights };
+
       for (const recipient of target.recipients) {
         const result = await step.run(`send-${target.tenantId}-${recipient.userId}`, async () => {
           try {
-            return await deliverWeeklySummary(recipient.waId, data);
+            return await deliverWeeklySummary(recipient.waId, withInsights);
           } catch (error) {
             console.error("[weekly-summary] no se pudo mandar", { tenantId: target.tenantId, userId: recipient.userId, error });
             Sentry.captureException(error, { tags: { flow: "weekly-summary" } });

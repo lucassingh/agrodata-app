@@ -8,6 +8,8 @@ export const createSupplySchema = z.object({
   cost: z.number().optional(),
   currency: z.enum(["ARS", "USD"]).optional(),
   supplier: z.string().trim().max(200).optional(),
+  /** Mínimo de stock para los avisos (null = sin mínimo). */
+  minStock: z.number().nonnegative("El mínimo no puede ser negativo").nullable().optional(),
   notes: z.string().trim().max(500).optional(),
 });
 export type CreateSupplyInput = z.infer<typeof createSupplySchema>;

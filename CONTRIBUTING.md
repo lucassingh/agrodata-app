@@ -36,18 +36,19 @@ el mismo PR que lo cambia.
 Un chequeo de GitHub (`.github/workflows/pr-to-main.yml`) rechaza cualquier PR a `main` que no
 venga de `develop` o de una rama `hotfix/…`.
 
-Nombres cortos, en minúscula y con guiones: `feat/alertas-stock`, `fix/fecha-gastos`.
+Nombres **en inglés**, cortos, en minúscula y con guiones: `feat/stock-alerts`, `fix/expense-date`,
+`hotfix/broken-login`.
 
 ## 3. Una funcionalidad nueva (o un bug no urgente)
 
 ```bash
 git checkout develop && git pull
-git checkout -b feat/alertas-stock          # o fix/…
+git checkout -b feat/stock-alerts          # o fix/…
 
 # … trabajar, con commits chicos (ver §8) …
 
 pnpm check-types && pnpm lint && pnpm test && pnpm build   # lo mismo que corre el CI
-git push -u origin feat/alertas-stock
+git push -u origin feat/stock-alerts
 gh pr create --base develop --fill          # o desde GitHub: base develop ← compare feat/…
 ```
 
@@ -88,10 +89,10 @@ Solo para algo roto en producción que no puede esperar a la próxima salida.
 
 ```bash
 git checkout main && git pull
-git checkout -b hotfix/login-caido
+git checkout -b hotfix/broken-login
 # … arreglo mínimo, con test si se puede …
 pnpm check-types && pnpm lint && pnpm test && pnpm build
-git push -u origin hotfix/login-caido
+git push -u origin hotfix/broken-login
 gh pr create --base main --title "Hotfix: <qué arregla>"
 ```
 
@@ -108,8 +109,8 @@ falta (ver al final de esta sección).
 ```bash
 # 1. Editar packages/database/prisma/schema.prisma
 # 2. Generar la migración (compara el schema con la base develop; no aplica nada)
-pnpm --filter @repo/database exec prisma migrate dev --create-only --name agregar_alertas
-# 3. Leer el SQL generado en prisma/migrations/<fecha>_agregar_alertas/migration.sql
+pnpm --filter @repo/database exec prisma migrate dev --create-only --name add_alerts
+# 3. Leer el SQL generado en prisma/migrations/<fecha>_add_alerts/migration.sql
 # 4. Aplicarla en develop
 pnpm --filter @repo/database db:migrate:deploy
 # 5. Regenerar el cliente (en Windows, cortá antes el pnpm dev: bloquea el archivo)
@@ -148,9 +149,11 @@ Los secretos nunca se commitean ni se pegan en un chat o en un PR.
 
 ## 8. Commits y PR
 
-- Commits chicos, uno por cambio lógico, en castellano y en imperativo, explicando **por qué**
-  cuando no es obvio («Corregir la fecha de los gastos: se guardaba en UTC y se veía un día
-  antes»).
+- Commits chicos, uno por cambio lógico, **en inglés** y en imperativo, explicando **por qué**
+  cuando no es obvio («Fix expense dates: they were stored in UTC and showed one day earlier»).
+  Los commits anteriores al 2026-09-27 están en castellano; no se reescriben.
+- Los títulos de los PR también van en inglés. La interfaz de la app, los documentos de `docs/`
+  y esta guía siguen en castellano.
 - **Nunca `--force`** sobre `main` ni `develop`. No se reescribe historia compartida.
 - Datos de prueba: en develop y en local se crean los que hagan falta; en producción, nunca.
 
@@ -163,7 +166,15 @@ Los secretos nunca se commitean ni se pegan en un chat o en un PR.
 - [ ] La documentación que cambió (este archivo, el `CLAUDE.md` del proyecto, los planes en
       `docs/`) está al día.
 
-## 9. Probar el bot de WhatsApp
+## 9. Quién hace qué
+
+- **Claude** (el asistente de código) trabaja en la rama de la funcionalidad: la crea desde
+  `develop`, hace los commits y la sube. No abre ni mergea PR, no toca `develop` ni `main` y
+  no borra ramas.
+- **Lucas** maneja todo el circuito a mano: abre los PR a `develop`, los mergea, pasa
+  `develop` a `main` cuando decide salir a producción y borra las ramas terminadas.
+
+## 10. Probar el bot de WhatsApp
 
 Meta manda los mensajes reales solo a producción (una URL de webhook por app). Para probar el bot
 en local: `pnpm dev`, más `npx inngest-cli dev -u http://localhost:3000/api/inngest --no-discovery`,

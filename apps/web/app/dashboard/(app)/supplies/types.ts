@@ -14,6 +14,7 @@ export interface Supply {
   cost: number | null;
   currency: "ARS" | "USD";
   supplier: string | null;
+  minStock: number | null;
   notes: string | null;
   category: SupplyCategoryRef;
 }

@@ -144,6 +144,8 @@ model Tenant {
   reproEvents       ReproEvent[]
   milkRecords       MilkRecord[]
   milkSettlements   MilkSettlement[]
+  alertSettings     AlertSettings?
+  alertDeliveries   AlertDelivery[]
 
   @@map("tenants")
 }
@@ -174,6 +176,7 @@ model User {
   assignedTasks         Task[]                 @relation("TaskResponsible")
   tenantInvitesCreated  TenantPendingInvite[] @relation("TenantInviteInvitedBy")
   pendingWhatsAppActions PendingWhatsAppAction[]
+  alertDeliveries       AlertDelivery[]
 
   @@map("users")
 }
@@ -222,6 +225,8 @@ model UserTenantMembership {
   role       SystemRole
   status     MembershipStatus @default(INVITED)
   specialty  String?
+  /// Si recibe los avisos del campo por WhatsApp (Etapa 5). Lo apaga cada uno.
+  whatsappAlerts Boolean      @default(true)
   invitedAt  DateTime         @default(now())
   acceptedAt DateTime?
   createdAt  DateTime         @default(now())
@@ -452,6 +457,8 @@ model Supply {
   supplier    String?
   /// Alícuota de IVA de sus compras (el costo se guarda sin IVA).
   vatRate     Float?
+  /// Mínimo de stock: por debajo, avisa (Etapa 5). Opcional.
+  minStock    Float?
   notes       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -897,4 +904,33 @@ enum FarmActivity {
   AGRICULTURA
   GANADERIA
   TAMBO
+}
+
+// ─── Avisos (Etapa 5) ───────────────────────────────────
+
+/// Configuración de los avisos de un campo: cuáles están prendidos y sus valores.
+/// JSON validado en `core/alerts/alert-settings.ts`; lo que falte usa los valores por defecto.
+model AlertSettings {
+  tenantId  String   @id
+  settings  Json
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("alert_settings")
+}
+
+/// Qué aviso se le mandó a quién por WhatsApp: no se repite y se recuerda a los 7 días.
+model AlertDelivery {
+  id       String   @id @default(cuid())
+  tenantId String
+  userId   String
+  alertKey String
+  sentAt   DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, userId, alertKey, sentAt])
+  @@map("alert_deliveries")
 }

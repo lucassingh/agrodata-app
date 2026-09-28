@@ -23,6 +23,10 @@ import {
   deleteExpenseCategory,
   updateTenantSchema,
   updateTenant,
+  alertSettingsSchema,
+  saveAlertSettings,
+  setMemberWhatsappAlerts,
+  type AlertSettings,
   type RodeoInput,
 } from "@repo/core";
 
@@ -162,4 +166,21 @@ export async function updateTenantConfigAction(
     if (error instanceof AppError) return fail(error.message);
     throw error;
   }
+}
+
+/** La configuración de los avisos del campo la cambian el dueño y el encargado. */
+export async function saveAlertSettingsAction(input: AlertSettings): Promise<ActionResult> {
+  const user = await requireUser();
+  if (!user.isSuperAdmin && user.fieldRole !== "OWNER" && user.fieldRole !== "ADMIN") {
+    return fail("Los avisos del campo los configuran el dueño y el encargado.");
+  }
+  const parsed = alertSettingsSchema.safeParse(input);
+  if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Valores inválidos.");
+  return withActiveTenant((tenantId) => saveAlertSettings(tenantId, parsed.data));
+}
+
+/** Cada uno decide si recibe los avisos del campo activo por WhatsApp. */
+export async function setWhatsappAlertsAction(enabled: boolean): Promise<ActionResult> {
+  const user = await requireUser();
+  return withActiveTenant((tenantId) => setMemberWhatsappAlerts(user.id, tenantId, enabled));
 }

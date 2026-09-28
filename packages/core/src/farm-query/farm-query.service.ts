@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@repo/database";
+import { getFieldAlerts } from "../alerts/alerts.service";
 import { getEconomyOverview } from "../economy/economy.service";
 import { getDairyOverview } from "../livestock/dairy.service";
 import { getReproSeasons } from "../livestock/repro.service";
@@ -286,6 +287,12 @@ export function createFarmQueryHandlers(tenantId: string) {
           mensajeOriginal: r.rawMessage,
         })),
       };
+    },
+
+    async avisos() {
+      const GRAVEDAD = { critical: "urgente", warning: "atención", info: "para mirar" } as const;
+      const alerts = await getFieldAlerts(tenantId);
+      return alerts.map((a) => ({ gravedad: GRAVEDAD[a.severity], aviso: a.title, deDondeSale: a.detail }));
     },
   };
 }
