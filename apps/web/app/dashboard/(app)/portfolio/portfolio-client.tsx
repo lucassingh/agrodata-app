@@ -175,19 +175,21 @@ export function PortfolioClient({
       ),
     },
     {
-      key: "due",
-      label: "Por vencer",
+      key: "alerts",
+      label: "Avisos",
       render: (f) =>
-        f.tasksDue + f.sanitaryDue === 0 ? (
-          <Muted>Al día</Muted>
+        f.alerts.total === 0 ? (
+          <Muted>Sin avisos</Muted>
         ) : (
-          <div className="flex flex-col items-start gap-1">
-            {f.tasksDue > 0 ? <Badge variant="outline">{f.tasksDue} tareas (7 días)</Badge> : null}
-            {f.sanitaryDue > 0 ? (
-              <Badge variant="outline" className="border-[#D97706]/40 text-[#8A5A12]">
-                {f.sanitaryDue} sanidad (30 días)
-              </Badge>
-            ) : null}
+          <div className="flex max-w-56 flex-col items-start gap-1">
+            <Badge
+              variant="outline"
+              className={f.alerts.critical > 0 ? "border-destructive/40 text-destructive" : "border-[#D97706]/40 text-[#8A5A12]"}
+            >
+              {f.alerts.total} {f.alerts.total === 1 ? "aviso" : "avisos"}
+              {f.alerts.critical > 0 ? ` · ${f.alerts.critical} ${f.alerts.critical === 1 ? "urgente" : "urgentes"}` : ""}
+            </Badge>
+            <span className="text-xs text-muted-foreground">{f.alerts.top}</span>
           </div>
         ),
     },
@@ -225,7 +227,7 @@ export function PortfolioClient({
   ].filter(Boolean);
 
   const season = fields[0]?.season;
-  const pending = fields.reduce((sum, f) => sum + f.tasksDue + f.sanitaryDue, 0);
+  const pending = fields.reduce((sum, f) => sum + f.alerts.total, 0);
 
   return (
     <div className="space-y-6">
@@ -250,7 +252,7 @@ export function PortfolioClient({
         </Card>
         <Card className="col-span-2 rounded-2xl shadow-soft sm:col-span-1">
           <CardContent>
-            <p className="text-xs text-muted-foreground">Por vencer en toda la cartera</p>
+            <p className="text-xs text-muted-foreground">Avisos en toda la cartera</p>
             <p className="font-heading text-2xl font-bold">{pending}</p>
           </CardContent>
         </Card>

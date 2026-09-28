@@ -34,6 +34,7 @@ export const farmQueryInputs = {
     categoria: z.string().nullable().describe("parte del nombre de la categoría de animal; null para todas"),
   }),
   tambo: z.object(period),
+  avisos: z.object({}),
   registros: z.object({
     ...period,
     texto: z.string().nullable().describe("palabra a buscar en el registro o el mensaje original; null para todos"),
@@ -61,6 +62,8 @@ const DESCRIPTIONS: Record<FarmQueryTool, string> = {
     "Ganadería: por grupo (categoría en un potrero o corral) cabezas, último peso, ADPV (aumento diario de peso), kg producidos por ha y carga; y los índices reproductivos por temporada de servicio (preñez, parición, destete).",
   tambo:
     "Tambo en un período: litros, litros por día y por vaca, liquidaciones de la usina (precio por litro, grasa, proteína), costo de alimentación por litro y margen sobre alimentación por litro. Montos en pesos.",
+  avisos:
+    "Avisos abiertos del campo hoy, de lo más grave a lo más leve: stock que se acaba, sanidad vencida o por vencer, tareas vencidas, caída del aumento de peso o de los litros por vaca y gastos fuera de lo normal, cada uno con el dato del que sale. Úsala para «¿qué avisos tengo?», «¿qué tengo pendiente?» o «¿algo para atender?».",
   registros:
     "Historial de todo lo que se cargó (por WhatsApp o la web) en un período, con el mensaje original. Sirve para lo que no está en los otros módulos.",
 };

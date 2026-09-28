@@ -21,14 +21,6 @@ export interface ExpenseByCategory {
   count: number;
 }
 
-export interface SupplyAlert {
-  id: string;
-  name: string;
-  quantity: number;
-  unit: string | null;
-  category: { name: string } | null;
-}
-
 export interface RecentRecord {
   id: string;
   type: string;
@@ -62,9 +54,6 @@ export interface DashboardSummaryData {
   animalsByType: AnimalByType[];
   cropSummary: CropSummaryItem[];
   expensesByCategory: ExpenseByCategory[];
-  supplyAlerts: SupplyAlert[];
-  /** Tratamientos sanitarios pendientes que vencen en 30 días o ya vencieron. */
-  sanitaryDue: { id: string; name: string; day: string }[];
 }
 
 export const ZERO_DASHBOARD: DashboardSummaryData = {
@@ -83,6 +72,4 @@ export const ZERO_DASHBOARD: DashboardSummaryData = {
   animalsByType: [],
   cropSummary: [],
   expensesByCategory: [],
-  supplyAlerts: [],
-  sanitaryDue: [],
 };

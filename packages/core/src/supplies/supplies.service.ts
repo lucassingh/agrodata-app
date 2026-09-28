@@ -50,6 +50,7 @@ export async function createSupply(tenantId: string, input: CreateSupplyInput, u
         cost: input.cost,
         currency: input.currency ?? "ARS",
         supplier: input.supplier,
+        minStock: input.minStock ?? null,
         notes: input.notes,
       },
     });
@@ -94,6 +95,7 @@ export async function updateSupply(tenantId: string, id: string, input: UpdateSu
         cost: input.cost,
         currency: input.currency,
         supplier: input.supplier,
+        minStock: input.minStock,
         notes: input.notes,
       },
       include: SUPPLY_INCLUDE,

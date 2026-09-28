@@ -8,6 +8,7 @@ import { getLivestockGroups } from "../livestock/weighings.service";
 import { dateOnlyRangeFilter } from "../reports/date-range";
 import { visibleModules } from "../tenants/tenant-labels";
 import { averageAdpv, seasonMarginPerHa } from "./portfolio-math";
+import { getFieldAlerts } from "../alerts/alerts.service";
 
 const argentinaDay = (date: Date) =>
   new Intl.DateTimeFormat("en-CA", { timeZone: "America/Argentina/Buenos_Aires" }).format(date);
@@ -32,10 +33,8 @@ export interface PortfolioField {
   /** Tambo, últimos 30 días. */
   dairy: { litersPerCowDay: number | null; marginPerLiter: number | null; liters: number } | null;
   expensesMonth: { ars: number; usd: number };
-  /** Tareas pendientes que vencen en 7 días o ya vencieron. */
-  tasksDue: number;
-  /** Sanidad pendiente que vence en 30 días o ya venció. */
-  sanitaryDue: number;
+  /** Avisos del campo (Etapa 5): cuántos, cuántos urgentes y el más grave. */
+  alerts: { total: number; critical: number; top: string | null };
   lastEntryAt: Date | null;
 }
 
@@ -45,9 +44,7 @@ async function fieldFigures(tenantId: string, today: string) {
   const season = seasonOf(today);
   const monthStart = `${today.slice(0, 8)}01`;
   const expensesWhere = { tenantId, date: dateOnlyRangeFilter({ from: monthStart, to: today }) };
-  const pending = { tenantId, status: "PENDING" as const };
-
-  const [owner, arsMonth, usdMonth, tasksDue, sanitaryDue, lastRecord, economy, groups, dairy] = await Promise.all([
+  const [owner, arsMonth, usdMonth, alerts, lastRecord, economy, groups, dairy] = await Promise.all([
     prisma.userTenantMembership.findFirst({
       where: { tenantId, role: "OWNER", status: "ACTIVE" },
       include: { user: { select: { name: true, lastname: true } } },
@@ -55,10 +52,7 @@ async function fieldFigures(tenantId: string, today: string) {
     }),
     prisma.expense.aggregate({ where: { ...expensesWhere, currency: "ARS" }, _sum: { amount: true } }),
     prisma.expense.aggregate({ where: { ...expensesWhere, currency: "USD" }, _sum: { amount: true } }),
-    prisma.task.count({ where: { ...pending, deadline: { lte: new Date(`${addDays(today, 7)}T23:59:59.999Z`) } } }),
-    prisma.task.count({
-      where: { ...pending, type: "TRATAMIENTO_SANITARIO", deadline: { lte: new Date(`${addDays(today, 30)}T23:59:59.999Z`) } },
-    }),
+    getFieldAlerts(tenantId, today),
     prisma.record.findFirst({ where: { tenantId }, orderBy: { createdAt: "desc" }, select: { createdAt: true } }),
     modules.economy ? getEconomyOverview(tenantId, season) : null,
     modules.livestock ? getLivestockGroups(tenantId) : null,
@@ -89,8 +83,11 @@ async function fieldFigures(tenantId: string, today: string) {
       ? { litersPerCowDay: dairy.summary.litersPerCowDay, marginPerLiter: dairy.margin.marginPerLiter, liters: dairy.summary.liters }
       : null,
     expensesMonth: { ars: arsMonth._sum.amount ?? 0, usd: usdMonth._sum.amount ?? 0 },
-    tasksDue,
-    sanitaryDue,
+    alerts: {
+      total: alerts.length,
+      critical: alerts.filter((a) => a.severity === "critical").length,
+      top: alerts[0]?.title ?? null,
+    },
     lastEntryAt: lastRecord?.createdAt ?? null,
   };
 }

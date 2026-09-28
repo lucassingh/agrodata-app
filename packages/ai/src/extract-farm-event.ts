@@ -28,7 +28,8 @@ const TYPE_GUIDE = `
 - REPRODUCTION (reproducción): inicio de servicio o entore, tacto (preñadas y vacías) o destete. Los partos
   y nacimientos NO van acá: son ANIMAL_BIRTH (suman los terneros al potrero).
 - QUERY (consulta): el usuario PREGUNTA por datos que ya cargó (cuánto gastó, cuánto stock le queda,
-  cuántos animales hay, qué se aplicó en un potrero, cuándo vacunó). No registra nada: en summary
+  cuántos animales hay, qué se aplicó en un potrero, cuándo vacunó) o por el estado del campo (qué
+  avisos o alertas tiene, qué está pendiente o vencido, si hay algo para atender). No registra nada: en summary
   poné la pregunta reformulada con claridad y dejá el resto de los campos en null (movimientoStock NINGUNO).
 `.trim();
 

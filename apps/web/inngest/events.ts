@@ -26,6 +26,11 @@ export const whatsappMessageReceived = eventType("agrodata/whatsapp.message-rece
   schema: whatsappMessageReceivedSchema,
 });
 
+/** Dispara los avisos del día a mano (el disparo normal es el cron de lunes a sábado). */
+export const alertsRequested = eventType("agrodata/alerts.requested", {
+  schema: z.object({}),
+});
+
 /** Dispara el resumen semanal a mano (el disparo normal es el cron de los lunes). */
 export const weeklySummaryRequested = eventType("agrodata/weekly-summary.requested", {
   schema: z.object({}),
