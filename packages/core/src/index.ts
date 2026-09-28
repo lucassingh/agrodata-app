@@ -71,3 +71,4 @@ export * from "./alerts/alert-rules";
 export * from "./alerts/alerts.service";
 export * from "./alerts/alert-digest";
 export * from "./alerts/alert-delivery.service";
+export * from "./weekly-summary/weekly-insights";
