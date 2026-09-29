@@ -177,6 +177,7 @@ model User {
   tenantInvitesCreated  TenantPendingInvite[] @relation("TenantInviteInvitedBy")
   pendingWhatsAppActions PendingWhatsAppAction[]
   alertDeliveries       AlertDelivery[]
+  subscription          Subscription?
 
   @@map("users")
 }
@@ -965,4 +966,35 @@ model DemoRequest {
 
   @@index([status, createdAt])
   @@map("demo_requests")
+}
+
+// ─── Planes (Etapa 6.3) ─────────────────────────────────────
+
+enum PlanType {
+  CAMPO
+  ASESOR
+  EMPRESA
+}
+
+/// El plan es de la persona: qué campos cubre sale de core/billing/plans.ts. Al
+/// registrarse arranca la prueba gratis; sin plan ni prueba vigentes, sus campos
+/// quedan en modo lectura (nunca se borra nada).
+model Subscription {
+  userId        String    @id
+  /// Plan pago (null mientras está en la prueba o si nunca pagó).
+  plan          PlanType?
+  trialEndsAt   DateTime
+  /// Hasta cuándo está pago el plan. Lo carga el equipo desde Soporte (y después Mercado Pago).
+  paidUntil     DateTime?
+  /// Plan que la persona pidió desde la pantalla Plan, a la espera de que lo activemos.
+  requestedPlan PlanType?
+  requestedAt   DateTime?
+  /// Nota interna del equipo (cómo pagó, acuerdos).
+  note          String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
 }
