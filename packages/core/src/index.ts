@@ -81,3 +81,5 @@ export * from "./support/support.service";
 
 export * from "./billing/plans";
 export * from "./billing/billing.service";
+
+export * from "./tours/tours.service";
