@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireActiveTenantId } from "@/lib/session";
+import { requireWritableTenantId } from "@/lib/session";
 import {
   AppError,
   createMilkSettlement,
@@ -18,7 +18,7 @@ type ActionResult = { success: true } | { success: false; error: string };
 
 async function run(fn: (tenantId: string) => Promise<unknown>): Promise<ActionResult> {
   try {
-    await fn(await requireActiveTenantId());
+    await fn(await requireWritableTenantId());
     revalidatePath("/dashboard/dairy");
     return { success: true };
   } catch (error) {

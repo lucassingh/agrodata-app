@@ -1,10 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireUser, requireActiveTenantId } from "@/lib/session";
+import { requireUser, requireActiveTenantId, requireWritableTenantId } from "@/lib/session";
 import {
   AppError,
   assertCanDeleteOperationalData,
+  assertFieldWritable,
   createAnimalCategorySchema,
   createAnimalCategory,
   deleteAnimalCategory,
@@ -44,7 +45,7 @@ async function withActiveTenant(
   run: (tenantId: string) => Promise<void>,
 ): Promise<ActionResult> {
   try {
-    const tenantId = await requireActiveTenantId();
+    const tenantId = await requireWritableTenantId();
     await run(tenantId);
     revalidatePath("/dashboard/preferences");
     return ok();
@@ -61,6 +62,7 @@ async function withDeletePermission(
     const user = await requireUser();
     assertCanDeleteOperationalData(user.capabilities);
     if (!user.activeTenantId) return fail("No hay un campo activo seleccionado.");
+    await assertFieldWritable(user.activeTenantId);
     await run(user.activeTenantId);
     revalidatePath("/dashboard/preferences");
     return ok();
@@ -158,6 +160,7 @@ export async function updateTenantConfigAction(
   }
   try {
     const user = await requireUser();
+    await assertFieldWritable(tenantId);
     await updateTenant(user.id, tenantId, parsed.data);
     revalidatePath("/dashboard/preferences");
     revalidatePath("/dashboard", "layout");
@@ -179,8 +182,16 @@ export async function saveAlertSettingsAction(input: AlertSettings): Promise<Act
   return withActiveTenant((tenantId) => saveAlertSettings(tenantId, parsed.data));
 }
 
-/** Cada uno decide si recibe los avisos del campo activo por WhatsApp. */
+/** Cada uno decide si recibe los avisos del campo activo por WhatsApp. Es una
+ *  preferencia personal: se puede cambiar también en modo lectura. */
 export async function setWhatsappAlertsAction(enabled: boolean): Promise<ActionResult> {
-  const user = await requireUser();
-  return withActiveTenant((tenantId) => setMemberWhatsappAlerts(user.id, tenantId, enabled));
+  try {
+    const user = await requireUser();
+    await setMemberWhatsappAlerts(user.id, await requireActiveTenantId(), enabled);
+    revalidatePath("/dashboard/preferences");
+    return ok();
+  } catch (error) {
+    if (error instanceof AppError) return fail(error.message);
+    throw error;
+  }
 }

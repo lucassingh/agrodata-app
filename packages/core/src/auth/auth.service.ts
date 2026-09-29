@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma, hashPassword, verifyPassword } from "@repo/database";
+import { TRIAL_DAYS } from "../billing/plans";
 import { badRequest, conflict, notFound, unauthorized } from "../errors";
 import { redeemPendingInvitesForNewUser } from "../memberships/memberships.service";
 import { canAccessWeb, isPlatformStaff } from "./field-roles";
@@ -71,6 +72,8 @@ export async function registerUser(input: RegisterInput) {
       profileType: input.profileType ?? "OTRO",
       // Los permisos son por campo: registrarse no da permisos de plataforma.
       isSuperAdmin: false,
+      // Arranca la prueba gratis, con todo el plan Asesor y sin tarjeta.
+      subscription: { create: { trialEndsAt: new Date(Date.now() + TRIAL_DAYS * 86_400_000) } },
     },
   });
 

@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@repo/database";
+import { onlyActiveFields } from "../billing/billing.service";
 import { waIdFromWNumber } from "../whatsapp/wa-id";
 import { OUTSIDE_24H_WINDOW, sendWhatsAppTemplate, sendWhatsAppText, WhatsAppSendError } from "../whatsapp/whatsapp-client";
 import { alertDigestOneLine, alertDigestText, alertsToSend, REMIND_AFTER_DAYS } from "./alert-digest";
@@ -36,7 +37,8 @@ export async function alertTargets(): Promise<AlertTarget[]> {
     target.recipients.push({ userId: m.user.id, waId });
     targets.set(m.tenantId, target);
   }
-  return [...targets.values()];
+  // En modo lectura (venció el plan) el campo no recibe avisos.
+  return onlyActiveFields([...targets.values()]);
 }
 
 /** Texto si la persona escribió en las últimas 24 hs; si no, la plantilla

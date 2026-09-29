@@ -9,7 +9,9 @@ import {
   ChevronLeft,
   ChevronRight,
   ClipboardList,
+  CreditCard,
   Database,
+  Lock,
   DollarSign,
   TrendingUp,
   Milk,
@@ -85,6 +87,10 @@ interface AppShellProps {
   signOutAction: () => Promise<void>;
   /** Entorno que no es producción («Prueba», «Local»), para no confundirlos. */
   environmentLabel: string | null;
+  /** El campo activo está en modo lectura (venció la prueba o el plan). */
+  readOnly: boolean;
+  /** Días que le quedan a mi prueba gratis (null si no estoy en prueba). */
+  trialDaysLeft: number | null;
 }
 
 function getInitials(name: string): string {
@@ -103,7 +109,15 @@ function getTenantInitials(name: string): string {
     .join("");
 }
 
-export function AppShell({ user, memberships, children, signOutAction, environmentLabel }: AppShellProps) {
+export function AppShell({
+  user,
+  memberships,
+  children,
+  signOutAction,
+  environmentLabel,
+  readOnly,
+  trialDaysLeft,
+}: AppShellProps) {
   const { collapsed: collapsedSetting, setCollapsed, mobileOpen, setMobileOpen } = useSidebar();
   const isDesktop = useIsDesktop();
   // En celular el menú va siempre completo: se abre encima del contenido.
@@ -172,6 +186,7 @@ export function AppShell({ user, memberships, children, signOutAction, environme
   const configItems: NavItem[] = [
     { label: "Equipo", href: "/dashboard/team", icon: <Users size={18} /> },
     { label: "Preferencias", href: "/dashboard/preferences", icon: <Settings size={18} /> },
+    { label: "Mi plan", href: "/dashboard/plan", icon: <CreditCard size={18} /> },
   ];
   const staffItems: NavItem[] = [{ label: "Soporte", href: "/dashboard/support", icon: <LifeBuoy size={18} /> }];
 
@@ -328,6 +343,15 @@ export function AppShell({ user, memberships, children, signOutAction, environme
             </span>
           ) : null}
 
+          {trialDaysLeft !== null ? (
+            <Link
+              href="/dashboard/plan"
+              className="hidden truncate rounded-full border border-primary/30 bg-accent px-3 py-1 text-xs font-semibold text-primary-dark hover:bg-muted sm:inline-block"
+            >
+              Prueba gratis: {trialDaysLeft === 1 ? "queda 1 día" : `quedan ${trialDaysLeft} días`}
+            </Link>
+          ) : null}
+
           <div className="flex items-center gap-1">
             <a
               href="https://wa.me/5491100000000"
@@ -430,18 +454,10 @@ export function AppShell({ user, memberships, children, signOutAction, environme
                     </DropdownMenuItem>
                   ) : null}
 
-                  {user.capabilities.canManageBilling ? (
-                    <>
-                      <DropdownMenuItem disabled>
-                        <DollarSign size={16} />
-                        Suscribirse
-                      </DropdownMenuItem>
-                      <DropdownMenuItem disabled>
-                        <DollarSign size={16} />
-                        Mis pagos
-                      </DropdownMenuItem>
-                    </>
-                  ) : null}
+                  <DropdownMenuItem onClick={() => router.push("/dashboard/plan")}>
+                    <CreditCard size={16} />
+                    Mi plan
+                  </DropdownMenuItem>
                 </DropdownMenuGroup>
 
                 <DropdownMenuSeparator />
@@ -460,6 +476,24 @@ export function AppShell({ user, memberships, children, signOutAction, environme
             </DropdownMenu>
           </div>
         </header>
+
+        {/* Franja fija bajo el encabezado (no dentro del contenido): el banner de cada página se pega arriba. */}
+        {readOnly ? (
+          <div
+            role="status"
+            className="flex flex-col gap-3 border-b border-[#D97706]/40 bg-[#FDF4E3] px-4 py-3 text-[#6B4510] sm:flex-row sm:items-center md:px-6"
+          >
+            <Lock size={18} className="hidden shrink-0 sm:block" aria-hidden />
+            <p className="flex-1 text-sm">
+              <strong className="font-bold">Este campo está en modo lectura.</strong> Venció la prueba gratis o el plan
+              de quien lo administra. Podés ver, exportar y pedir informes, y no se pierde ningún dato. Para volver a
+              cargar, activá un plan.
+            </p>
+            <Link href="/dashboard/plan" className={cn(buttonVariants({ size: "sm" }), "shrink-0 self-start sm:self-auto")}>
+              Ver planes
+            </Link>
+          </div>
+        ) : null}
 
         <main className="flex-1 p-4 md:p-6">{children}</main>
       </div>

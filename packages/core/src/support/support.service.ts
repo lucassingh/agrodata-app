@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma, type DemoRequestStatus } from "@repo/database";
 import { FIELD_ROLE_LABEL, isPlatformStaff, type FieldRole } from "../auth/field-roles";
+import { planState } from "../billing/plans";
 import { forbidden } from "../errors";
 import { lastWeeks, weeklyMetrics } from "./support-metrics";
 
@@ -39,11 +40,13 @@ export async function listAccounts() {
         profileType: true,
         createdAt: true,
         memberships: { where: { status: "ACTIVE" }, select: { role: true, tenant: { select: { name: true } } } },
+        subscription: { select: { plan: true, trialEndsAt: true, paidUntil: true, requestedPlan: true, requestedAt: true, note: true } },
       },
     }),
     prisma.record.groupBy({ by: ["userId"], where: { userId: { not: null } }, _max: { createdAt: true } }),
   ]);
   const lastByUser = new Map(lastRecords.map((r) => [r.userId, r._max.createdAt]));
+  const now = new Date();
   return users.map((u) => ({
     id: u.id,
     name: `${u.name} ${u.lastname}`.trim(),
@@ -53,6 +56,10 @@ export async function listAccounts() {
     createdAt: u.createdAt,
     fields: u.memberships.map((m) => ({ name: m.tenant.name, role: FIELD_ROLE_LABEL[m.role as FieldRole] ?? m.role })),
     lastEntryAt: lastByUser.get(u.id) ?? null,
+    plan: planState(u.subscription, now),
+    requestedPlan: u.subscription?.requestedPlan ?? null,
+    requestedAt: u.subscription?.requestedAt ?? null,
+    note: u.subscription?.note ?? null,
   }));
 }
 

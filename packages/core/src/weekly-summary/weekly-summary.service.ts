@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@repo/database";
 import { dateOnlyRangeFilter, dateRangeFilter } from "../reports/date-range";
 import { LOW_STOCK_THRESHOLD } from "../supplies/stock-math";
+import { onlyActiveFields } from "../billing/billing.service";
 import { waIdFromWNumber } from "../whatsapp/wa-id";
 import { OUTSIDE_24H_WINDOW, sendWhatsAppTemplate, sendWhatsAppText, WhatsAppSendError } from "../whatsapp/whatsapp-client";
 import { weeklySummaryOneLine, weeklySummaryText, type WeeklySummaryData } from "./weekly-summary";
@@ -44,7 +45,8 @@ export async function weeklySummaryTargets(): Promise<WeeklySummaryTarget[]> {
     target.recipients.push({ userId: membership.user.id, name: membership.user.name, waId });
     targets.set(membership.tenantId, target);
   }
-  return [...targets.values()];
+  // En modo lectura (venció el plan) el campo no recibe el resumen.
+  return onlyActiveFields([...targets.values()]);
 }
 
 /** Números de la semana de un campo. Días argentinos para lo que ocurre en un

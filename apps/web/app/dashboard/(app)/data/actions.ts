@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireUser, requireActiveTenantId } from "@/lib/session";
+import { requireUser, requireWritableTenantId } from "@/lib/session";
 import {
   AppError,
   assertCanDeleteOperationalData,
@@ -17,7 +17,7 @@ export async function updateRecordAction(id: string, input: UpdateRecordInput): 
   const parsed = updateRecordSchema.safeParse(input);
   if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? "Datos inválidos." };
   try {
-    const tenantId = await requireActiveTenantId();
+    const tenantId = await requireWritableTenantId();
     await updateRecord(tenantId, id, parsed.data);
     revalidatePath("/dashboard/data");
     revalidatePath("/dashboard/summary");
@@ -33,7 +33,7 @@ export async function deleteRecordAction(id: string): Promise<ActionResult> {
   try {
     const user = await requireUser();
     assertCanDeleteOperationalData(user.capabilities);
-    const tenantId = await requireActiveTenantId();
+    const tenantId = await requireWritableTenantId();
     await deleteRecord(tenantId, id);
     revalidatePath("/dashboard/data");
     revalidatePath("/dashboard/summary");
