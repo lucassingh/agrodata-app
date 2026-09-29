@@ -141,7 +141,7 @@ export function DataClient({
       key: "actions",
       label: "",
       render: (r) => (
-        <div className="flex justify-end gap-1">
+        <div data-tour="datos.row-actions" className="flex justify-end gap-1">
           <Button variant="ghost" size="icon-sm" title="Ver registro" onClick={() => setViewing(r)}>
             <Eye size={14} />
           </Button>
@@ -174,7 +174,7 @@ export function DataClient({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Tabs value={tab} onValueChange={(v: string | null) => v && navigate({ tab: v as "all" | "mine", page: 0 })}>
+        <Tabs data-tour="datos.tabs" value={tab} onValueChange={(v: string | null) => v && navigate({ tab: v as "all" | "mine", page: 0 })}>
           <TabsList>
             <TabsTrigger value="all">Todos</TabsTrigger>
             <TabsTrigger value="mine">Mis datos</TabsTrigger>
@@ -184,12 +184,12 @@ export function DataClient({
       </div>
 
       {total === 0 ? (
-        <div className="rounded-xl border border-dashed border-border py-16 text-center text-sm text-muted-foreground">
+        <div data-tour="datos.empty" className="rounded-xl border border-dashed border-border py-16 text-center text-sm text-muted-foreground">
           {tab === "mine" ? "No hay registros tuyos para mostrar." : "Todavía no hay registros cargados."}
         </div>
       ) : (
         <div className="space-y-1">
-          <DataTable rows={records} columns={columns} />
+          <DataTable rows={records} columns={columns} tour="datos.table" />
           <TablePagination
             page={page}
             rowsPerPage={pageSize}

@@ -201,7 +201,7 @@ export function SuppliesClient({
       label: "Mov.",
       className: "text-center",
       render: (s) => (
-        <div className="flex items-center justify-center gap-1">
+        <div data-tour="insumos.movements" className="flex items-center justify-center gap-1">
           <Button
             variant="ghost"
             size="icon-sm"
@@ -232,6 +232,7 @@ export function SuppliesClient({
             variant="ghost"
             size="icon-sm"
             title="Historial de stock"
+            data-tour="insumos.history"
             aria-label={`Historial de stock de ${s.name}`}
             onClick={() => setHistoryTarget(s)}
           >
@@ -272,7 +273,7 @@ export function SuppliesClient({
 
   return (
     <div className="space-y-5">
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div data-tour="insumos.kpis" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="rounded-2xl shadow-soft">
           <CardContent className="flex items-center gap-3">
             <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -369,6 +370,7 @@ export function SuppliesClient({
           <ExportButton href="/dashboard/export/insumos" />
           {canEdit ? (
             <Button
+              data-tour="insumos.new"
               disabled={categories.length === 0}
               title={
                 categories.length === 0

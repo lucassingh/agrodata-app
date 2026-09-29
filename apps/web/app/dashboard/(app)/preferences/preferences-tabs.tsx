@@ -70,18 +70,18 @@ export function PreferencesTabs({
 }: PreferencesTabsProps) {
   return (
     <Tabs defaultValue={defaultTab && TAB_VALUES.includes(defaultTab) ? defaultTab : "campo"}>
-      <TabsList className="w-full justify-start overflow-x-auto rounded-xl border border-border bg-card p-1 shadow-soft sm:w-auto">
-        <TabsTrigger value="campo">Campo</TabsTrigger>
+      <TabsList data-tour="preferencias.tabs" className="w-full justify-start overflow-x-auto rounded-xl border border-border bg-card p-1 shadow-soft sm:w-auto">
+        <TabsTrigger value="campo" data-tour="preferencias.tab.campo">Campo</TabsTrigger>
         <TabsTrigger value="animales">Animales</TabsTrigger>
         <TabsTrigger value="rodeos">Rodeos</TabsTrigger>
         <TabsTrigger value="cultivos">Cultivos</TabsTrigger>
         <TabsTrigger value="insumos">Insumos</TabsTrigger>
         <TabsTrigger value="gastos">Gastos</TabsTrigger>
-        <TabsTrigger value="avisos">Avisos</TabsTrigger>
+        <TabsTrigger value="avisos" data-tour="preferencias.tab.avisos">Avisos</TabsTrigger>
       </TabsList>
 
       <div className="mt-4">
-        <TabsContent value="campo">
+        <TabsContent value="campo" data-tour="preferencias.campo">
           <CampoTab memberships={memberships} activeTenantId={activeTenantId} canEditField={canEditField} />
         </TabsContent>
 
@@ -148,7 +148,7 @@ export function PreferencesTabs({
           />
         </TabsContent>
 
-        <TabsContent value="avisos">
+        <TabsContent value="avisos" data-tour="preferencias.alerts">
           <AlertsTab {...alerts} />
         </TabsContent>
       </div>

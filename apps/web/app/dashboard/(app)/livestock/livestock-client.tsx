@@ -128,7 +128,7 @@ export function LivestockClient({ groups, pastures, categories, seasons, rodeos,
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap justify-end gap-2">
+      <div data-tour="ganaderia.load" className="flex flex-wrap justify-end gap-2">
         <ExportButton href="/dashboard/export/ganaderia" />
         {canEdit ? (
           <>
@@ -144,7 +144,7 @@ export function LivestockClient({ groups, pastures, categories, seasons, rodeos,
         ) : null}
       </div>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div data-tour="ganaderia.kpis" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi label="Cabezas" value={number(heads)} caption={`${groups.length} ${groups.length === 1 ? "grupo" : "grupos"}`} />
         <Kpi label="Grupos pesados" value={number(weighed.length)} />
         <Kpi label="ADPV promedio" value={avgGain !== null ? `${number(avgGain, 3)} kg/día` : "—"} caption={avgGain !== null ? "Ponderado por cabezas" : "Hacen falta dos pesadas de un grupo"} />
@@ -152,7 +152,7 @@ export function LivestockClient({ groups, pastures, categories, seasons, rodeos,
       </div>
 
       {groups.length === 0 ? (
-        <div className="mx-auto flex max-w-xl flex-col items-center gap-3 rounded-xl border border-dashed border-border py-12 text-center">
+        <div data-tour="ganaderia.table" className="mx-auto flex max-w-xl flex-col items-center gap-3 rounded-xl border border-dashed border-border py-12 text-center">
           <Scale className="text-muted-foreground" />
           <p className="font-heading text-lg font-semibold">Todavía no hay hacienda ni pesadas</p>
           <p className="max-w-md text-sm text-muted-foreground">
@@ -161,10 +161,12 @@ export function LivestockClient({ groups, pastures, categories, seasons, rodeos,
           </p>
         </div>
       ) : (
-        <DataTable rows={groups} columns={columns} />
+        <DataTable rows={groups} columns={columns} tour="ganaderia.table" />
       )}
 
-      <ReproSection seasons={seasons} rodeos={rodeos} canEdit={canEdit} />
+      <div data-tour="ganaderia.repro">
+        <ReproSection seasons={seasons} rodeos={rodeos} canEdit={canEdit} />
+      </div>
 
       {detail ? <GroupDialog group={detail} canEdit={canEdit} onClose={() => setDetailKey(null)} /> : null}
       {dialog === "weighing" ? <WeighingDialog pastures={pastures} categories={categories} onClose={() => setDialog(null)} /> : null}
