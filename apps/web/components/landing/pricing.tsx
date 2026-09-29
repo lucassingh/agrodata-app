@@ -5,7 +5,7 @@ import { Check } from "lucide-react";
 import { useId, useState } from "react";
 import { cn } from "@/lib/utils";
 import { CtaLink } from "./cta-link";
-import { DEMO_CTA_LABEL, PRICING } from "./content";
+import { DEMO_CTA_LABEL, PRICING, TRIAL_CTA_LABEL, TRIAL_HREF } from "./content";
 import { Container, SectionTitle, SoonBadge, featureLabel, type PlanFeature } from "./primitives";
 import { usePrefersReducedMotion } from "@/lib/use-prefers-reduced-motion";
 
@@ -41,7 +41,7 @@ export function Pricing() {
                   aria-checked={selected}
                   onClick={() => setBilling(option)}
                   className={cn(
-                    "relative rounded-full px-5 py-2.5 text-sm font-medium transition-colors duration-200 outline-none focus-visible:ring-3 focus-visible:ring-l-brand-light/60",
+                    "relative rounded-full px-5 py-2.5 text-sm font-medium whitespace-nowrap transition-colors duration-200 outline-none focus-visible:ring-3 focus-visible:ring-l-brand-light/60",
                     selected ? "text-white" : "text-l-ink-soft hover:text-l-ink",
                   )}
                 >
@@ -55,7 +55,7 @@ export function Pricing() {
                   <span className="relative">
                     {option === "monthly" ? "Mensual" : "Anual"}
                     {option === "yearly" && (
-                      <span className={cn("ml-2 rounded-full px-2 py-0.5 text-xs", selected ? "bg-l-accent text-l-ink" : "bg-l-accent-tint text-l-ink")}>
+                      <span className={cn("ml-2 rounded-full px-2 py-0.5 text-xs whitespace-nowrap", selected ? "bg-l-accent text-l-ink" : "bg-l-accent-tint text-l-ink")}>
                         2 meses gratis
                       </span>
                     )}
@@ -120,8 +120,9 @@ export function Pricing() {
                 ))}
               </ul>
 
-              <CtaLink href="#demo" variant={plan.highlighted ? "onBrand" : "secondary"} size="lg" className="mt-10 w-full">
-                {DEMO_CTA_LABEL}
+              {/* El plan a medida se conversa; los demás se prueban gratis. */}
+              <CtaLink href={plan.custom ? "#demo" : TRIAL_HREF} variant={plan.highlighted ? "onBrand" : "secondary"} size="lg" className="mt-10 w-full">
+                {plan.custom ? DEMO_CTA_LABEL : TRIAL_CTA_LABEL}
               </CtaLink>
             </li>
           ))}

@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { ActivitiesMarquee } from "@/components/landing/activities-marquee";
+import { AdvisorSection } from "@/components/landing/advisor-section";
+import { AlertsSection } from "@/components/landing/alerts-section";
+import { Comparison } from "@/components/landing/comparison";
 import { DemoCta } from "@/components/landing/demo-cta";
 import { Faq } from "@/components/landing/faq";
 import { FeaturesBento } from "@/components/landing/features-bento";
@@ -24,10 +27,11 @@ export const metadata: Metadata = {
     title: "AgroData | Todo tu campo, ordenado desde WhatsApp",
     description:
       "Cargá siembra, animales, gastos y facturas desde WhatsApp. Consultá y exportá cuando lo necesites.",
-    images: [{ url: "/landing/hero-potreros.jpg", width: 2400, height: 1816 }],
+    images: [{ url: "/landing/og-image.jpg", width: 1200, height: 630, alt: "AgroData: todo lo que pasa en tu campo, ordenado desde WhatsApp" }],
     locale: "es_AR",
     type: "website",
   },
+  twitter: { card: "summary_large_image", images: ["/landing/og-image.jpg"] },
 };
 
 export default function MarketingHomePage() {
@@ -49,8 +53,11 @@ export default function MarketingHomePage() {
           <FeaturesBento />
           <LotMargin />
           <LivestockDairy />
+          <AlertsSection />
           <MultiField />
+          <AdvisorSection />
           <ProductShowcase />
+          <Comparison />
           <Profiles />
           <Pricing />
           <Faq />

@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import CardNav, { type CardNavItem } from "@/components/react-bits/CardNav";
 import { CtaLink } from "./cta-link";
-import { DEMO_CTA_LABEL, SIGN_IN_LABEL } from "./content";
+import { DEMO_CTA_LABEL, SIGN_IN_LABEL, TRIAL_CTA_LABEL, TRIAL_HREF } from "./content";
 
 const NAV_ITEMS: CardNavItem[] = [
   {
@@ -32,6 +32,7 @@ const NAV_ITEMS: CardNavItem[] = [
     bgColor: "var(--l-accent-tint)",
     textColor: "var(--l-ink)",
     links: [
+      { label: TRIAL_CTA_LABEL, href: TRIAL_HREF },
       { label: DEMO_CTA_LABEL, href: "#demo" },
       { label: "Precios", href: "#precios" },
       { label: "Preguntas frecuentes", href: "#preguntas" },
@@ -54,7 +55,7 @@ export function LandingNav() {
           <CtaLink href="/dashboard/sign-in" variant="secondary">
             {SIGN_IN_LABEL}
           </CtaLink>
-          <CtaLink href="#demo">{DEMO_CTA_LABEL}</CtaLink>
+          <CtaLink href={TRIAL_HREF}>Probar gratis</CtaLink>
         </div>
       }
     />

@@ -1,7 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import { AnimatePresence, motion, useScroll, useTransform } from "motion/react";
-import { ClipboardList, DollarSign, Fence, Package, PieChart, Users, type LucideIcon } from "lucide-react";
+import { ClipboardList, Database, DollarSign, Fence, Milk, Package, PieChart, Scale, type LucideIcon } from "lucide-react";
 import { useId, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { SHOWCASE } from "./content";
@@ -11,17 +12,19 @@ import { usePrefersReducedMotion } from "@/lib/use-prefers-reduced-motion";
 
 const TAB_ICONS: Record<string, LucideIcon> = {
   resumen: PieChart,
+  datos: Database,
   potreros: Fence,
   tareas: ClipboardList,
   gastos: DollarSign,
   insumos: Package,
-  equipo: Users,
+  ganaderia: Scale,
+  tambo: Milk,
 };
 
 /**
- * Tabs con capturas del dashboard. Las capturas reales (Playwright sobre datos
- * demo) se suman en un paso posterior: por ahora cada tab reserva el espacio
- * exacto (16:10) con un marcador claro, sin simular la UI con divs.
+ * Tabs con capturas reales del dashboard (2400x1500, 16:10), sacadas de la
+ * cuenta demo de develop (`pnpm --filter @repo/database db:seed:demo`, ver
+ * docs/17). Para actualizarlas, se vuelven a sacar con el mismo tamaño.
  */
 export function ProductShowcase() {
   const [activeId, setActiveId] = useState(SHOWCASE.tabs[0]!.id);
@@ -33,7 +36,6 @@ export function ProductShowcase() {
   const scale = useTransform(scrollYProgress, [0, 1], [0.94, 1]);
 
   const active = SHOWCASE.tabs.find((tab) => tab.id === activeId) ?? SHOWCASE.tabs[0]!;
-  const ActiveIcon = TAB_ICONS[active.id] ?? PieChart;
 
   const onTabKeyDown = useTabKeys({
     ids: SHOWCASE.tabs.map((tab) => tab.id),
@@ -48,6 +50,7 @@ export function ProductShowcase() {
         <SectionTitle id="showcase-title" className="max-w-[20ch]">
           {SHOWCASE.title}
         </SectionTitle>
+        <p className="mt-4 max-w-[52ch] text-lg text-l-ink-soft">{SHOWCASE.subtitle}</p>
 
         <div role="tablist" aria-label="Módulos del dashboard" onKeyDown={onTabKeyDown} className="mt-10 flex gap-1 overflow-x-auto pb-2 [scrollbar-width:none]">
           {SHOWCASE.tabs.map((tab) => {
@@ -93,6 +96,7 @@ export function ProductShowcase() {
               <span className="size-2.5 rounded-full bg-l-line" aria-hidden />
               <span className="size-2.5 rounded-full bg-l-line" aria-hidden />
               <span className="ml-3 truncate text-[13px] text-l-ink-soft">AgroData · {active.label}</span>
+              <span aria-hidden className="ml-auto hidden truncate text-[13px] text-l-ink-soft md:block">{active.caption}</span>
             </div>
 
             <div
@@ -104,23 +108,24 @@ export function ProductShowcase() {
               <AnimatePresence mode="wait">
                 <motion.div
                   key={active.id}
-                  initial={reduceMotion ? false : { opacity: 0, y: 12, filter: "blur(6px)" }}
-                  animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                  exit={{ opacity: 0, y: -8, filter: "blur(6px)" }}
+                  initial={reduceMotion ? false : { opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                  className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-8 text-center"
+                  className="absolute inset-0"
                 >
-                  {/* TODO(landing): reemplazar por la captura real del módulo (1600x1000). */}
-                  <span className="flex size-16 shrink-0 items-center justify-center rounded-full bg-white text-l-brand shadow-l">
-                    <ActiveIcon className="size-7" strokeWidth={1.75} aria-hidden />
-                  </span>
-                  <p className="font-heading text-2xl font-semibold text-l-ink">{active.label}</p>
-                  <p className="max-w-[40ch] text-l-ink-soft">{active.caption}</p>
-                  <p className="text-[13px] text-l-ink-soft/80">Captura del dashboard pendiente</p>
+                  <Image
+                    src={`/landing/dashboard/${active.id}.webp`}
+                    alt={`Pantalla ${active.label} de AgroData: ${active.caption}`}
+                    fill
+                    sizes="(min-width: 1320px) 1240px, 100vw"
+                    className="object-cover object-top"
+                  />
                 </motion.div>
               </AnimatePresence>
             </div>
           </motion.div>
+          <p aria-hidden className="mt-3 text-sm text-l-ink-soft md:hidden">{active.caption}</p>
         </div>
       </Container>
     </section>

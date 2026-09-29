@@ -284,7 +284,7 @@ function ExportCell() {
             Exportá todo y recibí un reporte cada semana
           </h3>
           <p className="mt-3 max-w-[44ch] leading-relaxed text-white/80">
-            Planillas de Excel listas para tu contador, tu socio o el banco (PDF, muy pronto). Y un resumen de la semana todos los lunes.
+            Planillas de Excel para tu contador, tu socio o el banco, e informes en PDF para tus clientes. Y un resumen de la semana todos los lunes.
           </p>
         </div>
         <ul className="flex flex-wrap gap-2 text-sm">
@@ -294,8 +294,7 @@ function ExportCell() {
           </li>
           <li className="flex items-center gap-2 rounded-full bg-white/12 px-4 py-2 backdrop-blur-sm">
             <FileText className="size-4 text-l-brand-light" aria-hidden />
-            PDF
-            <SoonBadge onDark />
+            Informe en PDF
           </li>
           <li className="flex items-center gap-2 rounded-full bg-white/12 px-4 py-2 backdrop-blur-sm">
             <CalendarClock className="size-4 text-l-accent" aria-hidden />
