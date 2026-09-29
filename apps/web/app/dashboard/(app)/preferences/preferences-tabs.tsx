@@ -70,7 +70,7 @@ export function PreferencesTabs({
 }: PreferencesTabsProps) {
   return (
     <Tabs defaultValue={defaultTab && TAB_VALUES.includes(defaultTab) ? defaultTab : "campo"}>
-      <TabsList className="w-full flex-wrap justify-start rounded-xl border border-border bg-card p-1 shadow-soft sm:w-auto">
+      <TabsList className="w-full justify-start overflow-x-auto rounded-xl border border-border bg-card p-1 shadow-soft sm:w-auto">
         <TabsTrigger value="campo">Campo</TabsTrigger>
         <TabsTrigger value="animales">Animales</TabsTrigger>
         <TabsTrigger value="rodeos">Rodeos</TabsTrigger>

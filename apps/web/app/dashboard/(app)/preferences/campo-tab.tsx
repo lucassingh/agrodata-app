@@ -299,7 +299,7 @@ export function CampoTab({ memberships, activeTenantId, canEditField }: CampoTab
         return (
           <div
             key={m.tenantId}
-            className="rounded-xl border border-border bg-card p-4 shadow-soft"
+            className="min-w-0 rounded-xl border border-border bg-card p-4 shadow-soft"
           >
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-start gap-3">
