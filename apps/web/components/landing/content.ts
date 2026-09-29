@@ -1,6 +1,7 @@
 // Copy de la landing comercial. Fuente: docs/01_comercial_agrodata.md y
 // docs/08_ui-landing.md. Regla: nada de rayas largas; hablar como el productor.
 
+import { PLANS, TRIAL_DAYS } from "@repo/core/billing/plans";
 import { DEMO_FIELD_COUNT_LABEL, DEMO_PROFILE_LABEL } from "@repo/core/leads/demo-request.schema";
 
 export const DEMO_CTA_LABEL = "Pedir demo";
@@ -212,13 +213,13 @@ export const PROFILES = {
 
 export const PRICING = {
   title: "Un plan para cada escala",
-  subtitle: "Precios de lanzamiento, en dólares por mes.",
+  subtitle: `Precios de lanzamiento, en dólares por mes. Probalo gratis ${TRIAL_DAYS} días con todo el plan Asesor, sin tarjeta.`,
   plans: [
     {
       id: "campo",
       name: "Campo",
       audience: "Para un establecimiento",
-      monthly: 29,
+      monthly: PLANS.CAMPO.monthlyUsd,
       custom: false,
       highlighted: false,
       features: [
@@ -234,7 +235,7 @@ export const PRICING = {
       id: "asesor",
       name: "Asesor",
       audience: "Para agrónomos y veterinarios con cartera",
-      monthly: 199,
+      monthly: PLANS.ASESOR.monthlyUsd,
       custom: false,
       highlighted: true,
       features: [
@@ -251,7 +252,7 @@ export const PRICING = {
       id: "empresa",
       name: "Empresa",
       audience: "Para grupos y administradoras",
-      monthly: null,
+      monthly: PLANS.EMPRESA.monthlyUsd,
       custom: true,
       highlighted: false,
       features: [

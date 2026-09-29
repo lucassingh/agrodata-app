@@ -1,6 +1,6 @@
 import { signOut } from "@/auth";
 import { requireUser } from "@/lib/session";
-import { findUserTenants } from "@repo/core";
+import { findUserTenants, getShellPlanInfo } from "@repo/core";
 import { AppShell } from "@/components/app-shell";
 import { SidebarProvider } from "@/context/sidebar-context";
 
@@ -18,7 +18,10 @@ export default async function DashboardShellLayout({
   children: React.ReactNode;
 }) {
   const user = await requireUser();
-  const memberships = await findUserTenants(user.id);
+  const [memberships, planInfo] = await Promise.all([
+    findUserTenants(user.id),
+    getShellPlanInfo(user.id, user.activeTenantId),
+  ]);
 
   async function signOutAction() {
     "use server";
@@ -48,6 +51,8 @@ export default async function DashboardShellLayout({
         }))}
         signOutAction={signOutAction}
         environmentLabel={environmentLabel()}
+        readOnly={planInfo.readOnly}
+        trialDaysLeft={planInfo.trialDaysLeft}
       >
         {children}
       </AppShell>

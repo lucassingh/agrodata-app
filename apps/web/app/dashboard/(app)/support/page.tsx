@@ -9,6 +9,7 @@ import {
   listAccounts,
   listDemoRequests,
   METRIC_WEEKS,
+  PLANS,
 } from "@repo/core";
 import { requireUser } from "@/lib/session";
 import { HeroBanner } from "@/components/hero-banner";
@@ -16,6 +17,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { cn } from "@/lib/utils";
 import { DemoStatusSelect } from "./demo-status-select";
+import { SubscriptionDialog } from "./subscription-dialog";
 
 export const metadata: Metadata = {
   title: "Soporte — AgroData",
@@ -42,6 +44,10 @@ function formatMoment(date: Date | null): string {
     })
     .replace(/\s+/g, " ");
 }
+
+/** Día argentino, dd/mm/aa. */
+const formatDay = (date: Date) =>
+  date.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "2-digit", timeZone: "America/Argentina/Buenos_Aires" });
 
 const dayMonth = (isoDay: string) => `${isoDay.slice(8, 10)}/${isoDay.slice(5, 7)}`;
 
@@ -161,6 +167,41 @@ async function Accounts() {
         ),
     },
     { key: "last", label: "Última carga", className: "whitespace-nowrap", render: (a) => formatMoment(a.lastEntryAt) },
+    {
+      key: "plan",
+      label: "Plan",
+      render: (a) => (
+        <div className="min-w-36 text-sm">
+          <p className={cn("font-medium", a.plan.kind === "expired" && "text-[#8A5A12]")}>
+            {a.plan.kind === "paid"
+              ? `${PLANS[a.plan.plan].name} hasta el ${formatDay(a.plan.until)}`
+              : a.plan.kind === "trial"
+                ? `Prueba: ${a.plan.daysLeft === 1 ? "1 día" : `${a.plan.daysLeft} días`}`
+                : "Vencido (modo lectura)"}
+          </p>
+          {a.requestedPlan ? (
+            <p className="text-xs font-semibold text-primary">
+              Pidió {PLANS[a.requestedPlan].name}
+              {a.requestedAt ? ` el ${formatDay(a.requestedAt)}` : ""}
+            </p>
+          ) : null}
+          {a.note ? <p className="max-w-56 text-xs text-muted-foreground">{a.note}</p> : null}
+        </div>
+      ),
+    },
+    {
+      key: "manage",
+      label: "",
+      render: (a) => (
+        <SubscriptionDialog
+          userId={a.id}
+          name={a.name}
+          paidPlan={a.plan.kind === "paid" ? a.plan.plan : null}
+          requestedPlan={a.requestedPlan}
+          note={a.note}
+        />
+      ),
+    },
   ];
   return <DataTable rows={accounts} columns={columns} />;
 }
