@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireUser, requireActiveTenantId } from "@/lib/session";
+import { requireUser, requireWritableTenantId } from "@/lib/session";
 import {
   AppError,
   assertCanDeleteOperationalData,
@@ -36,7 +36,7 @@ export async function createExpenseAction(
   const parsed = createExpenseSchema.safeParse(input);
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Datos inválidos.");
   try {
-    const tenantId = await requireActiveTenantId();
+    const tenantId = await requireWritableTenantId();
     const expense = await createExpense(tenantId, parsed.data);
     if (campaignIds.length > 0) await setExpenseCampaigns(tenantId, expense.id, campaignIds);
     revalidatePath("/dashboard/expenses");
@@ -55,7 +55,7 @@ export async function updateExpenseAction(
   const parsed = updateExpenseSchema.safeParse(input);
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Datos inválidos.");
   try {
-    const tenantId = await requireActiveTenantId();
+    const tenantId = await requireWritableTenantId();
     await updateExpense(tenantId, id, parsed.data);
     // Siempre: si cambió el monto, las asignaciones se recalculan.
     await setExpenseCampaigns(tenantId, id, campaignIds);
@@ -71,7 +71,7 @@ export async function deleteExpenseAction(id: string): Promise<ActionResult> {
   try {
     const user = await requireUser();
     assertCanDeleteOperationalData(user.capabilities);
-    const tenantId = await requireActiveTenantId();
+    const tenantId = await requireWritableTenantId();
     await deleteExpense(tenantId, id);
     revalidatePath("/dashboard/expenses");
     return ok(undefined);
@@ -89,7 +89,7 @@ export async function createExpenseCategoryAction(
   const parsed = createExpenseCategorySchema.safeParse({ name, color });
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Datos inválidos.");
   try {
-    const tenantId = await requireActiveTenantId();
+    const tenantId = await requireWritableTenantId();
     const category = await createExpenseCategory(tenantId, parsed.data);
     revalidatePath("/dashboard/expenses");
     revalidatePath("/dashboard/preferences");

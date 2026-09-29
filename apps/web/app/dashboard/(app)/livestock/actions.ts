@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireActiveTenantId } from "@/lib/session";
+import { requireWritableTenantId } from "@/lib/session";
 import {
   AppError,
   createReproEvent,
@@ -21,7 +21,7 @@ type ActionResult<T = undefined> = { success: true; data: T } | { success: false
 
 async function run<T>(fn: (tenantId: string) => Promise<T>): Promise<ActionResult<T>> {
   try {
-    const data = await fn(await requireActiveTenantId());
+    const data = await fn(await requireWritableTenantId());
     revalidatePath("/dashboard/livestock");
     return { success: true, data };
   } catch (error) {

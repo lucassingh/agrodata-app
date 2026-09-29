@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireUser, requireActiveTenantId } from "@/lib/session";
+import { requireUser, requireWritableTenantId } from "@/lib/session";
 import {
   AppError,
   assertCanDeleteOperationalData,
@@ -33,7 +33,7 @@ export async function createTaskAction(
   const parsed = createTaskSchema.safeParse(input);
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Datos inválidos.");
   try {
-    const tenantId = await requireActiveTenantId();
+    const tenantId = await requireWritableTenantId();
     const task = await createTask(tenantId, parsed.data);
     revalidatePath("/dashboard/tasks");
     return ok({ id: task.id });
@@ -47,7 +47,7 @@ export async function toggleTaskStatusAction(
   id: string,
 ): Promise<ActionResult<{ status: "PENDING" | "COMPLETED" }>> {
   try {
-    const tenantId = await requireActiveTenantId();
+    const tenantId = await requireWritableTenantId();
     const task = await toggleTaskStatus(tenantId, id);
     revalidatePath("/dashboard/tasks");
     return ok({ status: task.status });
@@ -61,7 +61,7 @@ export async function deleteTaskAction(id: string): Promise<ActionResult> {
   try {
     const user = await requireUser();
     assertCanDeleteOperationalData(user.capabilities);
-    const tenantId = await requireActiveTenantId();
+    const tenantId = await requireWritableTenantId();
     await deleteTask(tenantId, id);
     revalidatePath("/dashboard/tasks");
     return ok(undefined);
@@ -77,7 +77,7 @@ export async function deleteTaskAction(id: string): Promise<ActionResult> {
 export async function addTaskRecordAction(id: string): Promise<ActionResult> {
   try {
     const user = await requireUser();
-    const tenantId = await requireActiveTenantId();
+    const tenantId = await requireWritableTenantId();
     const task = await findTask(tenantId, id);
     const pasturesText = task.pastures.map((p) => p.pasture?.name ?? p.pastureId).join(", ");
     const animalsText = task.animals.map((a) => `${a.quantity} ${a.animalType}`).join(", ");

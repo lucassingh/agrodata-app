@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireActiveTenantId } from "@/lib/session";
+import { requireActiveTenantId, requireWritableTenantId } from "@/lib/session";
 import {
   AppError,
   createPastureSchema,
@@ -37,7 +37,7 @@ export async function createPastureAction(
   const parsed = createPastureSchema.safeParse(input);
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Datos inválidos.");
   try {
-    const tenantId = await requireActiveTenantId();
+    const tenantId = await requireWritableTenantId();
     const pasture = await createPasture(tenantId, parsed.data);
     revalidatePath("/dashboard/pastures");
     return ok({ id: pasture.id });
@@ -65,7 +65,7 @@ export async function createPasturesBulkAction(
     parsedItems.push(parsed.data);
   }
   try {
-    const tenantId = await requireActiveTenantId();
+    const tenantId = await requireWritableTenantId();
     const created = await createPasturesBulk(tenantId, parsedItems);
     revalidatePath("/dashboard/pastures");
     revalidatePath("/dashboard/how-start");
@@ -83,7 +83,7 @@ export async function updatePastureAction(
   const parsed = updatePastureSchema.safeParse(input);
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Datos inválidos.");
   try {
-    const tenantId = await requireActiveTenantId();
+    const tenantId = await requireWritableTenantId();
     await updatePasture(tenantId, id, parsed.data);
     revalidatePath("/dashboard/pastures");
     return ok(undefined);
@@ -95,7 +95,7 @@ export async function updatePastureAction(
 
 export async function deletePastureAction(id: string): Promise<ActionResult> {
   try {
-    const tenantId = await requireActiveTenantId();
+    const tenantId = await requireWritableTenantId();
     await deletePasture(tenantId, id);
     revalidatePath("/dashboard/pastures");
     return ok(undefined);
@@ -111,7 +111,7 @@ export async function createCropOptionAction(
   const parsed = createCropConfigSchema.safeParse({ name });
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Datos inválidos.");
   try {
-    const tenantId = await requireActiveTenantId();
+    const tenantId = await requireWritableTenantId();
     const crop = await createCropConfig(tenantId, parsed.data);
     revalidatePath("/dashboard/pastures");
     return ok({ id: crop.id, name: crop.name });
@@ -127,7 +127,7 @@ export async function createAnimalOptionAction(
   const parsed = createAnimalCategorySchema.safeParse({ name });
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Datos inválidos.");
   try {
-    const tenantId = await requireActiveTenantId();
+    const tenantId = await requireWritableTenantId();
     const category = await createAnimalCategory(tenantId, parsed.data);
     revalidatePath("/dashboard/pastures");
     return ok({ id: category.id, name: category.name });
