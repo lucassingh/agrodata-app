@@ -252,12 +252,16 @@ model Record {
   confidence Float?
   rawMessage String?
   userId     String?
+  /// Cuándo lo corrigió una persona desde Datos (updatedAt también cambia cuando el bot aplica
+  /// los efectos). Mide la calidad de lo que entendió la IA.
+  editedAt   DateTime?
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId, type, occurredAt])
+  @@index([createdAt])
   @@map("records")
 }
 

@@ -16,6 +16,7 @@ import {
   Scale,
   Download,
   Fence,
+  LifeBuoy,
   LogOut,
   Map as MapIcon,
   Menu,
@@ -67,6 +68,8 @@ interface AppShellUser {
   platformRole: PlatformRole;
   capabilities: Capabilities;
   activeTenantId: string | null;
+  /** Equipo de AgroData (SUPER_ADMIN_EMAILS): ve el panel de soporte. */
+  isStaff: boolean;
 }
 
 interface Membership {
@@ -170,6 +173,7 @@ export function AppShell({ user, memberships, children, signOutAction, environme
     { label: "Equipo", href: "/dashboard/team", icon: <Users size={18} /> },
     { label: "Preferencias", href: "/dashboard/preferences", icon: <Settings size={18} /> },
   ];
+  const staffItems: NavItem[] = [{ label: "Soporte", href: "/dashboard/support", icon: <LifeBuoy size={18} /> }];
 
   const activeMembership = memberships.find((m) => m.tenantId === user.activeTenantId);
   const activeTenant = activeMembership?.tenant;
@@ -285,6 +289,12 @@ export function AppShell({ user, memberships, children, signOutAction, environme
           {renderNavSection("Gestión", gestionItems)}
           {!collapsed ? <div className="mx-3 my-1 border-t border-border" /> : null}
           {renderNavSection("Configuración", configItems)}
+          {user.isStaff ? (
+            <>
+              {!collapsed ? <div className="mx-3 my-1 border-t border-border" /> : null}
+              {renderNavSection("AgroData", staffItems)}
+            </>
+          ) : null}
         </nav>
       </aside>
 
