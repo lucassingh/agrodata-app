@@ -31,6 +31,11 @@ export function useSidebar() {
 
 const DESKTOP_QUERY = "(min-width: 768px)";
 
+/** Si la pantalla es de escritorio en este momento. Para código que corre después
+ *  (por ejemplo, una acción del tour guardada al cargar la página), donde el valor
+ *  de `useIsDesktop` del primer render puede ser el del servidor. */
+export const isDesktopNow = (): boolean => window.matchMedia(DESKTOP_QUERY).matches;
+
 /** Si la pantalla es de escritorio (md de Tailwind). En el servidor se asume que
  *  sí; en celular se corrige apenas carga la página. */
 export function useIsDesktop(): boolean {

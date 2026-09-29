@@ -228,7 +228,7 @@ export function TasksClient({
   return (
     <div className="space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Tabs value={activeTab} onValueChange={(v: string | null) => v && setActiveTab(v as "all" | "mine")}>
+        <Tabs data-tour="tareas.tabs" value={activeTab} onValueChange={(v: string | null) => v && setActiveTab(v as "all" | "mine")}>
           <TabsList>
             <TabsTrigger value="all">Todas</TabsTrigger>
             <TabsTrigger value="mine">Mis Tareas</TabsTrigger>
@@ -239,6 +239,7 @@ export function TasksClient({
           {hasActiveTenant ? <ExportButton href="/dashboard/export/tareas" /> : null}
           <DropdownMenu>
             <DropdownMenuTrigger
+              data-tour="tareas.new"
               render={
                 <Button
                   disabled={!hasActiveTenant}
@@ -273,7 +274,7 @@ export function TasksClient({
         </div>
       </div>
 
-      <div className="rounded-xl border border-border p-4 shadow-soft">
+      <div data-tour="tareas.progress" className="rounded-xl border border-border p-4 shadow-soft">
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">
             {tasks.filter((t) => t.status === "COMPLETED").length} de {totalTasks} tareas completadas
@@ -290,6 +291,7 @@ export function TasksClient({
         tasks={pending}
         emptyMessage="No hay tareas pendientes"
         columns={columns}
+        tour="tareas.pending"
       />
       <TaskSection
         title="Completados"
@@ -342,11 +344,12 @@ interface TaskSectionProps {
   tasks: Task[];
   emptyMessage: string;
   columns: DataTableColumn<Task>[];
+  tour?: string;
 }
 
-function TaskSection({ title, color, bg, tasks, emptyMessage, columns }: TaskSectionProps) {
+function TaskSection({ title, color, bg, tasks, emptyMessage, columns, tour }: TaskSectionProps) {
   return (
-    <div className="space-y-2">
+    <div data-tour={tour} className="space-y-2">
       <div
         className="flex items-center gap-2 rounded-lg px-3 py-2"
         style={{ backgroundColor: bg, color }}

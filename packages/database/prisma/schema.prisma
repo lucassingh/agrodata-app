@@ -178,6 +178,7 @@ model User {
   pendingWhatsAppActions PendingWhatsAppAction[]
   alertDeliveries       AlertDelivery[]
   subscription          Subscription?
+  toursSeen             TourSeen[]
 
   @@map("users")
 }
@@ -997,4 +998,19 @@ model Subscription {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("subscriptions")
+}
+
+// ─── Tour guiado (Etapa 6.4) ────────────────────────────────
+
+/// Guías que cada persona ya terminó o cerró: no se vuelven a abrir solas, en
+/// ninguna computadora ni celular. `tourId` es el de la pantalla (resumen, gastos…).
+model TourSeen {
+  userId String
+  tourId String
+  seenAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, tourId])
+  @@map("tours_seen")
 }

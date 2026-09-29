@@ -45,6 +45,7 @@ import { useIsDesktop, useSidebar } from "@/context/sidebar-context";
 import { CreateTenantDialog } from "@/components/create-tenant-dialog";
 import { setActiveTenantAction } from "@/app/dashboard/(app)/_lib/tenant-actions";
 import { cn } from "@/lib/utils";
+import { TourHost, TourLayer } from "@/components/product-tour/engine";
 import type { Capabilities, PlatformRole } from "@repo/core";
 import { visibleModules } from "@repo/core/tenants/tenant-labels";
 import { isWebRole } from "@repo/core/auth/field-roles";
@@ -65,6 +66,7 @@ interface NavItem {
 }
 
 interface AppShellUser {
+  id: string;
   name: string;
   email: string;
   platformRole: PlatformRole;
@@ -91,6 +93,8 @@ interface AppShellProps {
   readOnly: boolean;
   /** Días que le quedan a mi prueba gratis (null si no estoy en prueba). */
   trialDaysLeft: number | null;
+  /** Guías que la persona ya terminó o cerró (tour guiado). */
+  seenTours: string[];
 }
 
 function getInitials(name: string): string {
@@ -117,6 +121,7 @@ export function AppShell({
   environmentLabel,
   readOnly,
   trialDaysLeft,
+  seenTours,
 }: AppShellProps) {
   const { collapsed: collapsedSetting, setCollapsed, mobileOpen, setMobileOpen } = useSidebar();
   const isDesktop = useIsDesktop();
@@ -200,9 +205,9 @@ export function AppShell({
     router.refresh();
   };
 
-  function renderNavSection(title: string, items: NavItem[]) {
+  function renderNavSection(title: string, items: NavItem[], tourKey: string) {
     return (
-      <div className="mb-1">
+      <div className="mb-1" data-tour={`shell.menu.${tourKey}`}>
         {!collapsed ? (
           <p className="px-3 py-2 text-[10.5px] font-bold tracking-wide text-muted-foreground uppercase">
             {title}
@@ -214,6 +219,7 @@ export function AppShell({
             <Link
               key={item.href}
               href={item.href}
+              data-tour={`shell.menu.item.${item.href.split("/").pop()}`}
               title={collapsed ? item.label : undefined}
               className={cn(
                 "mx-1 mb-1 flex min-h-10 items-center gap-3 rounded-lg px-3 text-sm font-semibold transition-colors",
@@ -277,7 +283,7 @@ export function AppShell({
         </div>
 
         {activeTenant ? (
-          <div className={cn("px-3 py-2", collapsed && "flex justify-center px-0")}>
+          <div data-tour="shell.field" className={cn("px-3 py-2", collapsed && "flex justify-center px-0")}>
             {collapsed ? (
               <div
                 title={activeTenant.name}
@@ -299,15 +305,15 @@ export function AppShell({
         ) : null}
 
         <nav className="flex-1 overflow-y-auto py-2">
-          {renderNavSection("Campo", campoItems)}
+          {renderNavSection("Campo", campoItems, "campo")}
           {!collapsed ? <div className="mx-3 my-1 border-t border-border" /> : null}
-          {renderNavSection("Gestión", gestionItems)}
+          {renderNavSection("Gestión", gestionItems, "gestion")}
           {!collapsed ? <div className="mx-3 my-1 border-t border-border" /> : null}
-          {renderNavSection("Configuración", configItems)}
+          {renderNavSection("Configuración", configItems, "configuracion")}
           {user.isStaff ? (
             <>
               {!collapsed ? <div className="mx-3 my-1 border-t border-border" /> : null}
-              {renderNavSection("AgroData", staffItems)}
+              {renderNavSection("AgroData", staffItems, "agrodata")}
             </>
           ) : null}
         </nav>
@@ -346,6 +352,7 @@ export function AppShell({
           {trialDaysLeft !== null ? (
             <Link
               href="/dashboard/plan"
+              data-tour="shell.header.trial"
               className="hidden truncate rounded-full border border-primary/30 bg-accent px-3 py-1 text-xs font-semibold text-primary-dark hover:bg-muted sm:inline-block"
             >
               Prueba gratis: {trialDaysLeft === 1 ? "queda 1 día" : `quedan ${trialDaysLeft} días`}
@@ -353,6 +360,7 @@ export function AppShell({
           ) : null}
 
           <div className="flex items-center gap-1">
+            <TourHost multiField={webMemberships.length > 1} />
             <a
               href="https://wa.me/5491100000000"
               target="_blank"
@@ -396,7 +404,7 @@ export function AppShell({
             <div className="mx-1 hidden h-6 w-px bg-border sm:block" />
 
             <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-muted">
+              <DropdownMenuTrigger data-tour="shell.header.user" className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-muted">
                 <div className="flex size-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
                   {getInitials(user.name)}
                 </div>
@@ -499,6 +507,7 @@ export function AppShell({
       </div>
 
       <CreateTenantDialog open={createFieldOpen} onClose={() => setCreateFieldOpen(false)} />
+      <TourLayer userId={user.id} seenTours={seenTours} />
     </div>
   );
 }

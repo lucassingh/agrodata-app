@@ -239,7 +239,7 @@ export function ExpensesClient({
 
   return (
     <div className="space-y-5">
-      <Card className="rounded-2xl shadow-soft">
+      <Card data-tour="gastos.filters" className="rounded-2xl shadow-soft">
         <CardContent className="flex flex-wrap items-center gap-4">
           <SegmentedToggle
             value={currency}
@@ -293,6 +293,7 @@ export function ExpensesClient({
               </p>
             </div>
             <Button
+              data-tour="gastos.new"
               onClick={() => {
                 if (categories.length === 0) {
                   toast.error("Creá primero al menos una categoría de gasto.");
@@ -308,7 +309,7 @@ export function ExpensesClient({
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div data-tour="gastos.charts" className="grid gap-4 md:grid-cols-3">
         <Card className="rounded-2xl shadow-soft">
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between">
@@ -413,7 +414,7 @@ export function ExpensesClient({
         </Card>
       </div>
 
-      <div className="space-y-3">
+      <div data-tour="gastos.table" className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="font-semibold">Detalle de gastos</p>

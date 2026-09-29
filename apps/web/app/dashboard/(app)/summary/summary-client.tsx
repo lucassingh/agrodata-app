@@ -91,12 +91,16 @@ export function SummaryClient({ dashboard, hasActiveTenant, from, to, report, al
       <HeroBanner
         title="Resumen del campo"
         subtitle="Indicadores según tus registros, actividad reciente y estado operativo."
-        actions={report ? <ReportButton {...report} variant="outline" /> : undefined}
+        actions={report ? <span data-tour="resumen.report"><ReportButton {...report} variant="outline" /></span> : undefined}
       />
 
-      <AlertsPanel alerts={alerts} canConfigure={canConfigureAlerts} />
+      <div data-tour="resumen.alerts">
+        <AlertsPanel alerts={alerts} canConfigure={canConfigureAlerts} />
+      </div>
 
-      <PeriodFilter from={from} to={to} />
+      <div data-tour="resumen.period">
+        <PeriodFilter from={from} to={to} />
+      </div>
 
       {dashboard.kpis.datosIngresados === 0 && !from && !to ? (
         <div className="rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-primary">
@@ -104,7 +108,7 @@ export function SummaryClient({ dashboard, hasActiveTenant, from, to, report, al
         </div>
       ) : null}
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+      <div data-tour="resumen.kpis" className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {KPI_DEFS.map((def) => (
           <KpiCard key={def.key} id={def.key} label={def.label} value={dashboard.kpis[def.key]} />
         ))}
@@ -204,7 +208,7 @@ export function SummaryClient({ dashboard, hasActiveTenant, from, to, report, al
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <Card className="rounded-2xl shadow-soft">
+        <Card data-tour="resumen.recent" className="rounded-2xl shadow-soft">
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between">
               <p className="font-heading text-sm font-bold">Últimos datos</p>

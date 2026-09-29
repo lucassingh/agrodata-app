@@ -31,7 +31,7 @@ export default async function TeamPage() {
     <div className="space-y-6">
       <HeroBanner title="Equipo" subtitle={subtitle} />
 
-      <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
+      <dl data-tour="equipo.roles" className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
         {[
           ["Dueño", "Todo en su campo: cargar, borrar, editar el campo y manejar el equipo."],
           ["Encargado", "Carga y edita; invita operarios. No borra datos."],

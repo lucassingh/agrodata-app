@@ -156,7 +156,7 @@ function TeamTable({
   });
 
   return (
-    <div className="rounded-xl border border-border bg-card shadow-soft">
+    <div data-tour="equipo.section" className="rounded-xl border border-border bg-card shadow-soft">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
         <h2 className="font-heading text-base font-semibold">
           Equipo de {section.tenantName}
@@ -228,6 +228,7 @@ function TeamTable({
                         {hasActions ? (
                           <DropdownMenu>
                             <DropdownMenuTrigger
+                              data-tour="equipo.member-actions"
                               className="rounded-md p-1.5 hover:bg-muted"
                               aria-label={`Acciones para ${member.fullName}`}
                             >
@@ -328,7 +329,7 @@ export function TeamSections({ sections, currentUserId, activeTenantId }: TeamSe
     <div className="space-y-6">
       {inviteTenants.length > 0 ? (
         <div className="flex justify-end">
-          <Button onClick={() => setInviteState({})}>
+          <Button data-tour="equipo.invite" onClick={() => setInviteState({})}>
             <Plus size={14} />
             Invitar usuario
           </Button>

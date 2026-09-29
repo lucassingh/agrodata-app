@@ -204,7 +204,7 @@ export function PortfolioClient({
       label: "",
       className: "text-right",
       render: (f) => (
-        <div className="flex justify-end gap-2">
+        <div data-tour="cartera.row-actions" className="flex justify-end gap-2">
           <ReportButton tenantId={f.tenantId} tenantName={f.name} signature={signature} size="sm" variant="outline" />
           <Button size="sm" disabled={entering} onClick={() => enter(f)} aria-label={`Entrar a ${f.name}`}>
             Entrar
@@ -237,7 +237,7 @@ export function PortfolioClient({
         </p>
       ) : null}
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <div data-tour="cartera.kpis" className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <Card className="rounded-2xl shadow-soft">
           <CardContent>
             <p className="text-xs text-muted-foreground">Campos</p>
@@ -258,13 +258,13 @@ export function PortfolioClient({
         </Card>
       </div>
 
-      <DataTable rows={fields} columns={columns} />
+      <DataTable rows={fields} columns={columns} tour="cartera.table" />
       <p className="text-xs text-muted-foreground">
         Margen/ha: campaña {season} en dólares, ponderado por superficie. ADPV: promedio de los grupos con pesadas, por
         cabezas. Tambo: últimos 30 días, margen sobre alimentación.
       </p>
 
-      {comparisons.length > 0 ? <div className="grid gap-4 lg:grid-cols-2">{comparisons}</div> : null}
+      {comparisons.length > 0 ? <div data-tour="cartera.compare" className="grid gap-4 lg:grid-cols-2">{comparisons}</div> : null}
     </div>
   );
 }

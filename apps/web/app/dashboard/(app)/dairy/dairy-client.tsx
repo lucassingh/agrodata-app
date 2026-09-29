@@ -104,7 +104,7 @@ export function DairyClient({ overview, canEdit }: { overview: Overview | null; 
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end gap-3">
+      <div data-tour="tambo.period" className="flex flex-wrap items-end gap-3">
         <div className="space-y-1">
           <Label htmlFor="dairy-from" className="text-xs text-muted-foreground">Desde</Label>
           <Input id="dairy-from" type="date" className="h-8 w-40" value={overview.period.from} max={overview.period.to} onChange={(e) => e.target.value && setPeriod(e.target.value, overview.period.to)} />
@@ -118,14 +118,14 @@ export function DairyClient({ overview, canEdit }: { overview: Overview | null; 
         </span>
         <ExportButton className="ml-auto" href={`/dashboard/export/tambo?from=${overview.period.from}&to=${overview.period.to}`} />
         {canEdit ? (
-          <Button variant="outline" onClick={() => setSettlementOpen(true)}>
+          <Button data-tour="tambo.settlement" variant="outline" onClick={() => setSettlementOpen(true)}>
             <Plus size={14} />
             Cargar liquidación
           </Button>
         ) : null}
       </div>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
+      <div data-tour="tambo.kpis" className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
         <Kpi label="Litros del período" value={number(summary.liters)} caption={`${summary.days} ${summary.days === 1 ? "día" : "días"} cargados`} />
         <Kpi label="Litros por día" value={number(summary.litersPerDay)} />
         <Kpi label="Litros por vaca por día" value={number(summary.litersPerCowDay, 1)} />
@@ -161,7 +161,7 @@ export function DairyClient({ overview, canEdit }: { overview: Overview | null; 
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="rounded-2xl shadow-soft">
+        <Card data-tour="tambo.daily" className="rounded-2xl shadow-soft">
           <CardContent className="space-y-3">
             <p className="font-heading text-sm font-bold">Producción diaria</p>
             {canEdit ? <MilkDayForm /> : null}
