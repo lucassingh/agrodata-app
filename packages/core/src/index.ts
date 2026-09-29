@@ -76,3 +76,5 @@ export * from "./leads/demo-request.schema";
 export * from "./leads/demo-request-email";
 export * from "./leads/demo-requests.service";
 export * from "./notifications/email.service";
+export * from "./support/support-metrics";
+export * from "./support/support.service";

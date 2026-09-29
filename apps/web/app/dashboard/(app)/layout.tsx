@@ -34,6 +34,7 @@ export default async function DashboardShellLayout({
           platformRole: user.platformRole,
           capabilities: user.capabilities,
           activeTenantId: user.activeTenantId,
+          isStaff: user.isSuperAdmin,
         }}
         memberships={memberships.map((m) => ({
           tenantId: m.tenantId,
