@@ -18,6 +18,8 @@ import {
   Fence,
   LogOut,
   Map as MapIcon,
+  Menu,
+  X,
   Package,
   PieChart,
   Plus,
@@ -36,7 +38,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useSidebar } from "@/context/sidebar-context";
+import { useIsDesktop, useSidebar } from "@/context/sidebar-context";
 import { CreateTenantDialog } from "@/components/create-tenant-dialog";
 import { setActiveTenantAction } from "@/app/dashboard/(app)/_lib/tenant-actions";
 import { cn } from "@/lib/utils";
@@ -99,7 +101,10 @@ function getTenantInitials(name: string): string {
 }
 
 export function AppShell({ user, memberships, children, signOutAction, environmentLabel }: AppShellProps) {
-  const { collapsed, setCollapsed } = useSidebar();
+  const { collapsed: collapsedSetting, setCollapsed, mobileOpen, setMobileOpen } = useSidebar();
+  const isDesktop = useIsDesktop();
+  // En celular el menú va siempre completo: se abre encima del contenido.
+  const collapsed = collapsedSetting && isDesktop;
   const pathname = usePathname();
   const router = useRouter();
   const [dataBadge, setDataBadge] = useState(0);
@@ -119,6 +124,19 @@ export function AppShell({ user, memberships, children, signOutAction, environme
   useEffect(() => {
     if (pathname === "/dashboard/data") setDataBadge(0);
   }, [pathname]);
+
+  // El menú de celular se cierra al navegar y con Escape.
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname, setMobileOpen]);
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMobileOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [mobileOpen, setMobileOpen]);
 
   const modules = visibleModules(memberships.find((m) => m.tenantId === user.activeTenantId)?.tenant.activities ?? []);
   // Los campos donde solo soy operario se usan por WhatsApp: no se eligen en la web.
@@ -208,13 +226,25 @@ export function AppShell({ user, memberships, children, signOutAction, environme
 
   return (
     <div className="flex min-h-screen bg-background">
+      {mobileOpen ? (
+        <button
+          type="button"
+          aria-label="Cerrar menú"
+          className="fixed inset-0 z-30 bg-black/40 md:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      ) : null}
       <aside
+        id="app-sidebar"
+        aria-label="Menú principal"
         className={cn(
-          "flex shrink-0 flex-col border-r border-border bg-sidebar transition-[width] duration-200",
-          collapsed ? "w-[86px]" : "w-[260px]",
+          // Celular: cajón que entra desde la izquierda. Escritorio: columna, angosta o completa.
+          "fixed inset-y-0 left-0 z-40 flex w-[260px] shrink-0 flex-col border-r border-border bg-sidebar transition-transform duration-200 md:static md:translate-x-0 md:transition-[width]",
+          mobileOpen ? "translate-x-0" : "-translate-x-full",
+          collapsed && "md:w-[86px]",
         )}
       >
-        <div className={cn("flex h-16 items-center px-4", collapsed && "justify-center px-2")}>
+        <div className={cn("flex h-16 items-center justify-between px-4", collapsed && "justify-center px-2")}>
           <Image
             src={collapsed ? "/brand/logo-small.png" : "/brand/logo.png"}
             alt="AgroData"
@@ -222,6 +252,9 @@ export function AppShell({ user, memberships, children, signOutAction, environme
             height={collapsed ? 38 : 30}
             className={cn("h-auto object-contain", collapsed ? "w-[38px]" : "w-[136px]")}
           />
+          <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileOpen(false)} aria-label="Cerrar menú">
+            <X size={18} />
+          </Button>
         </div>
 
         {activeTenant ? (
@@ -255,11 +288,24 @@ export function AppShell({ user, memberships, children, signOutAction, environme
         </nav>
       </aside>
 
-      <div className="flex flex-1 flex-col">
-        <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-border bg-card px-4">
+      {/* min-w-0: sin esto, una tabla ancha estira la columna y toda la página se desborda. */}
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="sticky top-0 z-10 flex h-16 items-center justify-between gap-2 border-b border-border bg-card px-3 sm:px-4">
           <Button
             variant="outline"
             size="icon"
+            className="md:hidden"
+            onClick={() => setMobileOpen(true)}
+            aria-label="Abrir menú"
+            aria-expanded={mobileOpen}
+            aria-controls="app-sidebar"
+          >
+            <Menu size={18} />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="hidden md:inline-flex"
             onClick={() => setCollapsed(!collapsed)}
             aria-label={collapsed ? "Expandir menú" : "Colapsar menú"}
           >
@@ -267,7 +313,7 @@ export function AppShell({ user, memberships, children, signOutAction, environme
           </Button>
 
           {environmentLabel ? (
-            <span className="rounded-full border border-[#D97706]/40 bg-[#FDF4E3] px-3 py-1 text-xs font-semibold text-[#8A5A12]">
+            <span className="truncate rounded-full border border-[#D97706]/40 bg-[#FDF4E3] px-2.5 py-1 text-[11px] font-semibold text-[#8A5A12] sm:px-3 sm:text-xs">
               Entorno: {environmentLabel}
             </span>
           ) : null}
@@ -282,12 +328,13 @@ export function AppShell({ user, memberships, children, signOutAction, environme
             >
               <Image src="/brand/whatsapp.svg" alt="" width={20} height={20} />
             </a>
-            <Button variant="ghost" size="icon" title="Descargar reporte">
+            <Button variant="ghost" size="icon" className="hidden sm:inline-flex" title="Descargar reporte">
               <Download size={18} />
             </Button>
             <Button
               variant="ghost"
               size="icon"
+              className="hidden sm:inline-flex"
               title="Nueva tarea"
               onClick={() => router.push("/dashboard/tasks")}
             >
@@ -296,6 +343,7 @@ export function AppShell({ user, memberships, children, signOutAction, environme
             <Button
               variant="ghost"
               size="icon"
+              className="hidden sm:inline-flex"
               title="Nuevo dato"
               onClick={() => router.push("/dashboard/data")}
             >
@@ -304,13 +352,14 @@ export function AppShell({ user, memberships, children, signOutAction, environme
             <Button
               variant="ghost"
               size="icon"
+              className="hidden sm:inline-flex"
               title="Configuración del campo"
               onClick={() => router.push("/dashboard/preferences")}
             >
               <Settings size={18} />
             </Button>
 
-            <div className="mx-1 h-6 w-px bg-border" />
+            <div className="mx-1 hidden h-6 w-px bg-border sm:block" />
 
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-muted">

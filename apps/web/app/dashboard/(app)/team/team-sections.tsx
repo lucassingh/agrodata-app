@@ -184,7 +184,7 @@ function TeamTable({
           No hay miembros en este establecimiento todavía.
         </p>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="relative overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase">

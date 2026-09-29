@@ -26,7 +26,7 @@ interface DataTableProps<T> {
  *  sorting ni filtros integrados; eso lo compone cada página por afuera. */
 export function DataTable<T extends object>({ rows, columns, className }: DataTableProps<T>) {
   return (
-    <div className={cn("overflow-x-auto rounded-2xl border border-border shadow-soft", className)}>
+    <div className={cn("relative overflow-x-auto rounded-2xl border border-border shadow-soft", className)}>
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
