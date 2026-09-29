@@ -72,29 +72,33 @@ export function PeriodFilter({ from, to }: PeriodFilterProps) {
           </button>
         ))}
       </div>
-      <div className="flex items-center gap-2 sm:ml-auto">
-        <label htmlFor="summary-from" className="text-xs text-muted-foreground">
-          Desde
-        </label>
-        <input
-          id="summary-from"
-          type="date"
-          value={from}
-          max={to || undefined}
-          onChange={(e) => push({ from: e.target.value, to })}
-          className="h-8 rounded-lg border border-input bg-transparent px-2 text-sm"
-        />
-        <label htmlFor="summary-to" className="text-xs text-muted-foreground">
-          Hasta
-        </label>
-        <input
-          id="summary-to"
-          type="date"
-          value={to}
-          min={from || undefined}
-          onChange={(e) => push({ from, to: e.target.value })}
-          className="h-8 rounded-lg border border-input bg-transparent px-2 text-sm"
-        />
+      <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+        <span className="flex items-center gap-2">
+          <label htmlFor="summary-from" className="text-xs text-muted-foreground">
+            Desde
+          </label>
+          <input
+            id="summary-from"
+            type="date"
+            value={from}
+            max={to || undefined}
+            onChange={(e) => push({ from: e.target.value, to })}
+            className="h-8 rounded-lg border border-input bg-transparent px-2 text-sm"
+          />
+        </span>
+        <span className="flex items-center gap-2">
+          <label htmlFor="summary-to" className="text-xs text-muted-foreground">
+            Hasta
+          </label>
+          <input
+            id="summary-to"
+            type="date"
+            value={to}
+            min={from || undefined}
+            onChange={(e) => push({ from, to: e.target.value })}
+            className="h-8 rounded-lg border border-input bg-transparent px-2 text-sm"
+          />
+        </span>
       </div>
     </div>
   );
