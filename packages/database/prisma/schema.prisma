@@ -934,3 +934,31 @@ model AlertDelivery {
   @@index([tenantId, userId, alertKey, sentAt])
   @@map("alert_deliveries")
 }
+
+// ─── Pedidos de demo de la landing (Etapa 6.1) ──────────
+
+enum DemoRequestStatus {
+  NEW
+  CONTACTED
+  DISCARDED
+}
+
+/// Pedido de demo del formulario de la landing. Se guarda siempre; el email al equipo es un aviso aparte.
+model DemoRequest {
+  id         String            @id @default(cuid())
+  name       String
+  whatsapp   String
+  email      String
+  /// AGRONOMO | VETERINARIO | PRODUCTOR | OTRO (validado en core/leads/demo-request.schema.ts)
+  profile    String
+  /// 1 | 2-5 | 6-10 | 10+
+  fieldCount String
+  message    String?
+  status     DemoRequestStatus @default(NEW)
+  /// Cuándo salió el email al equipo (null si no se pudo mandar).
+  notifiedAt DateTime?
+  createdAt  DateTime          @default(now())
+
+  @@index([status, createdAt])
+  @@map("demo_requests")
+}

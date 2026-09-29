@@ -11,9 +11,7 @@ import { cn } from "@/lib/utils";
 import { CTA, DEMO_CTA_LABEL } from "./content";
 import { Container } from "./primitives";
 import { usePrefersReducedMotion } from "@/lib/use-prefers-reduced-motion";
-
-/** Sin backend todavía: se simula el envío y se muestra la confirmación en el lugar del form. */
-const FAKE_SUBMIT_MS = 900;
+import { submitDemoRequestAction } from "@/app/(marketing)/actions";
 
 export function DemoCta() {
   const reduceMotion = usePrefersReducedMotion();
@@ -72,14 +70,27 @@ function DemoForm({ onSent }: { onSent: (name: string) => void }) {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<DemoRequestInput>({ resolver: zodResolver(demoRequestSchema) });
+  const [serverError, setServerError] = useState<string | null>(null);
 
   const onSubmit = async (data: DemoRequestInput) => {
-    await new Promise((resolve) => setTimeout(resolve, FAKE_SUBMIT_MS));
+    setServerError(null);
+    const result = await submitDemoRequestAction(data);
+    if (!result.success) {
+      setServerError(result.error);
+      return;
+    }
     onSent(data.name.split(" ")[0] ?? data.name);
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="grid gap-5 sm:grid-cols-2">
+      {/* Anti-robots: invisible para las personas y fuera del orden de tabulación. */}
+      <div aria-hidden className="absolute -left-[9999px] h-px w-px overflow-hidden">
+        <label>
+          No completar
+          <input {...register("website")} tabIndex={-1} autoComplete="off" />
+        </label>
+      </div>
       <Field label="Nombre y apellido" error={errors.name?.message}>
         {(props, invalid) => <input {...props} {...register("name")} autoComplete="name" className={inputClass(invalid)} />}
       </Field>
@@ -123,7 +134,12 @@ function DemoForm({ onSent }: { onSent: (name: string) => void }) {
         {(props, invalid) => <textarea {...props} {...register("message")} rows={3} className={cn(inputClass(invalid), "h-auto py-3")} />}
       </Field>
 
-      <div className="sm:col-span-2">
+      <div className="grid gap-3 sm:col-span-2">
+        {serverError ? (
+          <p role="alert" className="rounded-lg bg-white/10 px-4 py-3 text-sm text-white">
+            {serverError}
+          </p>
+        ) : null}
         <button
           type="submit"
           disabled={isSubmitting}

@@ -72,3 +72,7 @@ export * from "./alerts/alerts.service";
 export * from "./alerts/alert-digest";
 export * from "./alerts/alert-delivery.service";
 export * from "./weekly-summary/weekly-insights";
+export * from "./leads/demo-request.schema";
+export * from "./leads/demo-request-email";
+export * from "./leads/demo-requests.service";
+export * from "./notifications/email.service";
