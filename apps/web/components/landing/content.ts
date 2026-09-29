@@ -1,6 +1,8 @@
 // Copy de la landing comercial. Fuente: docs/01_comercial_agrodata.md y
 // docs/08_ui-landing.md. Regla: nada de rayas largas; hablar como el productor.
 
+import { DEMO_FIELD_COUNT_LABEL, DEMO_PROFILE_LABEL } from "@repo/core/leads/demo-request.schema";
+
 export const DEMO_CTA_LABEL = "Pedir demo";
 export const SIGN_IN_LABEL = "Ingresar";
 
@@ -303,18 +305,9 @@ export const CTA = {
   rotatingWords: ["siembras", "animales", "gastos", "facturas"],
   titleEnd: "desde esta semana",
   body: "Dejanos tus datos y te mostramos AgroData funcionando con un caso de tu campo.",
-  profileOptions: [
-    { value: "AGRONOMO", label: "Ingeniero agrónomo" },
-    { value: "VETERINARIO", label: "Veterinario" },
-    { value: "PRODUCTOR", label: "Productor" },
-    { value: "OTRO", label: "Otro" },
-  ],
-  fieldCountOptions: [
-    { value: "1", label: "1 campo" },
-    { value: "2-5", label: "De 2 a 5 campos" },
-    { value: "6-10", label: "De 6 a 10 campos" },
-    { value: "10+", label: "Más de 10 campos" },
-  ],
+  // Las mismas etiquetas que usa el email al equipo (core/leads/demo-request.schema.ts).
+  profileOptions: Object.entries(DEMO_PROFILE_LABEL).map(([value, label]) => ({ value, label })),
+  fieldCountOptions: Object.entries(DEMO_FIELD_COUNT_LABEL).map(([value, label]) => ({ value, label })),
 };
 
 export const FOOTER = {
