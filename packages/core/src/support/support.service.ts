@@ -41,6 +41,7 @@ export async function listAccounts() {
         createdAt: true,
         memberships: { where: { status: "ACTIVE" }, select: { role: true, tenant: { select: { name: true } } } },
         subscription: { select: { plan: true, trialEndsAt: true, paidUntil: true, requestedPlan: true, requestedAt: true, note: true } },
+        payments: { where: { appliedAt: { not: null } }, orderBy: { appliedAt: "desc" }, take: 1, select: { appliedAt: true, amountArs: true } },
       },
     }),
     prisma.record.groupBy({ by: ["userId"], where: { userId: { not: null } }, _max: { createdAt: true } }),
@@ -60,6 +61,8 @@ export async function listAccounts() {
     requestedPlan: u.subscription?.requestedPlan ?? null,
     requestedAt: u.subscription?.requestedAt ?? null,
     note: u.subscription?.note ?? null,
+    /** El último pago con Mercado Pago que activó el plan. */
+    lastPayment: u.payments[0] ?? null,
   }));
 }
 

@@ -255,6 +255,11 @@ async function Accounts() {
               {a.requestedAt ? ` el ${formatDay(a.requestedAt)}` : ""}
             </p>
           ) : null}
+          {a.lastPayment?.appliedAt ? (
+            <p className="text-xs text-muted-foreground">
+              Pagó con Mercado Pago el {formatDay(a.lastPayment.appliedAt)} ($ {Math.round(a.lastPayment.amountArs).toLocaleString("es-AR")})
+            </p>
+          ) : null}
           {a.note ? <p className="max-w-56 text-xs text-muted-foreground">{a.note}</p> : null}
         </div>
       ),
