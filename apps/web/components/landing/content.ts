@@ -5,13 +5,16 @@ import { PLANS, TRIAL_DAYS } from "@repo/core/billing/plans";
 import { DEMO_FIELD_COUNT_LABEL, DEMO_PROFILE_LABEL } from "@repo/core/leads/demo-request.schema";
 
 export const DEMO_CTA_LABEL = "Pedir demo";
+/** La prueba gratis: registro con 14 días del plan Asesor, sin tarjeta. */
+export const TRIAL_CTA_LABEL = `Probar gratis ${TRIAL_DAYS} días`;
+export const TRIAL_HREF = "/dashboard/register";
 export const SIGN_IN_LABEL = "Ingresar";
 
 export const HERO = {
   title: "Todo lo que pasa en tu campo, ordenado desde WhatsApp.",
   subtitle:
     "Un mensaje, un audio o la foto de una factura. AgroData lo convierte en datos ordenados, listos para consultar y exportar.",
-  secondaryCta: "Ver cómo funciona",
+  trialNote: "Sin tarjeta. Si no te sirve, no pagás nada.",
 };
 
 /** Escenas que se reproducen en loop en el teléfono del hero (datos de ejemplo). */
@@ -154,15 +157,63 @@ export const MULTI_FIELD = {
   ],
 };
 
+/** Capturas reales del dashboard (cuenta demo de develop, `db:seed:demo`), en public/landing/dashboard/. */
 export const SHOWCASE = {
   title: "Un dashboard pensado para el campo",
+  subtitle: "Capturas reales de un campo mixto: agricultura, cría, feedlot y tambo.",
   tabs: [
-    { id: "resumen", label: "Resumen", caption: "KPIs, actividad reciente y alertas de stock." },
-    { id: "potreros", label: "Potreros", caption: "Hectáreas, cultivos y animales por potrero." },
-    { id: "tareas", label: "Tareas", caption: "Siembra, pulverización, fertilización y sanidad." },
-    { id: "gastos", label: "Gastos", caption: "Distribución por categoría y tendencia mensual." },
-    { id: "insumos", label: "Insumos", caption: "Stock por categoría con alertas de faltante." },
-    { id: "equipo", label: "Equipo", caption: "Roles por campo e invitaciones por WhatsApp." },
+    { id: "resumen", label: "Resumen", caption: "Avisos del día, indicadores del campo y lo último que se cargó." },
+    { id: "datos", label: "Datos", caption: "Todo lo que llegó por WhatsApp y por la web, con quién lo cargó." },
+    { id: "potreros", label: "Potreros", caption: "Cada lote con su superficie, cultivos, hacienda y días de descanso." },
+    { id: "tareas", label: "Tareas", caption: "Siembra, pulverización, fertilización y sanidad, con responsable y fecha." },
+    { id: "gastos", label: "Gastos", caption: "Por categoría y mes a mes, en pesos y en dólares por separado." },
+    { id: "insumos", label: "Insumos", caption: "Stock con su historial, costo y lo que se movió en el último mes." },
+    { id: "ganaderia", label: "Ganadería", caption: "Pesadas, aumento diario de peso, carga por hectárea y reproducción." },
+    { id: "tambo", label: "Tambo", caption: "Litros por día y por vaca, precio de la liquidación y margen por litro." },
+  ],
+};
+
+export const ALERTS = {
+  eyebrow: "Avisos",
+  title: "Te avisa antes de que te cueste plata.",
+  body: "AgroData mira los datos que cargás todos los días y te avisa lo que conviene resolver: en el Resumen y, a primera hora, por WhatsApp. Cada aviso dice de qué datos sale.",
+  kinds: [
+    { title: "Stock que se acaba", body: "Al ritmo de consumo del último mes, cuántos días te quedan de gasoil, balanceado o urea." },
+    { title: "Sanidad por vencer", body: "Vacunas y tratamientos que vencen esta semana o que ya se pasaron." },
+    { title: "Kilos y litros que caen", body: "Un grupo que engorda menos que en la pesada anterior, o litros por vaca en baja." },
+    { title: "Gastos fuera de lo normal", body: "Una categoría que este mes gasta bastante más que su promedio." },
+  ],
+  imageAlt:
+    "Panel de avisos de AgroData: gasoil para 6 días, urea debajo del mínimo, vacunación aftosa por vencer, una pulverización vencida y dos categorías de gasto fuera de lo normal.",
+};
+
+export const ADVISOR = {
+  eyebrow: "Para asesores",
+  title: "Todos tus clientes en una pantalla. Y el informe, en un clic.",
+  body: "La Cartera compara tus campos: ganancia diaria, litros por vaca, gastos del mes, lo que vence y los avisos de cada uno. Desde ahí armás el informe en PDF de cualquier cliente, con tu comentario y tu firma.",
+  points: [
+    "Cargás por WhatsApp nombrando el campo, sin cambiar de cuenta.",
+    "Informe del mes o de la campaña, listo para mandar.",
+    "Cada cliente sigue siendo dueño de sus datos.",
+  ],
+  portfolioAlt: "La Cartera de AgroData con tres campos de un asesor: ganancia diaria, litros por vaca, gastos del mes y avisos.",
+  reportAlt: "Primera página de un informe de campo en PDF: gastos por categoría, pesadas y tambo del mes, preparado por el asesor.",
+};
+
+/** AgroData contra una app de registro por WhatsApp, sin nombrar a nadie. */
+export const COMPARISON = {
+  title: "Registrar es el primer paso. Decidir es el que importa.",
+  subtitle: "Lo que hace cualquier app de registro, y lo que suma AgroData.",
+  columns: { us: "AgroData", them: "Una app de registro" },
+  rows: [
+    { label: "Carga por WhatsApp: texto, audio y fotos", them: true },
+    { label: "Stock, tareas y gastos", them: true },
+    { label: "Exportación a Excel", them: true },
+    { label: "Margen bruto por lote, en dólares", them: false },
+    { label: "Aumento diario de peso y reproducción", them: false },
+    { label: "Litros por vaca y margen por litro", them: false },
+    { label: "Cartera de clientes e informe en PDF para el asesor", them: false },
+    { label: "Avisos antes de que el problema cueste plata", them: false },
   ],
 };
 
@@ -296,7 +347,22 @@ export const FAQ = {
     {
       id: "datos",
       q: "¿Los datos son míos?",
-      a: "Siempre. Exportás todo a Excel cuando quieras, y si dejás de usar AgroData te llevás tu información.",
+      a: "Siempre. Exportás todo a Excel cuando quieras, y si dejás de usar AgroData te llevás tu información. Si querés, la borramos.",
+    },
+    {
+      id: "prueba",
+      q: "¿Cómo es la prueba gratis?",
+      a: `${TRIAL_DAYS} días con todo el plan Asesor, sin tarjeta. Te registrás, cargás tus potreros y empezás a mandar mensajes. Una guía en cada pantalla te muestra cómo se usa.`,
+    },
+    {
+      id: "fin-prueba",
+      q: "¿Qué pasa cuando termina la prueba?",
+      a: "Si no elegís un plan, tus campos quedan en modo lectura: ves y exportás todo, pero no se cargan datos nuevos. No se borra nada; cuando activás un plan, todo sigue donde estaba.",
+    },
+    {
+      id: "pago",
+      q: "¿Cómo se paga?",
+      a: "Los precios están en dólares y se cobran en pesos al dólar oficial del día. Sin permanencia: das de baja cuando quieras.",
     },
   ],
 };
