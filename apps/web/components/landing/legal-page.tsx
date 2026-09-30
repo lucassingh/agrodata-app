@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { signupMode } from "@/lib/signup-mode";
 import { LEGAL } from "./content";
 import { Container } from "./primitives";
 import { LandingFooter } from "./landing-footer";
@@ -47,7 +48,7 @@ export function LegalPage({ title, intro, children }: LegalPageProps) {
         </Container>
       </main>
 
-      <LandingFooter />
+      <LandingFooter openSignup={signupMode() === "open"} />
     </div>
   );
 }

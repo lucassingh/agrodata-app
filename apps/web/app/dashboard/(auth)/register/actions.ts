@@ -1,6 +1,7 @@
 "use server";
 
 import { registerUser, registerSchema, AppError, type RegisterInput } from "@repo/core";
+import { signupMode } from "@/lib/signup-mode";
 
 export async function registerAction(input: RegisterInput) {
   const parsed = registerSchema.safeParse(input);
@@ -11,7 +12,7 @@ export async function registerAction(input: RegisterInput) {
     };
   }
   try {
-    const result = await registerUser(parsed.data);
+    const result = await registerUser(parsed.data, { signupMode: signupMode() });
     return {
       success: true as const,
       wNumber: result.wNumber ?? parsed.data.wNumber,

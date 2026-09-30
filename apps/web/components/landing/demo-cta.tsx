@@ -8,12 +8,13 @@ import { useForm } from "react-hook-form";
 import { demoRequestSchema, type DemoRequestInput } from "@repo/core/leads/demo-request.schema";
 import RotatingText from "@/components/react-bits/RotatingText";
 import { cn } from "@/lib/utils";
-import { CTA, DEMO_CTA_LABEL } from "./content";
+import { ACCESS_CTA_LABEL, CTA, DEMO_CTA_LABEL, EARLY_ACCESS } from "./content";
 import { Container } from "./primitives";
 import { usePrefersReducedMotion } from "@/lib/use-prefers-reduced-motion";
 import { submitDemoRequestAction } from "@/app/(marketing)/actions";
 
-export function DemoCta() {
+/** Con el registro cerrado, el mismo formulario es el pedido de acceso. */
+export function DemoCta({ openSignup }: { openSignup: boolean }) {
   const reduceMotion = usePrefersReducedMotion();
   const [sentName, setSentName] = useState<string | null>(null);
 
@@ -37,14 +38,14 @@ export function DemoCta() {
                 <span className="block">{CTA.titleEnd}</span>
               </span>
             </h2>
-            <p className="mt-6 max-w-[40ch] text-lg leading-relaxed text-white/80">{CTA.body}</p>
+            <p className="mt-6 max-w-[40ch] text-lg leading-relaxed text-white/80">{openSignup ? CTA.body : EARLY_ACCESS.ctaBody}</p>
           </div>
 
           <div className="lg:col-span-7">
             <AnimatePresence mode="wait" initial={false}>
               {sentName === null ? (
                 <motion.div key="form" exit={{ opacity: 0, y: -10, transition: { duration: 0.2 } }}>
-                  <DemoForm onSent={setSentName} />
+                  <DemoForm onSent={setSentName} submitLabel={openSignup ? DEMO_CTA_LABEL : ACCESS_CTA_LABEL} />
                 </motion.div>
               ) : (
                 <motion.div
@@ -53,7 +54,7 @@ export function DemoCta() {
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   transition={{ type: "spring", stiffness: 260, damping: 26 }}
                 >
-                  <SentMessage name={sentName} onReset={() => setSentName(null)} />
+                  <SentMessage name={sentName} openSignup={openSignup} onReset={() => setSentName(null)} />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -64,7 +65,7 @@ export function DemoCta() {
   );
 }
 
-function DemoForm({ onSent }: { onSent: (name: string) => void }) {
+function DemoForm({ onSent, submitLabel }: { onSent: (name: string) => void; submitLabel: string }) {
   const {
     register,
     handleSubmit,
@@ -152,7 +153,7 @@ function DemoForm({ onSent }: { onSent: (name: string) => void }) {
             </>
           ) : (
             <>
-              {DEMO_CTA_LABEL}
+              {submitLabel}
               <ArrowRight className="size-5" aria-hidden />
             </>
           )}
@@ -211,7 +212,7 @@ function inputClass(invalid: boolean) {
   );
 }
 
-function SentMessage({ name, onReset }: { name: string; onReset: () => void }) {
+function SentMessage({ name, openSignup, onReset }: { name: string; openSignup: boolean; onReset: () => void }) {
   const reduceMotion = usePrefersReducedMotion();
   return (
     <div role="status" className="flex h-full flex-col items-start justify-center rounded-[16px] bg-white/8 p-8 sm:p-12">
@@ -243,7 +244,9 @@ function SentMessage({ name, onReset }: { name: string; onReset: () => void }) {
         ¡Listo, {name}! Recibimos tu pedido.
       </h3>
       <p className="mt-4 max-w-[46ch] text-lg leading-relaxed text-white/85">
-        Te escribimos por WhatsApp en menos de 24 horas hábiles para coordinar la demo con un caso real de tu campo.
+        {openSignup
+          ? "Te escribimos por WhatsApp en menos de 24 horas hábiles para coordinar la demo con un caso real de tu campo."
+          : EARLY_ACCESS.sentBody}
       </p>
       <button
         type="button"

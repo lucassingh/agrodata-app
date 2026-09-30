@@ -2,16 +2,21 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
+  accessInvitesByDemoRequest,
   DEMO_FIELD_COUNT_LABEL,
   DEMO_PROFILE_LABEL,
   getSupportMetrics,
   isPlatformStaff,
+  listAccessInvites,
   listAccounts,
   listDemoRequests,
   METRIC_WEEKS,
   PLANS,
+  waMeDigits,
 } from "@repo/core";
 import { requireUser } from "@/lib/session";
+import { signupMode } from "@/lib/signup-mode";
+import { AccessDialog } from "./access-dialog";
 import { HeroBanner } from "@/components/hero-banner";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
@@ -25,6 +30,7 @@ export const metadata: Metadata = {
 
 const TABS = [
   { id: "pedidos", label: "Pedidos de demo" },
+  { id: "accesos", label: "Accesos" },
   { id: "cuentas", label: "Cuentas" },
   { id: "metricas", label: "Métricas" },
 ] as const;
@@ -65,7 +71,7 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
 
   return (
     <div className="space-y-6">
-      <HeroBanner title="Soporte" subtitle="Solo para el equipo de AgroData: pedidos de demo, cuentas y cómo se usa el producto." />
+      <HeroBanner title="Soporte" subtitle="Solo para el equipo de AgroData: pedidos de demo, accesos, cuentas y cómo se usa el producto." />
 
       <nav aria-label="Secciones del panel" className="flex w-full gap-1 overflow-x-auto rounded-xl border border-border bg-card p-1 shadow-soft sm:w-fit">
         {TABS.map((t) => (
@@ -84,14 +90,26 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
       </nav>
 
       {tab === "pedidos" ? <DemoRequests /> : null}
+      {tab === "accesos" ? <AccessInvites /> : null}
       {tab === "cuentas" ? <Accounts /> : null}
       {tab === "metricas" ? <Metrics /> : null}
     </div>
   );
 }
 
+type AccessInviteRow = Awaited<ReturnType<typeof listAccessInvites>>[number];
+
+/** Usado, vigente o vencido. */
+function AccessStatus({ invite, now }: { invite: AccessInviteRow; now: Date }) {
+  if (invite.usedAt) return <span className="font-medium text-primary">Se registró el {formatDay(invite.usedAt)}</span>;
+  if (invite.expiresAt <= now) return <span className="text-[#8A5A12]">Venció el {formatDay(invite.expiresAt)}</span>;
+  return <span>Vigente hasta el {formatDay(invite.expiresAt)}</span>;
+}
+
 async function DemoRequests() {
   const requests = await listDemoRequests();
+  const invites = await accessInvitesByDemoRequest(requests.map((r) => r.id));
+  const now = new Date();
   type Row = (typeof requests)[number];
   const columns: DataTableColumn<Row>[] = [
     { key: "date", label: "Fecha", className: "whitespace-nowrap", render: (r) => formatMoment(r.createdAt) },
@@ -113,7 +131,7 @@ async function DemoRequests() {
       label: "Contacto",
       render: (r) => (
         <div className="flex flex-col text-sm">
-          <a className="text-primary underline-offset-2 hover:underline" href={`https://wa.me/${r.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer">
+          <a className="text-primary underline-offset-2 hover:underline" href={`https://wa.me/${waMeDigits(r.whatsapp)}`} target="_blank" rel="noopener noreferrer">
             {r.whatsapp}
           </a>
           <a className="text-primary underline-offset-2 hover:underline" href={`mailto:${r.email}`}>
@@ -130,9 +148,61 @@ async function DemoRequests() {
       render: (r) => (r.notifiedAt ? "Enviado" : <span className="text-muted-foreground">No salió</span>),
     },
     { key: "status", label: "Estado", render: (r) => <DemoStatusSelect id={r.id} status={r.status} name={r.name} /> },
+    {
+      key: "access",
+      label: "Acceso",
+      render: (r) => {
+        const invite = invites.get(r.id);
+        return (
+          <div className="flex min-w-36 flex-col items-start gap-1.5 text-sm">
+            {invite ? <AccessStatus invite={invite} now={now} /> : null}
+            {invite?.usedAt ? null : (
+              <AccessDialog label={invite ? "Renovar acceso" : "Dar acceso"} demoRequestId={r.id} email={r.email} name={r.name} whatsapp={r.whatsapp} />
+            )}
+          </div>
+        );
+      },
+    },
   ];
   if (requests.length === 0) return <Empty text="Todavía no llegó ningún pedido de demo." />;
   return <DataTable rows={requests} columns={columns} />;
+}
+
+async function AccessInvites() {
+  const invites = await listAccessInvites();
+  const now = new Date();
+  const open = signupMode() === "open";
+  const columns: DataTableColumn<AccessInviteRow>[] = [
+    { key: "date", label: "Fecha", className: "whitespace-nowrap", render: (i) => formatMoment(i.createdAt) },
+    {
+      key: "who",
+      label: "Persona",
+      render: (i) => (
+        <div className="min-w-40">
+          <p className="font-medium">{i.name ?? "—"}</p>
+          <p className="text-xs text-muted-foreground">{i.email}</p>
+        </div>
+      ),
+    },
+    { key: "code", label: "Código", className: "whitespace-nowrap font-mono text-xs", render: (i) => i.token },
+    { key: "origin", label: "Origen", className: "whitespace-nowrap", render: (i) => (i.demoRequestId ? "Pedido de demo" : "A mano") },
+    { key: "status", label: "Estado", className: "whitespace-nowrap", render: (i) => <AccessStatus invite={i} now={now} /> },
+  ];
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-soft sm:flex-row sm:items-center sm:justify-between">
+        <p className="max-w-[70ch] text-sm text-muted-foreground">
+          <strong className="font-medium text-foreground">Registro {open ? "abierto" : "por invitación"}</strong> en este entorno.{" "}
+          {open
+            ? "Cualquiera puede crear una cuenta; un código igual queda marcado como usado."
+            : "Solo se registra quien tiene un código de acceso o una invitación de un equipo."}{" "}
+          Se cambia con <code className="font-mono text-xs">SIGNUP_MODE</code> en Vercel (y un deploy nuevo).
+        </p>
+        <AccessDialog label="Invitar a alguien" />
+      </div>
+      {invites.length === 0 ? <Empty text="Todavía no se dio ningún acceso." /> : <DataTable rows={invites} columns={columns} />}
+    </div>
+  );
 }
 
 async function Accounts() {

@@ -5,7 +5,7 @@ import { Check } from "lucide-react";
 import { useId, useState } from "react";
 import { cn } from "@/lib/utils";
 import { CtaLink } from "./cta-link";
-import { DEMO_CTA_LABEL, PRICING, TRIAL_CTA_LABEL, TRIAL_HREF } from "./content";
+import { DEMO_CTA_LABEL, EARLY_ACCESS, PRICING, primaryCta } from "./content";
 import { Container, SectionTitle, SoonBadge, featureLabel, type PlanFeature } from "./primitives";
 import { usePrefersReducedMotion } from "@/lib/use-prefers-reduced-motion";
 
@@ -16,7 +16,8 @@ function monthlyPrice(monthly: number, billing: Billing) {
   return billing === "monthly" ? monthly : Math.round((monthly * 10) / 12);
 }
 
-export function Pricing() {
+export function Pricing({ openSignup }: { openSignup: boolean }) {
+  const primary = primaryCta(openSignup);
   const [billing, setBilling] = useState<Billing>("monthly");
   const reduceMotion = usePrefersReducedMotion();
   const toggleId = useId();
@@ -27,7 +28,7 @@ export function Pricing() {
         <div className="flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
           <div>
             <SectionTitle id="precios-title">{PRICING.title}</SectionTitle>
-            <p className="mt-4 text-lg text-l-ink-soft">{PRICING.subtitle}</p>
+            <p className="mt-4 text-lg text-l-ink-soft">{openSignup ? PRICING.subtitle : EARLY_ACCESS.pricingSubtitle}</p>
           </div>
 
           <div role="radiogroup" aria-label="Frecuencia de pago" className="flex w-fit rounded-full bg-white p-1 shadow-l">
@@ -120,9 +121,9 @@ export function Pricing() {
                 ))}
               </ul>
 
-              {/* El plan a medida se conversa; los demás se prueban gratis. */}
-              <CtaLink href={plan.custom ? "#demo" : TRIAL_HREF} variant={plan.highlighted ? "onBrand" : "secondary"} size="lg" className="mt-10 w-full">
-                {plan.custom ? DEMO_CTA_LABEL : TRIAL_CTA_LABEL}
+              {/* El plan a medida se conversa; los demás se prueban gratis (o se pide acceso). */}
+              <CtaLink href={plan.custom ? "#demo" : primary.href} variant={plan.highlighted ? "onBrand" : "secondary"} size="lg" className="mt-10 w-full">
+                {plan.custom ? DEMO_CTA_LABEL : primary.label}
               </CtaLink>
             </li>
           ))}

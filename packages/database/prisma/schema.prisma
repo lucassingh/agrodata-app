@@ -1014,3 +1014,27 @@ model TourSeen {
   @@id([userId, tourId])
   @@map("tours_seen")
 }
+
+// ─── Acceso anticipado (Etapa 6.6) ──────────────────────────
+
+/// Invitación de AgroData para registrarse mientras el registro está cerrado
+/// (`SIGNUP_MODE=invite`, el modo por defecto en producción). Un código por persona,
+/// de un solo uso; lo da el equipo desde Soporte.
+model AccessInvite {
+  id            String    @id @default(cuid())
+  /// El código de acceso (XXXX-XXXX-XXXX): va en el link y también se puede tipear.
+  token         String    @unique
+  email         String
+  name          String?
+  /// El pedido de demo del que salió, si salió de uno.
+  demoRequestId String?
+  createdBy     String
+  expiresAt     DateTime
+  usedAt        DateTime?
+  usedByUserId  String?
+  createdAt     DateTime  @default(now())
+
+  @@index([demoRequestId])
+  @@index([email])
+  @@map("access_invites")
+}

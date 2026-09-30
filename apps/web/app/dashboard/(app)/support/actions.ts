@@ -1,11 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import {
   activatePlan,
   AppError,
   assertPlatformStaff,
   cancelPlan,
+  createAccessInvite,
   extendTrial,
   PLAN_TYPES,
   setSubscriptionNote,
@@ -65,4 +67,31 @@ export async function cancelPlanAction(userId: string): Promise<ActionResult> {
 
 export async function setSubscriptionNoteAction(userId: string, note: string): Promise<ActionResult> {
   return asStaff(() => setSubscriptionNote(userId, note));
+}
+
+export type GrantAccessResult =
+  | { success: true; code: string; link: string; emailed: boolean; whatsappText: string }
+  | { success: false; error: string };
+
+/** Acceso anticipado: crea (o renueva) el código de una persona y le manda el mail.
+ *  El link sale del dominio desde el que se usa Soporte (producción, develop o local). */
+export async function grantAccessAction(input: { email: string; name: string; demoRequestId: string | null }): Promise<GrantAccessResult> {
+  const user = await requireUser();
+  try {
+    assertPlatformStaff(user.email);
+    const requestHeaders = await headers();
+    const baseUrl = requestHeaders.get("origin") ?? process.env.AUTH_URL ?? "http://localhost:3000";
+    const result = await createAccessInvite({
+      email: input.email,
+      name: input.name,
+      demoRequestId: input.demoRequestId,
+      createdBy: user.id,
+      baseUrl,
+    });
+    revalidatePath("/dashboard/support");
+    return { success: true, ...result };
+  } catch (error) {
+    if (error instanceof AppError) return { success: false, error: error.message };
+    throw error;
+  }
 }
