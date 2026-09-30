@@ -3,7 +3,7 @@ import { prisma, type PlanType, type SystemRole } from "@repo/database";
 import { FIELD_ROLE_LABEL, isWebRole, type FieldRole } from "../auth/field-roles";
 import { badRequest, forbidden } from "../errors";
 import { sendEmail } from "../notifications/email.service";
-import { coveredTenantIds, isFieldCovered, planState, PLANS, type MembershipRef } from "./plans";
+import { coveredTenantIds, extendPaidUntil, isFieldCovered, planState, PLANS, type MembershipRef } from "./plans";
 
 /** Solo el dueño y el asesor cubren un campo con su plan (ver PLANS). */
 const COVERING_ROLES: SystemRole[] = ["OWNER", "ADVISOR"];
@@ -116,9 +116,7 @@ export async function requestPlan(userId: string, plan: PlanType) {
 export async function activatePlan(userId: string, plan: PlanType, months: number, now = new Date()) {
   if (!Number.isInteger(months) || months < 1 || months > 24) badRequest("Elegí entre 1 y 24 meses.");
   const current = await prisma.subscription.findUnique({ where: { userId }, select: { plan: true, paidUntil: true } });
-  const from = current?.plan === plan && current.paidUntil && current.paidUntil > now ? current.paidUntil : now;
-  const paidUntil = new Date(from);
-  paidUntil.setUTCMonth(paidUntil.getUTCMonth() + months);
+  const paidUntil = extendPaidUntil(current, plan, months, now);
   await prisma.subscription.upsert({
     where: { userId },
     create: { userId, trialEndsAt: now, plan, paidUntil },

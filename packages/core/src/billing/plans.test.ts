@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { coveredTenantIds, isFieldCovered, planState, type MembershipRef } from "./plans";
+import { coveredTenantIds, extendPaidUntil, isFieldCovered, planState, type MembershipRef } from "./plans";
 
 const NOW = new Date("2026-09-29T12:00:00Z");
 const days = (n: number) => new Date(NOW.getTime() + n * 86_400_000);
@@ -53,5 +53,18 @@ describe("si un campo funciona", () => {
   it("un encargado con plan no cubre un campo ajeno", () => {
     const manager = { state: { kind: "paid" as const, plan: "EMPRESA" as const, until: days(10) }, memberships: [m("t", "ADMIN", 3)] };
     expect(isFieldCovered("t", [manager])).toBe(false);
+  });
+});
+
+describe("hasta cuándo queda pago", () => {
+  it("renovar el mismo plan suma desde el vencimiento vigente", () => {
+    const current = { plan: "ASESOR" as const, paidUntil: new Date("2026-10-15T12:00:00Z") };
+    expect(extendPaidUntil(current, "ASESOR", 3, NOW).toISOString()).toBe("2027-01-15T12:00:00.000Z");
+  });
+
+  it("otro plan, un plan vencido o ninguno: desde hoy", () => {
+    expect(extendPaidUntil({ plan: "CAMPO", paidUntil: new Date("2026-10-15T12:00:00Z") }, "ASESOR", 1, NOW).toISOString()).toBe("2026-10-29T12:00:00.000Z");
+    expect(extendPaidUntil({ plan: "ASESOR", paidUntil: days(-3) }, "ASESOR", 12, NOW).toISOString()).toBe("2027-09-29T12:00:00.000Z");
+    expect(extendPaidUntil(null, "CAMPO", 1, NOW).toISOString()).toBe("2026-10-29T12:00:00.000Z");
   });
 });

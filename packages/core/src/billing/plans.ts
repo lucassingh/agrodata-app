@@ -78,3 +78,17 @@ export function isFieldCovered(
 ): boolean {
   return members.some((m) => coveredTenantIds(m.state, m.memberships).has(tenantId));
 }
+
+/** Hasta cuándo queda pago un plan al sumarle `months`: desde el vencimiento
+ *  vigente si es el mismo plan (renovar no pierde días), si no desde hoy. */
+export function extendPaidUntil(
+  current: { plan: PlanType | null; paidUntil: Date | null } | null,
+  plan: PlanType,
+  months: number,
+  now: Date,
+): Date {
+  const from = current?.plan === plan && current.paidUntil && current.paidUntil > now ? current.paidUntil : now;
+  const paidUntil = new Date(from);
+  paidUntil.setUTCMonth(paidUntil.getUTCMonth() + months);
+  return paidUntil;
+}

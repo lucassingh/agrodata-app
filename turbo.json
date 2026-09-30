@@ -36,7 +36,10 @@
         "RESEND_API_KEY",
         "DEMO_REQUESTS_EMAIL",
         "EMAIL_FROM",
-        "SIGNUP_MODE"
+        "SIGNUP_MODE",
+        "MERCADOPAGO_ACCESS_TOKEN",
+        "MERCADOPAGO_WEBHOOK_SECRET",
+        "PAYMENTS_ENABLED"
       ]
     },
     "lint": {
