@@ -10,6 +10,29 @@ export const TRIAL_CTA_LABEL = `Probar gratis ${TRIAL_DAYS} días`;
 export const TRIAL_HREF = "/dashboard/register";
 export const SIGN_IN_LABEL = "Ingresar";
 
+/**
+ * Acceso anticipado (Etapa 6.6): con el registro por invitación (`SIGNUP_MODE`, por
+ * defecto en producción) nadie abre la prueba solo: los botones de la prueba pasan a
+ * «Pedir acceso» y llevan al formulario. Cada sección recibe `openSignup`.
+ */
+export const ACCESS_CTA_LABEL = "Pedir acceso";
+export const ACCESS_HREF = "#demo";
+
+/** El botón principal según el modo, en largo y en corto (barra de navegación). */
+export function primaryCta(openSignup: boolean) {
+  return openSignup
+    ? { label: TRIAL_CTA_LABEL, shortLabel: "Probar gratis", href: TRIAL_HREF }
+    : { label: ACCESS_CTA_LABEL, shortLabel: ACCESS_CTA_LABEL, href: ACCESS_HREF };
+}
+
+export const EARLY_ACCESS = {
+  heroNote: `Estamos en acceso anticipado: te damos de alta y arrancás con ${TRIAL_DAYS} días gratis, sin tarjeta.`,
+  pricingSubtitle: `Precios de lanzamiento, en dólares por mes. Pedí acceso y arrancás con ${TRIAL_DAYS} días gratis del plan Asesor, sin tarjeta.`,
+  faqTrial: `${TRIAL_DAYS} días con todo el plan Asesor, sin tarjeta. Por ahora damos de alta cada cuenta: pedí acceso con el formulario y te escribimos para arrancar. Después sumás a tu equipo desde la web.`,
+  ctaBody: "Estamos sumando campos de a poco. Dejanos tus datos: te damos acceso y te mostramos AgroData con un caso de tu campo.",
+  sentBody: "Te escribimos por WhatsApp en menos de 24 horas hábiles para darte acceso y mostrarte AgroData con un caso real de tu campo.",
+};
+
 export const HERO = {
   title: "Todo lo que pasa en tu campo, ordenado desde WhatsApp.",
   subtitle:
@@ -392,6 +415,7 @@ export const FOOTER = {
       title: "Cuenta",
       links: [
         { href: "/dashboard/sign-in", label: "Ingresar" },
+        // Con el registro por invitación pasa a «Pedir acceso» (ver LandingFooter).
         { href: "/dashboard/register", label: "Crear cuenta" },
       ],
     },
