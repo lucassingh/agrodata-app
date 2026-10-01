@@ -53,6 +53,8 @@ export async function updateRecord(tenantId: string, id: string, input: UpdateRe
     data: {
       occurredAt: new Date(`${input.occurredAt}T12:00:00-03:00`),
       data: { ...data, summary: input.summary } as Prisma.InputJsonValue,
+      // Corrección a mano: mide qué tan bien entendió la IA (panel de soporte).
+      editedAt: new Date(),
     },
   });
 }

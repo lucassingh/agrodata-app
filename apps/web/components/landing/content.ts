@@ -1,14 +1,43 @@
 // Copy de la landing comercial. Fuente: docs/01_comercial_agrodata.md y
 // docs/08_ui-landing.md. Regla: nada de rayas largas; hablar como el productor.
 
+import { PLANS, TRIAL_DAYS } from "@repo/core/billing/plans";
+import { DEMO_FIELD_COUNT_LABEL, DEMO_PROFILE_LABEL } from "@repo/core/leads/demo-request.schema";
+
 export const DEMO_CTA_LABEL = "Pedir demo";
+/** La prueba gratis: registro con 14 días del plan Asesor, sin tarjeta. */
+export const TRIAL_CTA_LABEL = `Probar gratis ${TRIAL_DAYS} días`;
+export const TRIAL_HREF = "/dashboard/register";
 export const SIGN_IN_LABEL = "Ingresar";
+
+/**
+ * Acceso anticipado (Etapa 6.6): con el registro por invitación (`SIGNUP_MODE`, por
+ * defecto en producción) nadie abre la prueba solo: los botones de la prueba pasan a
+ * «Pedir acceso» y llevan al formulario. Cada sección recibe `openSignup`.
+ */
+export const ACCESS_CTA_LABEL = "Pedir acceso";
+export const ACCESS_HREF = "#demo";
+
+/** El botón principal según el modo, en largo y en corto (barra de navegación). */
+export function primaryCta(openSignup: boolean) {
+  return openSignup
+    ? { label: TRIAL_CTA_LABEL, shortLabel: "Probar gratis", href: TRIAL_HREF }
+    : { label: ACCESS_CTA_LABEL, shortLabel: ACCESS_CTA_LABEL, href: ACCESS_HREF };
+}
+
+export const EARLY_ACCESS = {
+  heroNote: `Estamos en acceso anticipado: te damos de alta y arrancás con ${TRIAL_DAYS} días gratis, sin tarjeta.`,
+  pricingSubtitle: `Precios de lanzamiento, en dólares por mes. Pedí acceso y arrancás con ${TRIAL_DAYS} días gratis del plan Asesor, sin tarjeta.`,
+  faqTrial: `${TRIAL_DAYS} días con todo el plan Asesor, sin tarjeta. Por ahora damos de alta cada cuenta: pedí acceso con el formulario y te escribimos para arrancar. Después sumás a tu equipo desde la web.`,
+  ctaBody: "Estamos sumando campos de a poco. Dejanos tus datos: te damos acceso y te mostramos AgroData con un caso de tu campo.",
+  sentBody: "Te escribimos por WhatsApp en menos de 24 horas hábiles para darte acceso y mostrarte AgroData con un caso real de tu campo.",
+};
 
 export const HERO = {
   title: "Todo lo que pasa en tu campo, ordenado desde WhatsApp.",
   subtitle:
     "Un mensaje, un audio o la foto de una factura. AgroData lo convierte en datos ordenados, listos para consultar y exportar.",
-  secondaryCta: "Ver cómo funciona",
+  trialNote: "Sin tarjeta. Si no te sirve, no pagás nada.",
 };
 
 /** Escenas que se reproducen en loop en el teléfono del hero (datos de ejemplo). */
@@ -151,15 +180,63 @@ export const MULTI_FIELD = {
   ],
 };
 
+/** Capturas reales del dashboard (cuenta demo de develop, `db:seed:demo`), en public/landing/dashboard/. */
 export const SHOWCASE = {
   title: "Un dashboard pensado para el campo",
+  subtitle: "Capturas reales de un campo mixto: agricultura, cría, feedlot y tambo.",
   tabs: [
-    { id: "resumen", label: "Resumen", caption: "KPIs, actividad reciente y alertas de stock." },
-    { id: "potreros", label: "Potreros", caption: "Hectáreas, cultivos y animales por potrero." },
-    { id: "tareas", label: "Tareas", caption: "Siembra, pulverización, fertilización y sanidad." },
-    { id: "gastos", label: "Gastos", caption: "Distribución por categoría y tendencia mensual." },
-    { id: "insumos", label: "Insumos", caption: "Stock por categoría con alertas de faltante." },
-    { id: "equipo", label: "Equipo", caption: "Roles por campo e invitaciones por WhatsApp." },
+    { id: "resumen", label: "Resumen", caption: "Avisos del día, indicadores del campo y lo último que se cargó." },
+    { id: "datos", label: "Datos", caption: "Todo lo que llegó por WhatsApp y por la web, con quién lo cargó." },
+    { id: "potreros", label: "Potreros", caption: "Cada lote con su superficie, cultivos, hacienda y días de descanso." },
+    { id: "tareas", label: "Tareas", caption: "Siembra, pulverización, fertilización y sanidad, con responsable y fecha." },
+    { id: "gastos", label: "Gastos", caption: "Por categoría y mes a mes, en pesos y en dólares por separado." },
+    { id: "insumos", label: "Insumos", caption: "Stock con su historial, costo y lo que se movió en el último mes." },
+    { id: "ganaderia", label: "Ganadería", caption: "Pesadas, aumento diario de peso, carga por hectárea y reproducción." },
+    { id: "tambo", label: "Tambo", caption: "Litros por día y por vaca, precio de la liquidación y margen por litro." },
+  ],
+};
+
+export const ALERTS = {
+  eyebrow: "Avisos",
+  title: "Te avisa antes de que te cueste plata.",
+  body: "AgroData mira los datos que cargás todos los días y te avisa lo que conviene resolver: en el Resumen y, a primera hora, por WhatsApp. Cada aviso dice de qué datos sale.",
+  kinds: [
+    { title: "Stock que se acaba", body: "Al ritmo de consumo del último mes, cuántos días te quedan de gasoil, balanceado o urea." },
+    { title: "Sanidad por vencer", body: "Vacunas y tratamientos que vencen esta semana o que ya se pasaron." },
+    { title: "Kilos y litros que caen", body: "Un grupo que engorda menos que en la pesada anterior, o litros por vaca en baja." },
+    { title: "Gastos fuera de lo normal", body: "Una categoría que este mes gasta bastante más que su promedio." },
+  ],
+  imageAlt:
+    "Panel de avisos de AgroData: gasoil para 6 días, urea debajo del mínimo, vacunación aftosa por vencer, una pulverización vencida y dos categorías de gasto fuera de lo normal.",
+};
+
+export const ADVISOR = {
+  eyebrow: "Para asesores",
+  title: "Todos tus clientes en una pantalla. Y el informe, en un clic.",
+  body: "La Cartera compara tus campos: ganancia diaria, litros por vaca, gastos del mes, lo que vence y los avisos de cada uno. Desde ahí armás el informe en PDF de cualquier cliente, con tu comentario y tu firma.",
+  points: [
+    "Cargás por WhatsApp nombrando el campo, sin cambiar de cuenta.",
+    "Informe del mes o de la campaña, listo para mandar.",
+    "Cada cliente sigue siendo dueño de sus datos.",
+  ],
+  portfolioAlt: "La Cartera de AgroData con tres campos de un asesor: ganancia diaria, litros por vaca, gastos del mes y avisos.",
+  reportAlt: "Primera página de un informe de campo en PDF: gastos por categoría, pesadas y tambo del mes, preparado por el asesor.",
+};
+
+/** AgroData contra una app de registro por WhatsApp, sin nombrar a nadie. */
+export const COMPARISON = {
+  title: "Registrar es el primer paso. Decidir es el que importa.",
+  subtitle: "Lo que hace cualquier app de registro, y lo que suma AgroData.",
+  columns: { us: "AgroData", them: "Una app de registro" },
+  rows: [
+    { label: "Carga por WhatsApp: texto, audio y fotos", them: true },
+    { label: "Stock, tareas y gastos", them: true },
+    { label: "Exportación a Excel", them: true },
+    { label: "Margen bruto por lote, en dólares", them: false },
+    { label: "Aumento diario de peso y reproducción", them: false },
+    { label: "Litros por vaca y margen por litro", them: false },
+    { label: "Cartera de clientes e informe en PDF para el asesor", them: false },
+    { label: "Avisos antes de que el problema cueste plata", them: false },
   ],
 };
 
@@ -210,13 +287,13 @@ export const PROFILES = {
 
 export const PRICING = {
   title: "Un plan para cada escala",
-  subtitle: "Precios de lanzamiento, en dólares por mes.",
+  subtitle: `Precios de lanzamiento, en dólares por mes. Probalo gratis ${TRIAL_DAYS} días con todo el plan Asesor, sin tarjeta.`,
   plans: [
     {
       id: "campo",
       name: "Campo",
       audience: "Para un establecimiento",
-      monthly: 29,
+      monthly: PLANS.CAMPO.monthlyUsd,
       custom: false,
       highlighted: false,
       features: [
@@ -232,7 +309,7 @@ export const PRICING = {
       id: "asesor",
       name: "Asesor",
       audience: "Para agrónomos y veterinarios con cartera",
-      monthly: 199,
+      monthly: PLANS.ASESOR.monthlyUsd,
       custom: false,
       highlighted: true,
       features: [
@@ -249,7 +326,7 @@ export const PRICING = {
       id: "empresa",
       name: "Empresa",
       audience: "Para grupos y administradoras",
-      monthly: null,
+      monthly: PLANS.EMPRESA.monthlyUsd,
       custom: true,
       highlighted: false,
       features: [
@@ -293,7 +370,22 @@ export const FAQ = {
     {
       id: "datos",
       q: "¿Los datos son míos?",
-      a: "Siempre. Exportás todo a Excel cuando quieras, y si dejás de usar AgroData te llevás tu información.",
+      a: "Siempre. Exportás todo a Excel cuando quieras, y si dejás de usar AgroData te llevás tu información. Si querés, la borramos.",
+    },
+    {
+      id: "prueba",
+      q: "¿Cómo es la prueba gratis?",
+      a: `${TRIAL_DAYS} días con todo el plan Asesor, sin tarjeta. Te registrás, cargás tus potreros y empezás a mandar mensajes. Una guía en cada pantalla te muestra cómo se usa.`,
+    },
+    {
+      id: "fin-prueba",
+      q: "¿Qué pasa cuando termina la prueba?",
+      a: "Si no elegís un plan, tus campos quedan en modo lectura: ves y exportás todo, pero no se cargan datos nuevos. No se borra nada; cuando activás un plan, todo sigue donde estaba.",
+    },
+    {
+      id: "pago",
+      q: "¿Cómo se paga?",
+      a: "Los precios están en dólares y se cobran en pesos al dólar oficial del día. Sin permanencia: das de baja cuando quieras.",
     },
   ],
 };
@@ -303,18 +395,9 @@ export const CTA = {
   rotatingWords: ["siembras", "animales", "gastos", "facturas"],
   titleEnd: "desde esta semana",
   body: "Dejanos tus datos y te mostramos AgroData funcionando con un caso de tu campo.",
-  profileOptions: [
-    { value: "AGRONOMO", label: "Ingeniero agrónomo" },
-    { value: "VETERINARIO", label: "Veterinario" },
-    { value: "PRODUCTOR", label: "Productor" },
-    { value: "OTRO", label: "Otro" },
-  ],
-  fieldCountOptions: [
-    { value: "1", label: "1 campo" },
-    { value: "2-5", label: "De 2 a 5 campos" },
-    { value: "6-10", label: "De 6 a 10 campos" },
-    { value: "10+", label: "Más de 10 campos" },
-  ],
+  // Las mismas etiquetas que usa el email al equipo (core/leads/demo-request.schema.ts).
+  profileOptions: Object.entries(DEMO_PROFILE_LABEL).map(([value, label]) => ({ value, label })),
+  fieldCountOptions: Object.entries(DEMO_FIELD_COUNT_LABEL).map(([value, label]) => ({ value, label })),
 };
 
 export const FOOTER = {
@@ -332,6 +415,7 @@ export const FOOTER = {
       title: "Cuenta",
       links: [
         { href: "/dashboard/sign-in", label: "Ingresar" },
+        // Con el registro por invitación pasa a «Pedir acceso» (ver LandingFooter).
         { href: "/dashboard/register", label: "Crear cuenta" },
       ],
     },

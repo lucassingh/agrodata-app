@@ -138,7 +138,7 @@ export function HowStartClient({ userName, hasActiveTenant, hasPastures }: HowSt
     <div className="space-y-6">
       <HeroBanner title={`¡Bienvenido, ${userName}!`} subtitle="Configurá tu campo en 3 pasos simples. Cada paso te acerca a tener toda tu operación digitalizada y bajo control." />
 
-      <div className="flex items-center">
+      <div data-tour="inicio.steps" className="flex items-center">
         {STEPS.map((step, i) => (
           <div key={step.label} className="flex flex-1 items-center last:flex-none">
             <button
@@ -164,7 +164,7 @@ export function HowStartClient({ userName, hasActiveTenant, hasPastures }: HowSt
         ))}
       </div>
 
-      <div className="rounded-xl border border-border p-5 shadow-soft">
+      <div data-tour="inicio.current" className="rounded-xl border border-border p-5 shadow-soft">
         <div className="mb-3 flex items-center gap-3">
           <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
             {activeStep + 1}

@@ -20,13 +20,15 @@ interface DataTableProps<T> {
   rows: T[];
   columns: DataTableColumn<T>[];
   className?: string;
+  /** `data-tour` de la tabla, para el tour guiado. */
+  tour?: string;
 }
 
 /** Puerto directo de frontend/src/components/shared/DataTable.tsx — sin paginación,
  *  sorting ni filtros integrados; eso lo compone cada página por afuera. */
-export function DataTable<T extends object>({ rows, columns, className }: DataTableProps<T>) {
+export function DataTable<T extends object>({ rows, columns, className, tour }: DataTableProps<T>) {
   return (
-    <div className={cn("relative overflow-x-auto rounded-2xl border border-border shadow-soft", className)}>
+    <div data-tour={tour} className={cn("relative overflow-x-auto rounded-2xl border border-border shadow-soft", className)}>
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent">

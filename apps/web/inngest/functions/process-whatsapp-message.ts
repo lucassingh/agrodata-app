@@ -19,6 +19,8 @@ import {
   applyMessagePlan,
   confirmationQuestion,
   resultMessage,
+  getFieldAccess,
+  READ_ONLY_WHATSAPP_MESSAGE,
   type EventDetail,
   type FarmEvent,
   type TenantCatalog,
@@ -185,6 +187,14 @@ export const processWhatsAppMessage = inngest.createFunction(
         : "unrelated";
 
       if (intent === "confirm") {
+        const access = await step.run("check-pending-field-access", () => getFieldAccess(pending.tenantId));
+        if (access === "read-only") {
+          await step.run("discard-read-only-pending", () => discardPendingAction(pending.id));
+          await step.run("reply-pending-read-only", () =>
+            sendWhatsAppText(waId, headerFor(pending.tenantId) + READ_ONLY_WHATSAPP_MESSAGE),
+          );
+          return { status: "read-only" as const };
+        }
         const confirmation = await step.run("execute-pending-action", () => executePendingAction(pending));
         await step.run("reply-pending-confirmed", () => sendWhatsAppText(waId, headerFor(pending.tenantId) + confirmation));
         return { status: "pending-confirmed" as const };
@@ -267,6 +277,14 @@ export const processWhatsAppMessage = inngest.createFunction(
       );
       await step.run("reply-answer", () => sendWhatsAppText(waId, notice + answer));
       return { status: "answered-question" as const, answer };
+    }
+
+    // ── Modo lectura: venció la prueba o el plan de quien administra el campo.
+    //    Las consultas (arriba) siguen; los datos no se registran. ───────────
+    const access = await step.run("check-field-access", () => getFieldAccess(activeTenantId));
+    if (access === "read-only") {
+      await step.run("reply-read-only", () => sendWhatsAppText(waId, notice + READ_ONLY_WHATSAPP_MESSAGE));
+      return { status: "read-only" as const };
     }
 
     // ── Log en el historial de Datos (siempre) ─────────────────────────────

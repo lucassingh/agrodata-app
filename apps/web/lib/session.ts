@@ -1,7 +1,7 @@
 import "server-only";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { badRequest } from "@repo/core";
+import { assertFieldWritable, badRequest } from "@repo/core";
 
 /** Usuario de la web. Lo usan todas las páginas y server actions del dashboard,
  *  así que es el lugar donde se corta el acceso a quien ya no lo tiene (ej. un
@@ -24,4 +24,13 @@ export async function requireActiveTenantId(): Promise<string> {
     badRequest("No hay un campo activo seleccionado.");
   }
   return user.activeTenantId;
+}
+
+/** Para las acciones que cargan, editan o borran datos del campo: en modo
+ *  lectura (venció la prueba o el plan) se cortan con un mensaje claro. Las
+ *  lecturas siguen usando `requireActiveTenantId`. */
+export async function requireWritableTenantId(): Promise<string> {
+  const tenantId = await requireActiveTenantId();
+  await assertFieldWritable(tenantId);
+  return tenantId;
 }

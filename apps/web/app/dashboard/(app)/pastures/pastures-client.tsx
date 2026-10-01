@@ -107,6 +107,7 @@ export function PasturesClient({
             variant="ghost"
             size="icon-sm"
             title="Agregar cultivo"
+            data-tour="potreros.quick-add"
             onClick={() => setQuickCropTarget(p)}
           >
             <Plus size={13} />
@@ -189,6 +190,7 @@ export function PasturesClient({
       <div className="flex justify-end gap-2">
         {hasActiveTenant ? <ExportButton href="/dashboard/export/potreros" /> : null}
         <Button
+          data-tour="potreros.add"
           disabled={!hasActiveTenant}
           title={!hasActiveTenant ? "Seleccioná o creá un establecimiento" : undefined}
           onClick={() => setFormState({ mode: "create" })}
@@ -207,7 +209,7 @@ export function PasturesClient({
           Todavía no cargaste potreros.
         </div>
       ) : (
-        <DataTable rows={pastures} columns={columns} />
+        <DataTable rows={pastures} columns={columns} tour="potreros.table" />
       )}
 
       {formState ? (

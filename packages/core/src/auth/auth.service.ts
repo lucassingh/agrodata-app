@@ -1,6 +1,9 @@
 import "server-only";
 import { prisma, hashPassword, verifyPassword } from "@repo/database";
-import { badRequest, conflict, notFound, unauthorized } from "../errors";
+import { consumeAccessInvite, findValidAccessInvite, hasPendingTeamInvite } from "../access/access-invites.service";
+import { canRegister, INVITE_REQUIRED_MESSAGE, type SignupMode } from "../access/signup-policy";
+import { TRIAL_DAYS } from "../billing/plans";
+import { badRequest, conflict, forbidden, notFound, unauthorized } from "../errors";
 import { redeemPendingInvitesForNewUser } from "../memberships/memberships.service";
 import { canAccessWeb, isPlatformStaff } from "./field-roles";
 import type { RegisterInput } from "./register.schema";
@@ -42,7 +45,9 @@ async function assertWebAppAccess(userId: string): Promise<void> {
   }
 }
 
-export async function registerUser(input: RegisterInput) {
+/** `signupMode` lo resuelve la app (`resolveSignupMode`): con invitación, hace falta
+ *  un código de acceso de AgroData (`invitationCode`) o una invitación de un equipo. */
+export async function registerUser(input: RegisterInput, options: { signupMode: SignupMode }) {
   if (input.password !== input.confirmPassword) {
     badRequest("Las contraseñas no coinciden");
   }
@@ -51,6 +56,18 @@ export async function registerUser(input: RegisterInput) {
   }
 
   const email = input.email.trim().toLowerCase();
+
+  const [accessInvite, teamInvite] = await Promise.all([
+    findValidAccessInvite(input.invitationCode),
+    options.signupMode === "invite" ? hasPendingTeamInvite(email, input.wNumber) : Promise.resolve(false),
+  ]);
+  if (!canRegister({ mode: options.signupMode, hasAccessInvite: accessInvite !== null, hasTeamInvite: teamInvite })) {
+    forbidden(
+      input.invitationCode?.trim()
+        ? "El código de acceso no es válido, ya se usó o venció. Pedinos uno nuevo."
+        : INVITE_REQUIRED_MESSAGE,
+    );
+  }
 
   const [existingEmail, existingPhone] = await Promise.all([
     prisma.user.findUnique({ where: { email } }),
@@ -71,8 +88,12 @@ export async function registerUser(input: RegisterInput) {
       profileType: input.profileType ?? "OTRO",
       // Los permisos son por campo: registrarse no da permisos de plataforma.
       isSuperAdmin: false,
+      // Arranca la prueba gratis, con todo el plan Asesor y sin tarjeta.
+      subscription: { create: { trialEndsAt: new Date(Date.now() + TRIAL_DAYS * 86_400_000) } },
     },
   });
+
+  if (accessInvite) await consumeAccessInvite(accessInvite.id, user.id);
 
   const redeemed = await redeemPendingInvitesForNewUser(user.id, email, input.wNumber);
 

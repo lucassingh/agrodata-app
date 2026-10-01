@@ -72,3 +72,22 @@ export * from "./alerts/alerts.service";
 export * from "./alerts/alert-digest";
 export * from "./alerts/alert-delivery.service";
 export * from "./weekly-summary/weekly-insights";
+export * from "./leads/demo-request.schema";
+export * from "./leads/demo-request-email";
+export * from "./leads/demo-requests.service";
+export * from "./notifications/email.service";
+export * from "./support/support-metrics";
+export * from "./support/support.service";
+
+export * from "./billing/plans";
+export * from "./billing/billing.service";
+
+export * from "./tours/tours.service";
+
+export * from "./access/access-code";
+export * from "./access/signup-policy";
+export * from "./access/access-invites.service";
+
+export * from "./billing/checkout";
+export * from "./billing/webhook-signature";
+export * from "./billing/payments.service";

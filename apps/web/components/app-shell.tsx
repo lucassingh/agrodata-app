@@ -9,13 +9,16 @@ import {
   ChevronLeft,
   ChevronRight,
   ClipboardList,
+  CreditCard,
   Database,
+  Lock,
   DollarSign,
   TrendingUp,
   Milk,
   Scale,
   Download,
   Fence,
+  LifeBuoy,
   LogOut,
   Map as MapIcon,
   Menu,
@@ -42,6 +45,7 @@ import { useIsDesktop, useSidebar } from "@/context/sidebar-context";
 import { CreateTenantDialog } from "@/components/create-tenant-dialog";
 import { setActiveTenantAction } from "@/app/dashboard/(app)/_lib/tenant-actions";
 import { cn } from "@/lib/utils";
+import { TourHost, TourLayer } from "@/components/product-tour/engine";
 import type { Capabilities, PlatformRole } from "@repo/core";
 import { visibleModules } from "@repo/core/tenants/tenant-labels";
 import { isWebRole } from "@repo/core/auth/field-roles";
@@ -62,11 +66,14 @@ interface NavItem {
 }
 
 interface AppShellUser {
+  id: string;
   name: string;
   email: string;
   platformRole: PlatformRole;
   capabilities: Capabilities;
   activeTenantId: string | null;
+  /** Equipo de AgroData (SUPER_ADMIN_EMAILS): ve el panel de soporte. */
+  isStaff: boolean;
 }
 
 interface Membership {
@@ -82,6 +89,12 @@ interface AppShellProps {
   signOutAction: () => Promise<void>;
   /** Entorno que no es producción («Prueba», «Local»), para no confundirlos. */
   environmentLabel: string | null;
+  /** El campo activo está en modo lectura (venció la prueba o el plan). */
+  readOnly: boolean;
+  /** Días que le quedan a mi prueba gratis (null si no estoy en prueba). */
+  trialDaysLeft: number | null;
+  /** Guías que la persona ya terminó o cerró (tour guiado). */
+  seenTours: string[];
 }
 
 function getInitials(name: string): string {
@@ -100,7 +113,16 @@ function getTenantInitials(name: string): string {
     .join("");
 }
 
-export function AppShell({ user, memberships, children, signOutAction, environmentLabel }: AppShellProps) {
+export function AppShell({
+  user,
+  memberships,
+  children,
+  signOutAction,
+  environmentLabel,
+  readOnly,
+  trialDaysLeft,
+  seenTours,
+}: AppShellProps) {
   const { collapsed: collapsedSetting, setCollapsed, mobileOpen, setMobileOpen } = useSidebar();
   const isDesktop = useIsDesktop();
   // En celular el menú va siempre completo: se abre encima del contenido.
@@ -169,7 +191,9 @@ export function AppShell({ user, memberships, children, signOutAction, environme
   const configItems: NavItem[] = [
     { label: "Equipo", href: "/dashboard/team", icon: <Users size={18} /> },
     { label: "Preferencias", href: "/dashboard/preferences", icon: <Settings size={18} /> },
+    { label: "Mi plan", href: "/dashboard/plan", icon: <CreditCard size={18} /> },
   ];
+  const staffItems: NavItem[] = [{ label: "Soporte", href: "/dashboard/support", icon: <LifeBuoy size={18} /> }];
 
   const activeMembership = memberships.find((m) => m.tenantId === user.activeTenantId);
   const activeTenant = activeMembership?.tenant;
@@ -181,9 +205,9 @@ export function AppShell({ user, memberships, children, signOutAction, environme
     router.refresh();
   };
 
-  function renderNavSection(title: string, items: NavItem[]) {
+  function renderNavSection(title: string, items: NavItem[], tourKey: string) {
     return (
-      <div className="mb-1">
+      <div className="mb-1" data-tour={`shell.menu.${tourKey}`}>
         {!collapsed ? (
           <p className="px-3 py-2 text-[10.5px] font-bold tracking-wide text-muted-foreground uppercase">
             {title}
@@ -195,6 +219,7 @@ export function AppShell({ user, memberships, children, signOutAction, environme
             <Link
               key={item.href}
               href={item.href}
+              data-tour={`shell.menu.item.${item.href.split("/").pop()}`}
               title={collapsed ? item.label : undefined}
               className={cn(
                 "mx-1 mb-1 flex min-h-10 items-center gap-3 rounded-lg px-3 text-sm font-semibold transition-colors",
@@ -258,7 +283,7 @@ export function AppShell({ user, memberships, children, signOutAction, environme
         </div>
 
         {activeTenant ? (
-          <div className={cn("px-3 py-2", collapsed && "flex justify-center px-0")}>
+          <div data-tour="shell.field" className={cn("px-3 py-2", collapsed && "flex justify-center px-0")}>
             {collapsed ? (
               <div
                 title={activeTenant.name}
@@ -280,11 +305,17 @@ export function AppShell({ user, memberships, children, signOutAction, environme
         ) : null}
 
         <nav className="flex-1 overflow-y-auto py-2">
-          {renderNavSection("Campo", campoItems)}
+          {renderNavSection("Campo", campoItems, "campo")}
           {!collapsed ? <div className="mx-3 my-1 border-t border-border" /> : null}
-          {renderNavSection("Gestión", gestionItems)}
+          {renderNavSection("Gestión", gestionItems, "gestion")}
           {!collapsed ? <div className="mx-3 my-1 border-t border-border" /> : null}
-          {renderNavSection("Configuración", configItems)}
+          {renderNavSection("Configuración", configItems, "configuracion")}
+          {user.isStaff ? (
+            <>
+              {!collapsed ? <div className="mx-3 my-1 border-t border-border" /> : null}
+              {renderNavSection("AgroData", staffItems, "agrodata")}
+            </>
+          ) : null}
         </nav>
       </aside>
 
@@ -318,7 +349,18 @@ export function AppShell({ user, memberships, children, signOutAction, environme
             </span>
           ) : null}
 
+          {trialDaysLeft !== null ? (
+            <Link
+              href="/dashboard/plan"
+              data-tour="shell.header.trial"
+              className="hidden truncate rounded-full border border-primary/30 bg-accent px-3 py-1 text-xs font-semibold text-primary-dark hover:bg-muted sm:inline-block"
+            >
+              Prueba gratis: {trialDaysLeft === 1 ? "queda 1 día" : `quedan ${trialDaysLeft} días`}
+            </Link>
+          ) : null}
+
           <div className="flex items-center gap-1">
+            <TourHost multiField={webMemberships.length > 1} />
             <a
               href="https://wa.me/5491100000000"
               target="_blank"
@@ -362,7 +404,7 @@ export function AppShell({ user, memberships, children, signOutAction, environme
             <div className="mx-1 hidden h-6 w-px bg-border sm:block" />
 
             <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-muted">
+              <DropdownMenuTrigger data-tour="shell.header.user" className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-muted">
                 <div className="flex size-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
                   {getInitials(user.name)}
                 </div>
@@ -420,18 +462,10 @@ export function AppShell({ user, memberships, children, signOutAction, environme
                     </DropdownMenuItem>
                   ) : null}
 
-                  {user.capabilities.canManageBilling ? (
-                    <>
-                      <DropdownMenuItem disabled>
-                        <DollarSign size={16} />
-                        Suscribirse
-                      </DropdownMenuItem>
-                      <DropdownMenuItem disabled>
-                        <DollarSign size={16} />
-                        Mis pagos
-                      </DropdownMenuItem>
-                    </>
-                  ) : null}
+                  <DropdownMenuItem onClick={() => router.push("/dashboard/plan")}>
+                    <CreditCard size={16} />
+                    Mi plan
+                  </DropdownMenuItem>
                 </DropdownMenuGroup>
 
                 <DropdownMenuSeparator />
@@ -451,10 +485,29 @@ export function AppShell({ user, memberships, children, signOutAction, environme
           </div>
         </header>
 
+        {/* Franja fija bajo el encabezado (no dentro del contenido): el banner de cada página se pega arriba. */}
+        {readOnly ? (
+          <div
+            role="status"
+            className="flex flex-col gap-3 border-b border-[#D97706]/40 bg-[#FDF4E3] px-4 py-3 text-[#6B4510] sm:flex-row sm:items-center md:px-6"
+          >
+            <Lock size={18} className="hidden shrink-0 sm:block" aria-hidden />
+            <p className="flex-1 text-sm">
+              <strong className="font-bold">Este campo está en modo lectura.</strong> Venció la prueba gratis o el plan
+              de quien lo administra. Podés ver, exportar y pedir informes, y no se pierde ningún dato. Para volver a
+              cargar, activá un plan.
+            </p>
+            <Link href="/dashboard/plan" className={cn(buttonVariants({ size: "sm" }), "shrink-0 self-start sm:self-auto")}>
+              Ver planes
+            </Link>
+          </div>
+        ) : null}
+
         <main className="flex-1 p-4 md:p-6">{children}</main>
       </div>
 
       <CreateTenantDialog open={createFieldOpen} onClose={() => setCreateFieldOpen(false)} />
+      <TourLayer userId={user.id} seenTours={seenTours} />
     </div>
   );
 }

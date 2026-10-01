@@ -113,8 +113,10 @@ const BlurText = ({
             key={index}
             aria-hidden="true"
             initial={reduceMotion ? false : fromSnapshot}
-            animate={reduceMotion ? undefined : inView ? animateKeyframes : fromSnapshot}
-            transition={spanTransition}
+            // Con movimiento reducido va directo al estado final: al hidratar la palabra
+            // arranca oculta (el servidor no sabe la preferencia) y sin esto quedaba invisible.
+            animate={reduceMotion ? toSnapshots[toSnapshots.length - 1] : inView ? animateKeyframes : fromSnapshot}
+            transition={reduceMotion ? { duration: 0 } : spanTransition}
             onAnimationComplete={index === elements.length - 1 ? onAnimationComplete : undefined}
             style={{
               display: 'inline-block',

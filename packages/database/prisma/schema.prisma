@@ -177,6 +177,9 @@ model User {
   tenantInvitesCreated  TenantPendingInvite[] @relation("TenantInviteInvitedBy")
   pendingWhatsAppActions PendingWhatsAppAction[]
   alertDeliveries       AlertDelivery[]
+  subscription          Subscription?
+  payments              Payment[]
+  toursSeen             TourSeen[]
 
   @@map("users")
 }
@@ -252,12 +255,16 @@ model Record {
   confidence Float?
   rawMessage String?
   userId     String?
+  /// Cuándo lo corrigió una persona desde Datos (updatedAt también cambia cuando el bot aplica
+  /// los efectos). Mide la calidad de lo que entendió la IA.
+  editedAt   DateTime?
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId, type, occurredAt])
+  @@index([createdAt])
   @@map("records")
 }
 
@@ -933,4 +940,136 @@ model AlertDelivery {
 
   @@index([tenantId, userId, alertKey, sentAt])
   @@map("alert_deliveries")
+}
+
+// ─── Pedidos de demo de la landing (Etapa 6.1) ──────────
+
+enum DemoRequestStatus {
+  NEW
+  CONTACTED
+  DISCARDED
+}
+
+/// Pedido de demo del formulario de la landing. Se guarda siempre; el email al equipo es un aviso aparte.
+model DemoRequest {
+  id         String            @id @default(cuid())
+  name       String
+  whatsapp   String
+  email      String
+  /// AGRONOMO | VETERINARIO | PRODUCTOR | OTRO (validado en core/leads/demo-request.schema.ts)
+  profile    String
+  /// 1 | 2-5 | 6-10 | 10+
+  fieldCount String
+  message    String?
+  status     DemoRequestStatus @default(NEW)
+  /// Cuándo salió el email al equipo (null si no se pudo mandar).
+  notifiedAt DateTime?
+  createdAt  DateTime          @default(now())
+
+  @@index([status, createdAt])
+  @@map("demo_requests")
+}
+
+// ─── Planes (Etapa 6.3) ─────────────────────────────────────
+
+enum PlanType {
+  CAMPO
+  ASESOR
+  EMPRESA
+}
+
+/// El plan es de la persona: qué campos cubre sale de core/billing/plans.ts. Al
+/// registrarse arranca la prueba gratis; sin plan ni prueba vigentes, sus campos
+/// quedan en modo lectura (nunca se borra nada).
+model Subscription {
+  userId        String    @id
+  /// Plan pago (null mientras está en la prueba o si nunca pagó).
+  plan          PlanType?
+  trialEndsAt   DateTime
+  /// Hasta cuándo está pago el plan. Lo carga el equipo desde Soporte (y después Mercado Pago).
+  paidUntil     DateTime?
+  /// Plan que la persona pidió desde la pantalla Plan, a la espera de que lo activemos.
+  requestedPlan PlanType?
+  requestedAt   DateTime?
+  /// Nota interna del equipo (cómo pagó, acuerdos).
+  note          String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+// ─── Tour guiado (Etapa 6.4) ────────────────────────────────
+
+/// Guías que cada persona ya terminó o cerró: no se vuelven a abrir solas, en
+/// ninguna computadora ni celular. `tourId` es el de la pantalla (resumen, gastos…).
+model TourSeen {
+  userId String
+  tourId String
+  seenAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, tourId])
+  @@map("tours_seen")
+}
+
+// ─── Acceso anticipado (Etapa 6.6) ──────────────────────────
+
+/// Invitación de AgroData para registrarse mientras el registro está cerrado
+/// (`SIGNUP_MODE=invite`, el modo por defecto en producción). Un código por persona,
+/// de un solo uso; lo da el equipo desde Soporte.
+model AccessInvite {
+  id            String    @id @default(cuid())
+  /// El código de acceso (XXXX-XXXX-XXXX): va en el link y también se puede tipear.
+  token         String    @unique
+  email         String
+  name          String?
+  /// El pedido de demo del que salió, si salió de uno.
+  demoRequestId String?
+  createdBy     String
+  expiresAt     DateTime
+  usedAt        DateTime?
+  usedByUserId  String?
+  createdAt     DateTime  @default(now())
+
+  @@index([demoRequestId])
+  @@index([email])
+  @@map("access_invites")
+}
+
+// ─── Pagos con Mercado Pago (Etapa 6.6) ─────────────────────
+
+enum PaymentStatus {
+  /// Creado y esperando el pago (o pagado en efectivo y sin acreditar).
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+/// Un pago de un plan por un período (1, 3 o 12 meses) con Checkout Pro, en pesos
+/// al dólar oficial del día. Los meses se suman una sola vez (`appliedAt`), llegue la
+/// confirmación por la vuelta del comprador, por «Ya pagué» o por el aviso de Mercado Pago.
+model Payment {
+  id           String        @id @default(cuid())
+  userId       String
+  plan         PlanType
+  months       Int
+  amountUsd    Float
+  amountArs    Float
+  exchangeRate Float
+  status       PaymentStatus @default(PENDING)
+  preferenceId String?       @unique
+  mpPaymentId  String?       @unique
+  appliedAt    DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("payments")
 }

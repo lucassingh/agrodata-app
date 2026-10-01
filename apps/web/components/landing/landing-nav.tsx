@@ -4,9 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import CardNav, { type CardNavItem } from "@/components/react-bits/CardNav";
 import { CtaLink } from "./cta-link";
-import { DEMO_CTA_LABEL, SIGN_IN_LABEL } from "./content";
+import { DEMO_CTA_LABEL, primaryCta, SIGN_IN_LABEL } from "./content";
 
-const NAV_ITEMS: CardNavItem[] = [
+const navItems = (openSignup: boolean): CardNavItem[] => [
   {
     label: "Producto",
     bgColor: "var(--l-brand-dark)",
@@ -32,7 +32,9 @@ const NAV_ITEMS: CardNavItem[] = [
     bgColor: "var(--l-accent-tint)",
     textColor: "var(--l-ink)",
     links: [
-      { label: DEMO_CTA_LABEL, href: "#demo" },
+      { label: primaryCta(openSignup).label, href: primaryCta(openSignup).href },
+      // Con el registro cerrado, «Pedir acceso» ya lleva al formulario.
+      ...(openSignup ? [{ label: DEMO_CTA_LABEL, href: "#demo" }] : []),
       { label: "Precios", href: "#precios" },
       { label: "Preguntas frecuentes", href: "#preguntas" },
       { label: SIGN_IN_LABEL, href: "/dashboard/sign-in" },
@@ -40,10 +42,11 @@ const NAV_ITEMS: CardNavItem[] = [
   },
 ];
 
-export function LandingNav() {
+export function LandingNav({ openSignup }: { openSignup: boolean }) {
+  const primary = primaryCta(openSignup);
   return (
     <CardNav
-      items={NAV_ITEMS}
+      items={navItems(openSignup)}
       logo={
         <Link href="/" aria-label="AgroData, inicio" className="rounded-md outline-none focus-visible:ring-3 focus-visible:ring-l-brand-light/60">
           <Image src="/brand/logo.png" alt="AgroData" width={635} height={121} priority className="h-auto w-[120px]" />
@@ -54,7 +57,7 @@ export function LandingNav() {
           <CtaLink href="/dashboard/sign-in" variant="secondary">
             {SIGN_IN_LABEL}
           </CtaLink>
-          <CtaLink href="#demo">{DEMO_CTA_LABEL}</CtaLink>
+          <CtaLink href={primary.href}>{primary.shortLabel}</CtaLink>
         </div>
       }
     />

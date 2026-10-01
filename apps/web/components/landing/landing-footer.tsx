@@ -1,9 +1,18 @@
 import Image from "next/image";
 import Link from "next/link";
-import { FOOTER } from "./content";
+import { ACCESS_CTA_LABEL, FOOTER } from "./content";
 import { Container } from "./primitives";
 
-export function LandingFooter() {
+export function LandingFooter({ openSignup }: { openSignup: boolean }) {
+  const columns = openSignup
+    ? FOOTER.columns
+    : FOOTER.columns.map((column) => ({
+        ...column,
+        links: column.links.map((link) =>
+          link.href === "/dashboard/register" ? { href: "/#demo", label: ACCESS_CTA_LABEL } : link,
+        ),
+      }));
+
   return (
     <footer className="relative overflow-hidden pt-24 pb-10">
       <Container>
@@ -13,7 +22,7 @@ export function LandingFooter() {
             <p className="mt-5 max-w-[30ch] text-lg leading-relaxed text-l-ink-soft">{FOOTER.tagline}</p>
           </div>
           <nav aria-label="Pie de página" className="grid grid-cols-2 gap-8 md:col-span-7 md:grid-cols-3">
-            {FOOTER.columns.map((column) => (
+            {columns.map((column) => (
               <div key={column.title}>
                 <p className="font-heading text-sm font-semibold text-l-ink">{column.title}</p>
                 <ul className="mt-4 grid gap-3">

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireUser, requireActiveTenantId } from "@/lib/session";
+import { requireUser, requireActiveTenantId, requireWritableTenantId } from "@/lib/session";
 import {
   AppError,
   assertCanDeleteOperationalData,
@@ -38,7 +38,7 @@ export async function createSupplyAction(
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Datos inválidos.");
   try {
     const user = await requireUser();
-    const tenantId = await requireActiveTenantId();
+    const tenantId = await requireWritableTenantId();
     const supply = await createSupply(tenantId, parsed.data, user.id);
     revalidatePath("/dashboard/supplies");
     return ok({ id: supply.id });
@@ -56,7 +56,7 @@ export async function updateSupplyAction(
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Datos inválidos.");
   try {
     const user = await requireUser();
-    const tenantId = await requireActiveTenantId();
+    const tenantId = await requireWritableTenantId();
     await updateSupply(tenantId, id, parsed.data, user.id);
     revalidatePath("/dashboard/supplies");
     return ok(undefined);
@@ -77,7 +77,7 @@ export async function adjustSupplyStockAction(
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Datos inválidos.");
   try {
     const user = await requireUser();
-    const tenantId = await requireActiveTenantId();
+    const tenantId = await requireWritableTenantId();
     await adjustSupplyStock(tenantId, id, { ...parsed.data, userId: user.id });
     revalidatePath("/dashboard/supplies");
     return ok(undefined);
@@ -91,7 +91,7 @@ export async function deleteSupplyAction(id: string): Promise<ActionResult> {
   try {
     const user = await requireUser();
     assertCanDeleteOperationalData(user.capabilities);
-    const tenantId = await requireActiveTenantId();
+    const tenantId = await requireWritableTenantId();
     await deleteSupply(tenantId, id);
     revalidatePath("/dashboard/supplies");
     return ok(undefined);
@@ -108,7 +108,7 @@ export async function deleteSupplyAction(id: string): Promise<ActionResult> {
 export async function addSupplyPurchaseRecordAction(id: string): Promise<ActionResult> {
   try {
     const user = await requireUser();
-    const tenantId = await requireActiveTenantId();
+    const tenantId = await requireWritableTenantId();
     const supply = await findSupply(tenantId, id);
     await createRecord(tenantId, {
       type: "PURCHASE",

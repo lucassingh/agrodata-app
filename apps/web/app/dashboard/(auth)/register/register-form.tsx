@@ -13,7 +13,14 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { registerAction } from "./actions";
 
-export function RegisterForm() {
+interface RegisterFormProps {
+  /** Registro por invitación (acceso anticipado): el código de acceso importa. */
+  inviteOnly: boolean;
+  /** Datos del link de acceso de AgroData, si llegó con uno. */
+  defaults?: { name: string; lastname: string; email: string; accessCode: string };
+}
+
+export function RegisterForm({ inviteOnly, defaults }: RegisterFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [showPassword, setShowPassword] = useState(false);
@@ -28,13 +35,13 @@ export function RegisterForm() {
   } = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      name: "",
-      lastname: "",
-      email: "",
+      name: defaults?.name ?? "",
+      lastname: defaults?.lastname ?? "",
+      email: defaults?.email ?? "",
       wNumber: "+54",
       password: "",
       confirmPassword: "",
-      invitationCode: "",
+      invitationCode: defaults?.accessCode ?? "",
       acceptTerms: false,
     },
   });
@@ -149,8 +156,20 @@ export function RegisterForm() {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="invitationCode">Código de invitación (opcional)</Label>
-        <Input id="invitationCode" {...register("invitationCode")} />
+        <Label htmlFor="invitationCode">{inviteOnly ? "Código de acceso" : "Código de acceso (opcional)"}</Label>
+        <Input
+          id="invitationCode"
+          placeholder="XXXX-XXXX-XXXX"
+          autoCapitalize="characters"
+          autoComplete="off"
+          aria-describedby={inviteOnly ? "invitationCode-hint" : undefined}
+          {...register("invitationCode")}
+        />
+        {inviteOnly ? (
+          <p id="invitationCode-hint" className="text-xs text-muted-foreground">
+            Viene con tu invitación de AgroData. Si te invitó tu equipo, dejalo vacío.
+          </p>
+        ) : null}
       </div>
 
       <div className="flex items-center gap-2">

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireActiveTenantId, requireUser } from "@/lib/session";
+import { requireWritableTenantId, requireUser } from "@/lib/session";
 import {
   AppError,
   assertCanDeleteOperationalData,
@@ -30,7 +30,7 @@ const fail = <T>(message: string): ActionResult<T> => ({ success: false, error: 
 
 async function run<T>(fn: (tenantId: string) => Promise<T>): Promise<ActionResult<T>> {
   try {
-    const tenantId = await requireActiveTenantId();
+    const tenantId = await requireWritableTenantId();
     const data = await fn(tenantId);
     revalidatePath("/dashboard/economy");
     return ok(data);

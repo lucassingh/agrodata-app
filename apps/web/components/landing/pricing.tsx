@@ -5,7 +5,7 @@ import { Check } from "lucide-react";
 import { useId, useState } from "react";
 import { cn } from "@/lib/utils";
 import { CtaLink } from "./cta-link";
-import { DEMO_CTA_LABEL, PRICING } from "./content";
+import { DEMO_CTA_LABEL, EARLY_ACCESS, PRICING, primaryCta } from "./content";
 import { Container, SectionTitle, SoonBadge, featureLabel, type PlanFeature } from "./primitives";
 import { usePrefersReducedMotion } from "@/lib/use-prefers-reduced-motion";
 
@@ -16,7 +16,8 @@ function monthlyPrice(monthly: number, billing: Billing) {
   return billing === "monthly" ? monthly : Math.round((monthly * 10) / 12);
 }
 
-export function Pricing() {
+export function Pricing({ openSignup }: { openSignup: boolean }) {
+  const primary = primaryCta(openSignup);
   const [billing, setBilling] = useState<Billing>("monthly");
   const reduceMotion = usePrefersReducedMotion();
   const toggleId = useId();
@@ -27,7 +28,7 @@ export function Pricing() {
         <div className="flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
           <div>
             <SectionTitle id="precios-title">{PRICING.title}</SectionTitle>
-            <p className="mt-4 text-lg text-l-ink-soft">{PRICING.subtitle}</p>
+            <p className="mt-4 text-lg text-l-ink-soft">{openSignup ? PRICING.subtitle : EARLY_ACCESS.pricingSubtitle}</p>
           </div>
 
           <div role="radiogroup" aria-label="Frecuencia de pago" className="flex w-fit rounded-full bg-white p-1 shadow-l">
@@ -41,7 +42,7 @@ export function Pricing() {
                   aria-checked={selected}
                   onClick={() => setBilling(option)}
                   className={cn(
-                    "relative rounded-full px-5 py-2.5 text-sm font-medium transition-colors duration-200 outline-none focus-visible:ring-3 focus-visible:ring-l-brand-light/60",
+                    "relative rounded-full px-5 py-2.5 text-sm font-medium whitespace-nowrap transition-colors duration-200 outline-none focus-visible:ring-3 focus-visible:ring-l-brand-light/60",
                     selected ? "text-white" : "text-l-ink-soft hover:text-l-ink",
                   )}
                 >
@@ -55,7 +56,7 @@ export function Pricing() {
                   <span className="relative">
                     {option === "monthly" ? "Mensual" : "Anual"}
                     {option === "yearly" && (
-                      <span className={cn("ml-2 rounded-full px-2 py-0.5 text-xs", selected ? "bg-l-accent text-l-ink" : "bg-l-accent-tint text-l-ink")}>
+                      <span className={cn("ml-2 rounded-full px-2 py-0.5 text-xs whitespace-nowrap", selected ? "bg-l-accent text-l-ink" : "bg-l-accent-tint text-l-ink")}>
                         2 meses gratis
                       </span>
                     )}
@@ -120,8 +121,9 @@ export function Pricing() {
                 ))}
               </ul>
 
-              <CtaLink href="#demo" variant={plan.highlighted ? "onBrand" : "secondary"} size="lg" className="mt-10 w-full">
-                {DEMO_CTA_LABEL}
+              {/* El plan a medida se conversa; los demás se prueban gratis (o se pide acceso). */}
+              <CtaLink href={plan.custom ? "#demo" : primary.href} variant={plan.highlighted ? "onBrand" : "secondary"} size="lg" className="mt-10 w-full">
+                {plan.custom ? DEMO_CTA_LABEL : primary.label}
               </CtaLink>
             </li>
           ))}

@@ -24,7 +24,9 @@ export function Problem() {
   const { scrollYProgress } = useScroll({ target: sectionRef, offset: ["start end", "center center"] });
 
   return (
-    <section ref={sectionRef} aria-labelledby="problema-title" className="py-28 lg:py-40">
+    // overflow-x-clip: antes de llegar al scroll, los papeles arrancan corridos y
+    // en celular estiraban la página a 433 px.
+    <section ref={sectionRef} aria-labelledby="problema-title" className="overflow-x-clip py-28 lg:py-40">
       <Container>
         <h2 id="problema-title" className="sr-only">
           El problema

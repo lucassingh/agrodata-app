@@ -141,7 +141,7 @@ export function EconomyClient({ overview, seasons, season, pastures, unassignedI
       key: "actions",
       label: "",
       render: (c) => (
-        <Button variant="ghost" size="icon-sm" title="Ver campaña" aria-label={`Ver ${c.crop} ${c.season} de ${c.pastureName}`} onClick={() => setDetailId(c.id)}>
+        <Button data-tour="economia.detail" variant="ghost" size="icon-sm" title="Ver campaña" aria-label={`Ver ${c.crop} ${c.season} de ${c.pastureName}`} onClick={() => setDetailId(c.id)}>
           <Eye size={14} />
         </Button>
       ),
@@ -150,7 +150,7 @@ export function EconomyClient({ overview, seasons, season, pastures, unassignedI
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center gap-3">
+      <div data-tour="economia.toolbar" className="flex flex-wrap items-center gap-3">
         <Select
           items={[{ value: ALL, label: "Todos los ciclos" }, ...seasons.map((s) => ({ value: s, label: `Ciclo ${s}` }))]}
           value={season || ALL}
@@ -179,7 +179,7 @@ export function EconomyClient({ overview, seasons, season, pastures, unassignedI
         <div className="ml-auto flex flex-wrap gap-2">
           <ExportButton href={`/dashboard/export/economia${season ? `?season=${encodeURIComponent(season)}` : ""}`} />
           {canEdit ? (
-            <Button onClick={() => setCreating(true)} disabled={pastures.length === 0} title={pastures.length === 0 ? "Cargá un lote en Potreros primero" : undefined}>
+            <Button data-tour="economia.new" onClick={() => setCreating(true)} disabled={pastures.length === 0} title={pastures.length === 0 ? "Cargá un lote en Potreros primero" : undefined}>
               <Plus size={14} />
               Nueva campaña
             </Button>
@@ -188,7 +188,7 @@ export function EconomyClient({ overview, seasons, season, pastures, unassignedI
       </div>
 
       {campaigns.length === 0 ? (
-        <div className="mx-auto flex max-w-xl flex-col items-center gap-3 rounded-xl border border-dashed border-border py-12 text-center">
+        <div data-tour="economia.empty" className="mx-auto flex max-w-xl flex-col items-center gap-3 rounded-xl border border-dashed border-border py-12 text-center">
           <span className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
             <Wheat size={26} />
           </span>
@@ -200,7 +200,7 @@ export function EconomyClient({ overview, seasons, season, pastures, unassignedI
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div data-tour="economia.kpis" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <Kpi label="Hectáreas" value={hectares.toLocaleString("es-AR")} caption={`${campaigns.length} ${campaigns.length === 1 ? "campaña" : "campañas"}`} />
             <Kpi label="Costos directos" value={formatUsd(cost)} caption={hectares > 0 ? `${formatUsd(cost / hectares)}/ha` : undefined} />
             <Kpi label="Ingresos" value={formatUsd(income)} caption={anyEstimated ? "Incluye ingresos estimados" : undefined} />
@@ -219,7 +219,7 @@ export function EconomyClient({ overview, seasons, season, pastures, unassignedI
             </p>
           ) : null}
 
-          <DataTable rows={campaigns} columns={columns} />
+          <DataTable rows={campaigns} columns={columns} tour="economia.table" />
 
           {chartData.length > 1 ? (
             <Card className="rounded-2xl shadow-soft">
