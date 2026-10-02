@@ -46,11 +46,11 @@ export function LandingFooter({ openSignup }: { openSignup: boolean }) {
           aria-hidden
           className="mt-20 font-heading text-[clamp(4.5rem,19vw,17rem)] leading-[0.8] font-bold tracking-[-0.04em] text-l-brand-tint select-none"
         >
-          AgroData
+          campIA
         </p>
 
         <div className="mt-8 flex flex-col gap-2 border-t border-l-line pt-6 text-sm text-l-ink-soft sm:flex-row sm:justify-between">
-          <p>© 2026 AgroData</p>
+          <p>© 2026 Campia</p>
           <p>Hecho en Argentina</p>
         </div>
       </Container>
