@@ -21,7 +21,7 @@ import { PlanCards, type PlanCard, type PlanPayments } from "./plan-cards";
 import { RefreshPaymentButton } from "./refresh-payment-button";
 
 export const metadata: Metadata = {
-  title: "Mi plan — AgroData",
+  title: "Mi plan — Campia",
 };
 
 /** Día argentino, sin hora (se arma en el servidor: no hay hidratación). */

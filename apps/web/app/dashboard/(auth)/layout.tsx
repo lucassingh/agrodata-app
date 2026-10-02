@@ -26,7 +26,7 @@ export default function AuthLayout({
         />
         <div className="absolute inset-x-0 bottom-0 flex flex-col gap-1 p-10 text-white">
           <h2 className="max-w-md font-heading text-2xl font-bold">
-            AgroData Intelligence
+            Campia Intelligence
           </h2>
           <p className="max-w-md text-sm text-white/90">
             Gestioná campos y tambos con datos en tiempo real, IA y

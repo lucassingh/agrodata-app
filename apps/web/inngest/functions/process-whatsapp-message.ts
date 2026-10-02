@@ -138,7 +138,7 @@ export const processWhatsAppMessage = inngest.createFunction(
       await step.run("reply-unregistered", () =>
         sendWhatsAppText(
           waId,
-          "Este número no está registrado en AgroData. Pedile a tu administrador que te invite desde la sección Equipo.",
+          "Este número no está registrado en Campia. Pedile a tu administrador que te invite desde la sección Equipo.",
         ),
       );
       return { status: "unregistered-sender" as const };

@@ -44,7 +44,7 @@ export interface TourDefinition<TCtx> {
   groupLabels: Record<string, string>;
 }
 
-/** La única puerta del motor a «¿esta persona ya vio este tour?». En AgroData
+/** La única puerta del motor a «¿esta persona ya vio este tour?». En Campia
  *  vive en la base (ver `tour-storage.ts`). */
 export interface TourStorageAdapter {
   hasSeenTour(tourId: string): boolean;

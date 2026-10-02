@@ -84,7 +84,7 @@ export function FieldReportDocument({ report, comment, issuedOn }: { report: Fie
   const signatureLine = [author.profession, author.licenseNumber].filter(Boolean).join(" · ");
 
   return (
-    <Document title={`Informe ${field.name} — ${period.label}`} author={author.fullName} creator="AgroData">
+    <Document title={`Informe ${field.name} — ${period.label}`} author={author.fullName} creator="Campia">
       <Page size="A4" style={s.page}>
         <Text style={s.brand}>AGRODATA · INFORME DE CAMPO</Text>
         <Text style={s.title}>{field.name}</Text>
@@ -261,7 +261,7 @@ export function FieldReportDocument({ report, comment, issuedOn }: { report: Fie
         </View>
 
         <View style={s.footer} fixed>
-          <Text>Generado con AgroData a partir de los datos cargados del campo.</Text>
+          <Text>Generado con Campia a partir de los datos cargados del campo.</Text>
           <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
         </View>
       </Page>

@@ -4,15 +4,15 @@ import { LEGAL } from "@/components/landing/content";
 import { LegalPage, LegalSection } from "@/components/landing/legal-page";
 
 export const metadata: Metadata = {
-  title: "Política de privacidad | AgroData",
-  description: "Qué datos trata AgroData, para qué, con quién los comparte y cómo ejercer tus derechos.",
+  title: "Política de privacidad | Campia",
+  description: "Qué datos trata Campia, para qué, con quién los comparte y cómo ejercer tus derechos.",
 };
 
 export default function PrivacyPage() {
   return (
     <LegalPage
       title="Política de privacidad"
-      intro="AgroData es un asistente que convierte los mensajes de WhatsApp de tu equipo en registros del campo. Para hacerlo necesitamos tratar algunos datos personales. Acá explicamos cuáles, para qué y qué podés hacer con ellos."
+      intro="Campia es un asistente que convierte los mensajes de WhatsApp de tu equipo en registros del campo. Para hacerlo necesitamos tratar algunos datos personales. Acá explicamos cuáles, para qué y qué podés hacer con ellos."
     >
       <LegalSection title="1. Quién es el responsable">
         <p>
@@ -28,7 +28,7 @@ export default function PrivacyPage() {
             texto plano) y el rol que tenés en cada campo.
           </li>
           <li>
-            <strong>Mensajes de WhatsApp enviados a AgroData:</strong> texto, notas de voz y fotos (por ejemplo, de
+            <strong>Mensajes de WhatsApp enviados a Campia:</strong> texto, notas de voz y fotos (por ejemplo, de
             facturas), junto con el número que los envía y la fecha.
           </li>
           <li>

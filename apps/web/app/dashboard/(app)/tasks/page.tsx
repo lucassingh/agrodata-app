@@ -5,7 +5,7 @@ import { HeroBanner } from "@/components/hero-banner";
 import { TasksClient } from "./tasks-client";
 
 export const metadata: Metadata = {
-  title: "Tareas — AgroData",
+  title: "Tareas — Campia",
 };
 
 export default async function TasksPage() {

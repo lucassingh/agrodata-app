@@ -72,7 +72,7 @@ export function AccessDialog({ label, demoRequestId, email: initialEmail = "", n
         <Dialog open onOpenChange={(next: boolean) => !next && close()}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>{granted ? "Acceso listo" : "Dar acceso a AgroData"}</DialogTitle>
+              <DialogTitle>{granted ? "Acceso listo" : "Dar acceso a Campia"}</DialogTitle>
               <DialogDescription>
                 {granted
                   ? granted.emailed

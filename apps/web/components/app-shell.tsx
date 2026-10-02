@@ -73,7 +73,7 @@ interface AppShellUser {
   platformRole: PlatformRole;
   capabilities: Capabilities;
   activeTenantId: string | null;
-  /** Equipo de AgroData (SUPER_ADMIN_EMAILS): ve el panel de soporte. */
+  /** Equipo de Campia (SUPER_ADMIN_EMAILS): ve el panel de soporte. */
   isStaff: boolean;
 }
 
@@ -312,7 +312,7 @@ export function AppShell({
           {user.isStaff ? (
             <>
               {!collapsed ? <div className="mx-3 my-1 border-t border-border" /> : null}
-              {renderNavSection("AgroData", staffItems, "agrodata")}
+              {renderNavSection("Campia", staffItems, "agrodata")}
             </>
           ) : null}
         </nav>

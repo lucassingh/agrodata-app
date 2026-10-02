@@ -6,7 +6,7 @@ import { HeroBanner } from "@/components/hero-banner";
 import { SuppliesClient } from "./supplies-client";
 
 export const metadata: Metadata = {
-  title: "Insumos — AgroData",
+  title: "Insumos — Campia",
 };
 
 export default async function SuppliesPage() {

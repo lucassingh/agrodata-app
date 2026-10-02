@@ -13,7 +13,7 @@ import { signupMode } from "@/lib/signup-mode";
 import { RegisterForm } from "./register-form";
 
 export const metadata: Metadata = {
-  title: "Crear cuenta — AgroData",
+  title: "Crear cuenta — Campia",
 };
 
 interface RegisterPageProps {
@@ -38,7 +38,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
       </CardHeader>
       <CardContent className="space-y-4">
         {invite ? (
-          <Notice tone="success">Tenés acceso a AgroData. Creá tu cuenta y arrancás 14 días gratis, sin tarjeta.</Notice>
+          <Notice tone="success">Tenés acceso a Campia. Creá tu cuenta y arrancás 14 días gratis, sin tarjeta.</Notice>
         ) : acceso && mode === "invite" ? (
           <Notice tone="warning">
             Ese link de acceso ya se usó o venció.{" "}

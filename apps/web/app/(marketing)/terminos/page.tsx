@@ -4,19 +4,19 @@ import { LEGAL } from "@/components/landing/content";
 import { LegalPage, LegalSection } from "@/components/landing/legal-page";
 
 export const metadata: Metadata = {
-  title: "Términos y condiciones | AgroData",
-  description: "Las condiciones de uso de AgroData: el asistente por WhatsApp y el dashboard web.",
+  title: "Términos y condiciones | Campia",
+  description: "Las condiciones de uso de Campia: el asistente por WhatsApp y el dashboard web.",
 };
 
 export default function TermsPage() {
   return (
     <LegalPage
       title="Términos y condiciones"
-      intro="Estas condiciones regulan el uso de AgroData: el asistente por WhatsApp y el dashboard web. Al crear una cuenta o mandar mensajes al asistente, las aceptás."
+      intro="Estas condiciones regulan el uso de Campia: el asistente por WhatsApp y el dashboard web. Al crear una cuenta o mandar mensajes al asistente, las aceptás."
     >
       <LegalSection title="1. El servicio">
         <p>
-          AgroData, prestado por {LEGAL.responsible}, permite registrar la información de un establecimiento
+          Campia, prestado por {LEGAL.responsible}, permite registrar la información de un establecimiento
           agropecuario enviando mensajes de texto, notas de voz o fotos por WhatsApp, y consultarla y administrarla desde
           un dashboard web.
         </p>
@@ -46,7 +46,7 @@ export default function TermsPage() {
       </LegalSection>
 
       <LegalSection title="4. Uso aceptable">
-        <p>No se puede usar AgroData para:</p>
+        <p>No se puede usar Campia para:</p>
         <ul>
           <li>cargar información de terceros sin autorización o con fines ilícitos;</li>
           <li>intentar acceder a datos de otros campos o vulnerar la seguridad del servicio;</li>
@@ -79,7 +79,7 @@ export default function TermsPage() {
 
       <LegalSection title="8. Responsabilidad">
         <p>
-          AgroData es una herramienta de registro y consulta: las decisiones productivas, sanitarias, comerciales o
+          Campia es una herramienta de registro y consulta: las decisiones productivas, sanitarias, comerciales o
           impositivas que tomes siguen siendo tuyas. En la medida en que la ley lo permita, no respondemos por daños
           indirectos derivados del uso de la información cargada. Nada de esto limita los derechos que te reconoce la
           Ley 24.240 de Defensa del Consumidor.

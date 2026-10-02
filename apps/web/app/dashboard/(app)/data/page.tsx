@@ -5,7 +5,7 @@ import { HeroBanner } from "@/components/hero-banner";
 import { DataClient } from "./data-client";
 
 export const metadata: Metadata = {
-  title: "Datos — AgroData",
+  title: "Datos — Campia",
 };
 
 const PAGE_SIZES = [10, 25, 50];

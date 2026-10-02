@@ -465,7 +465,7 @@ function PhoneChat({ current, phase, typed, reduceMotion }: { current: number; p
   return (
     <div
       role="img"
-      aria-label={`Chat de WhatsApp con AgroData. Mensaje: "${scene.message}". Respuesta: "${scene.reply}"`}
+      aria-label={`Chat de WhatsApp con Campia. Mensaje: "${scene.message}". Respuesta: "${scene.reply}"`}
       className="relative aspect-[462/944] w-full drop-shadow-[0_24px_32px_oklch(0.235_0.035_162/0.28)]"
     >
       {/* Marco real de iPhone 17 (public/landing/iphone-17.svg, 462x944). */}
