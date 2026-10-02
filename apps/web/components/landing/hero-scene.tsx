@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { AnimatePresence, motion, useInView } from "motion/react";
+import { CampiaLogo } from "@/components/brand/campia-logo";
 import {
   BatteryFull,
   Camera,
@@ -488,10 +489,10 @@ function PhoneChat({ current, phase, typed, reduceMotion }: { current: number; p
         <div className="flex shrink-0 items-center gap-2 border-b border-black/5 px-2.5 pt-1 pb-2">
           <ChevronLeft className="size-5 text-[#007aff]" />
           <div className="flex size-8 items-center justify-center rounded-full bg-white shadow-[0_0_0_1px_rgb(0_0_0/0.06)]">
-            <Image src="/brand/logo-small.png" alt="" width={93} height={110} className="h-5 w-auto" />
+            <CampiaLogo variant="mark" className="text-primary text-[20px]" />
           </div>
           <div className="min-w-0 flex-1 leading-tight">
-            <p className="truncate text-[13px] font-semibold text-black">AgroData</p>
+            <p className="truncate text-[13px] font-semibold text-black">Campia</p>
             <p className="text-[10px] text-black/55">{phase === "thinking" ? "escribiendo…" : "en línea"}</p>
           </div>
           <Video className="size-[18px] text-[#007aff]" />

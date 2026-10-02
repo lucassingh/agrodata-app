@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ACCESS_CTA_LABEL, FOOTER } from "./content";
+import { CampiaLogo } from "@/components/brand/campia-logo";
 import { Container } from "./primitives";
 
 export function LandingFooter({ openSignup }: { openSignup: boolean }) {
@@ -18,7 +18,7 @@ export function LandingFooter({ openSignup }: { openSignup: boolean }) {
       <Container>
         <div className="grid gap-12 md:grid-cols-12">
           <div className="md:col-span-5">
-            <Image src="/brand/logo.png" alt="AgroData" width={635} height={121} className="h-auto w-[148px]" />
+            <CampiaLogo className="text-l-brand text-[26px]" />
             <p className="mt-5 max-w-[30ch] text-lg leading-relaxed text-l-ink-soft">{FOOTER.tagline}</p>
           </div>
           <nav aria-label="Pie de página" className="grid grid-cols-2 gap-8 md:col-span-7 md:grid-cols-3">

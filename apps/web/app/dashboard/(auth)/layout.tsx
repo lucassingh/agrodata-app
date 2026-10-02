@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { CampiaLogo } from "@/components/brand/campia-logo";
 
 export default function AuthLayout({
   children,
@@ -35,14 +36,7 @@ export default function AuthLayout({
       </div>
 
       <div className="flex flex-col items-center justify-center gap-6 p-6 sm:p-10">
-        <Image
-          src="/brand/logo.png"
-          alt="AgroData"
-          width={220}
-          height={49}
-          className="h-auto w-[190px]"
-          priority
-        />
+        <CampiaLogo className="text-primary text-[34px]" />
         {children}
       </div>
     </div>
