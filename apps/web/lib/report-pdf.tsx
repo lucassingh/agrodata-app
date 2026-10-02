@@ -86,7 +86,7 @@ export function FieldReportDocument({ report, comment, issuedOn }: { report: Fie
   return (
     <Document title={`Informe ${field.name} — ${period.label}`} author={author.fullName} creator="Campia">
       <Page size="A4" style={s.page}>
-        <Text style={s.brand}>AGRODATA · INFORME DE CAMPO</Text>
+        <Text style={s.brand}>CAMPIA · INFORME DE CAMPO</Text>
         <Text style={s.title}>{field.name}</Text>
         <Text style={s.subtitle}>Informe de {period.label}</Text>
 
