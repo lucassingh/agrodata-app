@@ -4,7 +4,7 @@ import { LEGAL } from "@/components/landing/content";
 import { LegalPage, LegalSection } from "@/components/landing/legal-page";
 
 export const metadata: Metadata = {
-  title: "Términos y condiciones | Campia",
+  title: "Términos y condiciones | campIA",
   description: "Las condiciones de uso de Campia: el asistente por WhatsApp y el dashboard web.",
 };
 

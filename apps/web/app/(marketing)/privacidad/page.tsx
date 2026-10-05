@@ -4,7 +4,7 @@ import { LEGAL } from "@/components/landing/content";
 import { LegalPage, LegalSection } from "@/components/landing/legal-page";
 
 export const metadata: Metadata = {
-  title: "Política de privacidad | Campia",
+  title: "Política de privacidad | campIA",
   description: "Qué datos trata Campia, para qué, con quién los comparte y cómo ejercer tus derechos.",
 };
 

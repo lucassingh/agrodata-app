@@ -20,19 +20,26 @@ import { ProductShowcase } from "@/components/landing/product-showcase";
 import { Profiles } from "@/components/landing/profiles";
 import { signupMode } from "@/lib/signup-mode";
 
+/** La imagen para compartir lleva el mismo llamado que la landing: «Probalo gratis»
+ *  con el registro abierto, «Pedí acceso» con el registro por invitación. */
+const SHARE_IMAGE = signupMode() === "open" ? "/landing/og-image.jpg" : "/landing/og-image-acceso.jpg";
+
 export const metadata: Metadata = {
-  title: "Campia | Todo tu campo, ordenado desde WhatsApp",
+  title: "campIA | Todo tu campo, ordenado desde WhatsApp",
   description:
-    "Un mensaje, un audio o la foto de una factura. Campia lo convierte en datos listos para consultar y exportar. Para agrónomos, veterinarios y productores.",
+    "Un mensaje, un audio o la foto de una factura. campIA lo convierte en datos listos para consultar y exportar. Para agrónomos, veterinarios y productores.",
+  alternates: { canonical: "/" },
   openGraph: {
-    title: "Campia | Todo tu campo, ordenado desde WhatsApp",
+    url: "/",
+    siteName: "campIA",
+    title: "campIA | Todo tu campo, ordenado desde WhatsApp",
     description:
       "Cargá siembra, animales, gastos y facturas desde WhatsApp. Consultá y exportá cuando lo necesites.",
-    images: [{ url: "/landing/og-image.jpg", width: 1200, height: 630, alt: "Campia: todo lo que pasa en tu campo, ordenado desde WhatsApp" }],
+    images: [{ url: SHARE_IMAGE, width: 1200, height: 630, alt: "campIA: todo lo que pasa en tu campo, ordenado desde WhatsApp" }],
     locale: "es_AR",
     type: "website",
   },
-  twitter: { card: "summary_large_image", images: ["/landing/og-image.jpg"] },
+  twitter: { card: "summary_large_image", images: [SHARE_IMAGE] },
 };
 
 export default function MarketingHomePage() {
