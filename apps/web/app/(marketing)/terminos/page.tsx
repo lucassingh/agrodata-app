@@ -89,7 +89,7 @@ export default function TermsPage() {
       <LegalSection title="9. Cambios y baja">
         <p>
           Podemos actualizar estas condiciones; si el cambio es importante, te avisamos antes de que entre en vigencia.
-          Podés dar de baja tu cuenta cuando quieras escribiendo a {LEGAL.contactEmail}. Podemos suspender una cuenta que
+          Podés dar de baja tu cuenta cuando quieras escribiendo a <a href={`mailto:${LEGAL.contactEmail}`}>{LEGAL.contactEmail}</a>. Podemos suspender una cuenta que
           incumpla estas condiciones.
         </p>
       </LegalSection>

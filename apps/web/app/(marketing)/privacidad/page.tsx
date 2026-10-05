@@ -17,7 +17,7 @@ export default function PrivacyPage() {
       <LegalSection title="1. Quién es el responsable">
         <p>
           El responsable del tratamiento de los datos es {LEGAL.responsible}. Podés escribirnos por cualquier consulta
-          sobre privacidad a {LEGAL.contactEmail}.
+          sobre privacidad a <a href={`mailto:${LEGAL.contactEmail}`}>{LEGAL.contactEmail}</a>.
         </p>
       </LegalSection>
 
@@ -94,7 +94,7 @@ export default function PrivacyPage() {
       <LegalSection title="6. Tus derechos">
         <p>
           Podés pedir acceso, rectificación, actualización o supresión de tus datos personales escribiendo a{" "}
-          {LEGAL.contactEmail}. El acceso es gratuito si lo pedís con intervalos de al menos seis meses, salvo que
+          <a href={`mailto:${LEGAL.contactEmail}`}>{LEGAL.contactEmail}</a>. El acceso es gratuito si lo pedís con intervalos de al menos seis meses, salvo que
           acredites un interés legítimo (artículo 14, inciso 3, de la Ley 25.326). Parte de tus datos los podés corregir
           vos mismo desde el dashboard.
         </p>
@@ -107,7 +107,7 @@ export default function PrivacyPage() {
 
       <LegalSection title="7. Cómo borrar tus datos">
         <p>
-          Escribinos a {LEGAL.contactEmail} desde el email de tu cuenta pidiendo la baja. Confirmamos la solicitud y
+          Escribinos a <a href={`mailto:${LEGAL.contactEmail}`}>{LEGAL.contactEmail}</a> desde el email de tu cuenta pidiendo la baja. Confirmamos la solicitud y
           completamos el borrado dentro de los 30 días.
         </p>
       </LegalSection>

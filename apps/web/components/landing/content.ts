@@ -431,10 +431,14 @@ export const FOOTER = {
 
 /** Datos del responsable que aparecen en Términos y Privacidad. Completar antes
  *  de publicar (los pide Meta para verificar la app de WhatsApp). */
+/** La casilla de soporte (Hostinger): contacto de la landing, de los legales y
+ *  remitente de los mails de la app. */
+export const SUPPORT_EMAIL = "soporte@campia.app";
+
 export const LEGAL = {
   updatedAt: "25 de septiembre de 2026",
   responsible: "[Nombre o razón social del titular, CUIT]",
-  contactEmail: "[email de contacto]",
+  contactEmail: SUPPORT_EMAIL,
 };
 
 export const LOT_MARGIN = {
