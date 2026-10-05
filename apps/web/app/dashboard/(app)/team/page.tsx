@@ -5,7 +5,7 @@ import { HeroBanner } from "@/components/hero-banner";
 import { TeamSections } from "./team-sections";
 
 export const metadata: Metadata = {
-  title: "Equipo — AgroData",
+  title: "Equipo — Campia",
 };
 
 export default async function TeamPage() {

@@ -41,7 +41,7 @@ export function createTourWelcomeDialog<TCtx>(
                 <Compass size={18} aria-hidden />
               </span>
               <DialogTitle className="font-heading text-lg">
-                {firstTime ? "Te mostramos AgroData" : `Guía de ${definition.title}`}
+                {firstTime ? "Te mostramos Campia" : `Guía de ${definition.title}`}
               </DialogTitle>
             </div>
             <DialogDescription className="pt-1 text-sm leading-relaxed">

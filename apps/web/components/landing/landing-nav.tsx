@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import CardNav, { type CardNavItem } from "@/components/react-bits/CardNav";
+import { CampiaLogo } from "@/components/brand/campia-logo";
 import { CtaLink } from "./cta-link";
 import { DEMO_CTA_LABEL, primaryCta, SIGN_IN_LABEL } from "./content";
 
@@ -48,8 +48,8 @@ export function LandingNav({ openSignup }: { openSignup: boolean }) {
     <CardNav
       items={navItems(openSignup)}
       logo={
-        <Link href="/" aria-label="AgroData, inicio" className="rounded-md outline-none focus-visible:ring-3 focus-visible:ring-l-brand-light/60">
-          <Image src="/brand/logo.png" alt="AgroData" width={635} height={121} priority className="h-auto w-[120px]" />
+        <Link href="/" aria-label="Campia, inicio" className="rounded-md outline-none focus-visible:ring-3 focus-visible:ring-l-brand-light/60">
+          <CampiaLogo className="text-l-brand text-[22px]" />
         </Link>
       }
       cta={

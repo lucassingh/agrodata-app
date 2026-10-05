@@ -16,7 +16,7 @@ import { registerAction } from "./actions";
 interface RegisterFormProps {
   /** Registro por invitación (acceso anticipado): el código de acceso importa. */
   inviteOnly: boolean;
-  /** Datos del link de acceso de AgroData, si llegó con uno. */
+  /** Datos del link de acceso de Campia, si llegó con uno. */
   defaults?: { name: string; lastname: string; email: string; accessCode: string };
 }
 
@@ -167,7 +167,7 @@ export function RegisterForm({ inviteOnly, defaults }: RegisterFormProps) {
         />
         {inviteOnly ? (
           <p id="invitationCode-hint" className="text-xs text-muted-foreground">
-            Viene con tu invitación de AgroData. Si te invitó tu equipo, dejalo vacío.
+            Viene con tu invitación de Campia. Si te invitó tu equipo, dejalo vacío.
           </p>
         ) : null}
       </div>

@@ -1,4 +1,4 @@
-/** Las guías de AgroData, una por pantalla. Sin "use client": lo usa también la
+/** Las guías de Campia, una por pantalla. Sin "use client": lo usa también la
  *  acción del servidor que guarda el avance, para validar el id. */
 export const TOUR_PATHS = {
   inicio: "/dashboard/how-start",

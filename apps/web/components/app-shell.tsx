@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { CampiaLogo } from "@/components/brand/campia-logo";
 import {
   BookOpen,
   ChevronLeft,
@@ -72,7 +73,7 @@ interface AppShellUser {
   platformRole: PlatformRole;
   capabilities: Capabilities;
   activeTenantId: string | null;
-  /** Equipo de AgroData (SUPER_ADMIN_EMAILS): ve el panel de soporte. */
+  /** Equipo de Campia (SUPER_ADMIN_EMAILS): ve el panel de soporte. */
   isStaff: boolean;
 }
 
@@ -270,13 +271,11 @@ export function AppShell({
         )}
       >
         <div className={cn("flex h-16 items-center justify-between px-4", collapsed && "justify-center px-2")}>
-          <Image
-            src={collapsed ? "/brand/logo-small.png" : "/brand/logo.png"}
-            alt="AgroData"
-            width={collapsed ? 38 : 136}
-            height={collapsed ? 38 : 30}
-            className={cn("h-auto object-contain", collapsed ? "w-[38px]" : "w-[136px]")}
-          />
+          {collapsed ? (
+            <CampiaLogo variant="mark" className="text-primary text-[34px]" />
+          ) : (
+            <CampiaLogo className="text-primary text-[23px]" />
+          )}
           <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileOpen(false)} aria-label="Cerrar menú">
             <X size={18} />
           </Button>
@@ -313,7 +312,7 @@ export function AppShell({
           {user.isStaff ? (
             <>
               {!collapsed ? <div className="mx-3 my-1 border-t border-border" /> : null}
-              {renderNavSection("AgroData", staffItems, "agrodata")}
+              {renderNavSection("Campia", staffItems, "agrodata")}
             </>
           ) : null}
         </nav>

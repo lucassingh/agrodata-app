@@ -39,7 +39,7 @@ export function buildShellSteps(ctx: TourContext): TourStep[] {
     step(
       "shell.whatsapp",
       "shell.menu.item.data",
-      "Lo más rápido es cargar por WhatsApp: un mensaje, un audio o la foto de una factura, como «cargué 200 litros de gasoil en el tractor». AgroData lo carga en Gastos, Insumos o Potreros, y el mensaje queda acá, en Datos, para revisarlo.",
+      "Lo más rápido es cargar por WhatsApp: un mensaje, un audio o la foto de una factura, como «cargué 200 litros de gasoil en el tractor». Campia lo carga en Gastos, Insumos o Potreros, y el mensaje queda acá, en Datos, para revisarlo.",
       { title: "Tu primer mensaje por WhatsApp", placement: "right-start", onEnter: "openMenu" },
     ),
     step(

@@ -18,9 +18,9 @@ const workSans = Work_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "AgroData — Todo tu campo, ordenado por WhatsApp",
+  title: "Campia — Todo tu campo, ordenado por WhatsApp",
   description:
-    "AgroData organiza todo lo que pasa en tu campo con IA por WhatsApp. Cargá siembra, animales, gastos y facturas desde el chat.",
+    "Campia organiza todo lo que pasa en tu campo con IA por WhatsApp. Cargá siembra, animales, gastos y facturas desde el chat.",
 };
 
 export default function RootLayout({

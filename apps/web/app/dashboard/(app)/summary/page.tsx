@@ -5,7 +5,7 @@ import { SummaryClient } from "./summary-client";
 import { ZERO_DASHBOARD } from "./types";
 
 export const metadata: Metadata = {
-  title: "Resumen — AgroData",
+  title: "Resumen — Campia",
 };
 
 interface SummaryPageProps {

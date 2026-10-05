@@ -25,7 +25,7 @@ import { DemoStatusSelect } from "./demo-status-select";
 import { SubscriptionDialog } from "./subscription-dialog";
 
 export const metadata: Metadata = {
-  title: "Soporte — AgroData",
+  title: "Soporte — Campia",
 };
 
 const TABS = [
@@ -61,7 +61,7 @@ interface SupportPageProps {
   searchParams: Promise<{ tab?: string }>;
 }
 
-/** Panel de soporte (Etapa 6.2): solo para el equipo de AgroData (SUPER_ADMIN_EMAILS).
+/** Panel de soporte (Etapa 6.2): solo para el equipo de Campia (SUPER_ADMIN_EMAILS).
  *  A cualquier otra persona le responde como si la página no existiera. */
 export default async function SupportPage({ searchParams }: SupportPageProps) {
   const user = await requireUser();
@@ -71,7 +71,7 @@ export default async function SupportPage({ searchParams }: SupportPageProps) {
 
   return (
     <div className="space-y-6">
-      <HeroBanner title="Soporte" subtitle="Solo para el equipo de AgroData: pedidos de demo, accesos, cuentas y cómo se usa el producto." />
+      <HeroBanner title="Soporte" subtitle="Solo para el equipo de Campia: pedidos de demo, accesos, cuentas y cómo se usa el producto." />
 
       <nav aria-label="Secciones del panel" className="flex w-full gap-1 overflow-x-auto rounded-xl border border-border bg-card p-1 shadow-soft sm:w-fit">
         {TABS.map((t) => (

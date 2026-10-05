@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import Image from "next/image";
 import { Sprout, Package, FlaskConical } from "lucide-react";
+import { CampiaLogo } from "@/components/brand/campia-logo";
 import { CowHeadIcon } from "@/components/cow-head-icon";
 import { TASK_TYPE_LABEL } from "./task-labels";
 import type { TaskType } from "./types";
@@ -37,7 +37,7 @@ export function TaskPreviewCard({
   return (
     <div className="space-y-3 rounded-xl border border-border p-4 shadow-soft">
       <div className="flex items-center justify-between">
-        <Image src="/brand/logo-small.png" alt="AgroData" width={32} height={24} />
+        <CampiaLogo variant="mark" className="text-primary/80 text-[22px]" />
         <p className="text-xs text-muted-foreground">Fecha límite: {deadlineLabel}</p>
       </div>
       <h3 className="font-heading text-base font-semibold">{TASK_TYPE_LABEL[type]}</h3>

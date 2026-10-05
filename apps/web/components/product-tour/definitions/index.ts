@@ -4,7 +4,7 @@ import { exportStep, step, type TourContext } from "./shared";
 import { buildShellSteps, SHELL_GROUP_LABELS } from "./shell-steps";
 
 /**
- * Las guías de AgroData: una por pantalla, cada una autocontenida. Los pasos
+ * Las guías de Campia: una por pantalla, cada una autocontenida. Los pasos
  * apuntan a elementos con `data-tour` en cada pantalla; si uno no se ve al
  * arrancar (depende del rol o de los datos), el motor lo descarta (ver
  * `dropMissingTargets` en `engine.tsx`). Agregar una guía es sumar una
@@ -311,7 +311,7 @@ const datos: TourDefinition<TourContext> = {
     step(
       "datos.list",
       "datos.empty",
-      "Acá va a aparecer tu primer mensaje por WhatsApp, con lo que entendió AgroData y lo que cargó.",
+      "Acá va a aparecer tu primer mensaje por WhatsApp, con lo que entendió Campia y lo que cargó.",
       { placement: "top" },
     ),
     step("datos.list", "datos.table", "Cada registro con su fecha, qué es, de dónde vino y quién lo cargó.", { placement: "top" }),

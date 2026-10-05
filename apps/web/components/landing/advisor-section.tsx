@@ -31,7 +31,7 @@ export function AdvisorSection() {
                 <span className="size-2.5 rounded-full bg-l-line" />
                 <span className="size-2.5 rounded-full bg-l-line" />
                 <span className="size-2.5 rounded-full bg-l-line" />
-                <span className="ml-3 truncate text-[13px] text-l-ink-soft">AgroData · Cartera</span>
+                <span className="ml-3 truncate text-[13px] text-l-ink-soft">Campia · Cartera</span>
               </div>
               <div className="relative aspect-[2000/1206]">
                 <Image

@@ -9,7 +9,7 @@ import {
 import { SignInForm } from "./sign-in-form";
 
 export const metadata: Metadata = {
-  title: "Ingresar — AgroData",
+  title: "Ingresar — Campia",
 };
 
 export default async function SignInPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
