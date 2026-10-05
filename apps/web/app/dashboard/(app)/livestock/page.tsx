@@ -5,7 +5,7 @@ import { HeroBanner } from "@/components/hero-banner";
 import { LivestockClient } from "./livestock-client";
 
 export const metadata: Metadata = {
-  title: "Ganadería — AgroData",
+  title: "Ganadería — Campia",
 };
 
 export default async function LivestockPage() {

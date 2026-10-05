@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import Image from "next/image";
 import Link from "next/link";
+import { CampiaLogo } from "@/components/brand/campia-logo";
 import { ArrowLeft } from "lucide-react";
 import { signupMode } from "@/lib/signup-mode";
 import { LEGAL } from "./content";
@@ -22,10 +22,10 @@ export function LegalPage({ title, intro, children }: LegalPageProps) {
         <Container className="flex h-16 items-center justify-between">
           <Link
             href="/"
-            aria-label="AgroData, inicio"
+            aria-label="Campia, inicio"
             className="rounded-md outline-none focus-visible:ring-3 focus-visible:ring-l-brand-light/60"
           >
-            <Image src="/brand/logo.png" alt="AgroData" width={635} height={121} priority className="h-auto w-[120px]" />
+            <CampiaLogo className="text-l-brand text-[22px]" />
           </Link>
           <Link
             href="/"

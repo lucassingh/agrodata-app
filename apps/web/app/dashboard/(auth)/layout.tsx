@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { CampiaLogo } from "@/components/brand/campia-logo";
 
 export default function AuthLayout({
   children,
@@ -25,7 +26,7 @@ export default function AuthLayout({
         />
         <div className="absolute inset-x-0 bottom-0 flex flex-col gap-1 p-10 text-white">
           <h2 className="max-w-md font-heading text-2xl font-bold">
-            AgroData Intelligence
+            Campia Intelligence
           </h2>
           <p className="max-w-md text-sm text-white/90">
             Gestioná campos y tambos con datos en tiempo real, IA y
@@ -35,14 +36,7 @@ export default function AuthLayout({
       </div>
 
       <div className="flex flex-col items-center justify-center gap-6 p-6 sm:p-10">
-        <Image
-          src="/brand/logo.png"
-          alt="AgroData"
-          width={220}
-          height={49}
-          className="h-auto w-[190px]"
-          priority
-        />
+        <CampiaLogo className="text-primary text-[34px]" />
         {children}
       </div>
     </div>

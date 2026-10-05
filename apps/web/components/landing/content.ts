@@ -29,14 +29,14 @@ export const EARLY_ACCESS = {
   heroNote: `Estamos en acceso anticipado: te damos de alta y arrancás con ${TRIAL_DAYS} días gratis, sin tarjeta.`,
   pricingSubtitle: `Precios de lanzamiento, en dólares por mes. Pedí acceso y arrancás con ${TRIAL_DAYS} días gratis del plan Asesor, sin tarjeta.`,
   faqTrial: `${TRIAL_DAYS} días con todo el plan Asesor, sin tarjeta. Por ahora damos de alta cada cuenta: pedí acceso con el formulario y te escribimos para arrancar. Después sumás a tu equipo desde la web.`,
-  ctaBody: "Estamos sumando campos de a poco. Dejanos tus datos: te damos acceso y te mostramos AgroData con un caso de tu campo.",
-  sentBody: "Te escribimos por WhatsApp en menos de 24 horas hábiles para darte acceso y mostrarte AgroData con un caso real de tu campo.",
+  ctaBody: "Estamos sumando campos de a poco. Dejanos tus datos: te damos acceso y te mostramos Campia con un caso de tu campo.",
+  sentBody: "Te escribimos por WhatsApp en menos de 24 horas hábiles para darte acceso y mostrarte Campia con un caso real de tu campo.",
 };
 
 export const HERO = {
   title: "Todo lo que pasa en tu campo, ordenado desde WhatsApp.",
   subtitle:
-    "Un mensaje, un audio o la foto de una factura. AgroData lo convierte en datos ordenados, listos para consultar y exportar.",
+    "Un mensaje, un audio o la foto de una factura. Campia lo convierte en datos ordenados, listos para consultar y exportar.",
   trialNote: "Sin tarjeta. Si no te sirve, no pagás nada.",
 };
 
@@ -199,7 +199,7 @@ export const SHOWCASE = {
 export const ALERTS = {
   eyebrow: "Avisos",
   title: "Te avisa antes de que te cueste plata.",
-  body: "AgroData mira los datos que cargás todos los días y te avisa lo que conviene resolver: en el Resumen y, a primera hora, por WhatsApp. Cada aviso dice de qué datos sale.",
+  body: "Campia mira los datos que cargás todos los días y te avisa lo que conviene resolver: en el Resumen y, a primera hora, por WhatsApp. Cada aviso dice de qué datos sale.",
   kinds: [
     { title: "Stock que se acaba", body: "Al ritmo de consumo del último mes, cuántos días te quedan de gasoil, balanceado o urea." },
     { title: "Sanidad por vencer", body: "Vacunas y tratamientos que vencen esta semana o que ya se pasaron." },
@@ -207,7 +207,7 @@ export const ALERTS = {
     { title: "Gastos fuera de lo normal", body: "Una categoría que este mes gasta bastante más que su promedio." },
   ],
   imageAlt:
-    "Panel de avisos de AgroData: gasoil para 6 días, urea debajo del mínimo, vacunación aftosa por vencer, una pulverización vencida y dos categorías de gasto fuera de lo normal.",
+    "Panel de avisos de Campia: gasoil para 6 días, urea debajo del mínimo, vacunación aftosa por vencer, una pulverización vencida y dos categorías de gasto fuera de lo normal.",
 };
 
 export const ADVISOR = {
@@ -219,15 +219,15 @@ export const ADVISOR = {
     "Informe del mes o de la campaña, listo para mandar.",
     "Cada cliente sigue siendo dueño de sus datos.",
   ],
-  portfolioAlt: "La Cartera de AgroData con tres campos de un asesor: ganancia diaria, litros por vaca, gastos del mes y avisos.",
+  portfolioAlt: "La Cartera de Campia con tres campos de un asesor: ganancia diaria, litros por vaca, gastos del mes y avisos.",
   reportAlt: "Primera página de un informe de campo en PDF: gastos por categoría, pesadas y tambo del mes, preparado por el asesor.",
 };
 
-/** AgroData contra una app de registro por WhatsApp, sin nombrar a nadie. */
+/** Campia contra una app de registro por WhatsApp, sin nombrar a nadie. */
 export const COMPARISON = {
   title: "Registrar es el primer paso. Decidir es el que importa.",
-  subtitle: "Lo que hace cualquier app de registro, y lo que suma AgroData.",
-  columns: { us: "AgroData", them: "Una app de registro" },
+  subtitle: "Lo que hace cualquier app de registro, y lo que suma Campia.",
+  columns: { us: "Campia", them: "Una app de registro" },
   rows: [
     { label: "Carga por WhatsApp: texto, audio y fotos", them: true },
     { label: "Stock, tareas y gastos", them: true },
@@ -355,7 +355,7 @@ export const FAQ = {
     {
       id: "senal",
       q: "¿Funciona donde no hay señal?",
-      a: "Sí. Mandás el mensaje como siempre y WhatsApp lo entrega cuando vuelve la señal. AgroData lo procesa en cuanto llega.",
+      a: "Sí. Mandás el mensaje como siempre y WhatsApp lo entrega cuando vuelve la señal. Campia lo procesa en cuanto llega.",
     },
     {
       id: "operarios",
@@ -370,7 +370,7 @@ export const FAQ = {
     {
       id: "datos",
       q: "¿Los datos son míos?",
-      a: "Siempre. Exportás todo a Excel cuando quieras, y si dejás de usar AgroData te llevás tu información. Si querés, la borramos.",
+      a: "Siempre. Exportás todo a Excel cuando quieras, y si dejás de usar Campia te llevás tu información. Si querés, la borramos.",
     },
     {
       id: "prueba",
@@ -394,7 +394,7 @@ export const CTA = {
   titleStart: "Ordená tus",
   rotatingWords: ["siembras", "animales", "gastos", "facturas"],
   titleEnd: "desde esta semana",
-  body: "Dejanos tus datos y te mostramos AgroData funcionando con un caso de tu campo.",
+  body: "Dejanos tus datos y te mostramos Campia funcionando con un caso de tu campo.",
   // Las mismas etiquetas que usa el email al equipo (core/leads/demo-request.schema.ts).
   profileOptions: Object.entries(DEMO_PROFILE_LABEL).map(([value, label]) => ({ value, label })),
   fieldCountOptions: Object.entries(DEMO_FIELD_COUNT_LABEL).map(([value, label]) => ({ value, label })),
@@ -440,7 +440,7 @@ export const LEGAL = {
 export const LOT_MARGIN = {
   eyebrow: "Economía por lote",
   title: "Sabé cuánto te dejó cada lote, sin armar una planilla.",
-  body: "Cada aplicación, labor y gasto que cargás por WhatsApp suma al costo de su lote. Cuando cosechás y vendés, AgroData te muestra el margen bruto, el costo por hectárea y el rinde que necesitás para no perder.",
+  body: "Cada aplicación, labor y gasto que cargás por WhatsApp suma al costo de su lote. Cuando cosechás y vendés, Campia te muestra el margen bruto, el costo por hectárea y el rinde que necesitás para no perder.",
   points: [
     { title: "Costos que llegan solos", body: "Insumos aplicados, contratistas y gastos del lote, sin cargar nada dos veces." },
     { title: "En dólares, al día", body: "Cada peso se convierte con el dólar de su fecha. Elegís mayorista, oficial o MEP." },
@@ -467,7 +467,7 @@ export const LOT_MARGIN = {
 export const LIVESTOCK_DAIRY = {
   eyebrow: "Ganadería y tambo",
   title: "Kilos, preñez y litros: los números que definen si el campo gana plata.",
-  body: "Mandá la pesada, el tacto o los litros del día por WhatsApp. AgroData calcula lo que un veterinario o un tambero mira todas las semanas, sin planillas aparte.",
+  body: "Mandá la pesada, el tacto o los litros del día por WhatsApp. Campia calcula lo que un veterinario o un tambero mira todas las semanas, sin planillas aparte.",
   note: "Datos de ejemplo",
   cards: [
     {

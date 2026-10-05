@@ -58,7 +58,7 @@ describe("interfaz del tour", () => {
     const first = createTourEngine<Ctx>({ registry: { gastos: definition(oneStep) }, storage: makeStorage(false) });
     render(<first.ProductTourLayer />);
     act(() => first.useTourStore.getState().openWelcome("gastos", { ctx: { isAdmin: false } }));
-    expect(screen.getByText("Te mostramos AgroData")).toBeInTheDocument();
+    expect(screen.getByText("Te mostramos Campia")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Empezar el recorrido" })).toBeInTheDocument();
     cleanup();
 

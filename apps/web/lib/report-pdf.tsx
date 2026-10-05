@@ -1,4 +1,4 @@
-import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
+import { Document, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 import type { FieldReport } from "@repo/core/reports/field-report.service";
 
 /** Informe del asesor para un campo (Etapa 4). Solo servidor: lo renderiza la ruta
@@ -13,6 +13,9 @@ const RED = "#B3261E";
 
 const s = StyleSheet.create({
   page: { paddingTop: 40, paddingBottom: 56, paddingHorizontal: 44, fontSize: 9.5, color: INK, fontFamily: "Helvetica" },
+  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 16 },
+  headerText: { flexShrink: 1 },
+  logo: { maxHeight: 48, maxWidth: 140, objectFit: "contain" },
   brand: { fontSize: 9, color: GREEN, fontFamily: "Helvetica-Bold", letterSpacing: 1 },
   title: { fontSize: 20, fontFamily: "Helvetica-Bold", marginTop: 6 },
   subtitle: { fontSize: 10.5, color: MUTED, marginTop: 3 },
@@ -79,16 +82,32 @@ function Kpi({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function FieldReportDocument({ report, comment, issuedOn }: { report: FieldReport; comment: string; issuedOn: string }) {
+export function FieldReportDocument({
+  report,
+  comment,
+  issuedOn,
+  logo,
+}: {
+  report: FieldReport;
+  comment: string;
+  issuedOn: string;
+  /** Logo de quien firma, como data URI (PNG o JPG). */
+  logo: string | null;
+}) {
   const { field, author, period, expenses, economy, livestock, dairy } = report;
   const signatureLine = [author.profession, author.licenseNumber].filter(Boolean).join(" · ");
 
   return (
-    <Document title={`Informe ${field.name} — ${period.label}`} author={author.fullName} creator="AgroData">
+    <Document title={`Informe ${field.name} — ${period.label}`} author={author.fullName} creator="Campia">
       <Page size="A4" style={s.page}>
-        <Text style={s.brand}>AGRODATA · INFORME DE CAMPO</Text>
-        <Text style={s.title}>{field.name}</Text>
-        <Text style={s.subtitle}>Informe de {period.label}</Text>
+        <View style={s.header}>
+          <View style={s.headerText}>
+            <Text style={s.brand}>CAMPIA · INFORME DE CAMPO</Text>
+            <Text style={s.title}>{field.name}</Text>
+            <Text style={s.subtitle}>Informe de {period.label}</Text>
+          </View>
+          {logo ? <Image src={logo} style={s.logo} /> : null}
+        </View>
 
         <View style={s.meta}>
           <Text style={s.metaItem}>
@@ -261,7 +280,7 @@ export function FieldReportDocument({ report, comment, issuedOn }: { report: Fie
         </View>
 
         <View style={s.footer} fixed>
-          <Text>Generado con AgroData a partir de los datos cargados del campo.</Text>
+          <Text>Generado con Campia a partir de los datos cargados del campo.</Text>
           <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
         </View>
       </Page>

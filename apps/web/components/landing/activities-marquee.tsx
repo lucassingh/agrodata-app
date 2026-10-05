@@ -1,11 +1,11 @@
 import { Sprout } from "lucide-react";
 import { ACTIVITIES } from "./content";
 
-/** Única franja en movimiento de la página: rubros y actividades que cubre AgroData. */
+/** Única franja en movimiento de la página: rubros y actividades que cubre Campia. */
 export function ActivitiesMarquee() {
   const items = [...ACTIVITIES, ...ACTIVITIES];
   return (
-    <section aria-label="Rubros y actividades que cubre AgroData" className="border-y border-l-line bg-l-surface py-6">
+    <section aria-label="Rubros y actividades que cubre Campia" className="border-y border-l-line bg-l-surface py-6">
       <ul className="sr-only">
         {ACTIVITIES.map((activity) => (
           <li key={activity}>{activity}</li>

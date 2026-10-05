@@ -5,7 +5,7 @@ import { HeroBanner } from "@/components/hero-banner";
 import { EconomyClient } from "./economy-client";
 
 export const metadata: Metadata = {
-  title: "Economía — AgroData",
+  title: "Economía — Campia",
 };
 
 interface EconomyPageProps {

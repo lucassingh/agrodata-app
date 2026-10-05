@@ -4,7 +4,7 @@ import { listPastures } from "@repo/core";
 import { HowStartClient } from "./how-start-client";
 
 export const metadata: Metadata = {
-  title: "Cómo empezar — AgroData",
+  title: "Cómo empezar — Campia",
 };
 
 export default async function HowStartPage() {

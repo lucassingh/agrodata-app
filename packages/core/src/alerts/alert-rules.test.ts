@@ -3,6 +3,7 @@ import {
   adpvAlerts,
   evaluateAlerts,
   expenseAlerts,
+  idleLotAlerts,
   milkAlerts,
   overdueTaskAlerts,
   sanitaryAlerts,
@@ -156,12 +157,40 @@ describe("gastos fuera de lo normal", () => {
   });
 });
 
+describe("lotes sin labores", () => {
+  const lot = (labors: { day: string; label: string }[], startDay = "2026-07-01") => ({ id: "c1", name: "Soja 26/27 en Norte", startDay, labors });
+
+  it("cuenta desde la última labor y dice cuál fue", () => {
+    const [alert] = idleLotAlerts([lot([{ day: "2026-08-10", label: "pulverización" }, { day: "2026-07-20", label: "contratista" }])], TODAY, 30);
+    expect(alert).toMatchObject({ key: "idle-lot:c1", kind: "IDLE_LOT", severity: "info", title: "Soja 26/27 en Norte: 48 días sin labores" });
+    expect(alert!.detail).toBe("La última que se cargó fue pulverización, el 10/08.");
+  });
+
+  it("sin labores, cuenta desde la siembra; con el doble de días pide atención", () => {
+    const [alert] = idleLotAlerts([lot([], "2026-07-01")], TODAY, 30);
+    expect(alert!.severity).toBe("warning");
+    expect(alert!.detail).toContain("Desde la siembra del 01/07");
+  });
+
+  it("con una labor reciente, una siembra futura o antes del umbral, no avisa", () => {
+    expect(idleLotAlerts([lot([{ day: "2026-09-10", label: "fertilización" }])], TODAY, 30)).toEqual([]);
+    expect(idleLotAlerts([lot([], "2026-10-15")], TODAY, 30)).toEqual([]);
+    expect(idleLotAlerts([lot([], "2026-09-01")], TODAY, 30)).toEqual([]);
+  });
+
+  it("no toma labores de antes de la siembra ni con fecha futura", () => {
+    const old = lot([{ day: "2026-03-01", label: "cosecha anterior" }, { day: "2026-12-01", label: "tarea a futuro" }], "2026-08-01");
+    expect(idleLotAlerts([old], TODAY, 30)[0]!.detail).toContain("Desde la siembra del 01/08");
+  });
+});
+
 describe("todo junto", () => {
   const input: FieldAlertInput = {
     today: TODAY,
     supplies: [{ id: "g", name: "Gasoil", unit: "L", quantity: 84, minStock: null, consumedLast30: 420 }],
     sanitaryTasks: [{ id: "a", name: "Aftosa", deadline: "2026-09-20", pasture: null }],
     otherTasks: [],
+    idleLots: [],
     weighingGroups: [],
     milkDays: [],
     monthlyExpenses: [],
@@ -182,5 +211,8 @@ describe("configuración", () => {
     expect(settings.enabled.STOCK).toBe(true);
     expect(settings.stockCoverageDays).toBe(21);
     expect(settings.adpvDropPct).toBe(30);
+    expect(settings.enabled.IDLE_LOT).toBe(true);
+    expect(settings.idleLotDays).toBe(30);
+    expect(resolveAlertSettings({ idleLotDays: 3 }).idleLotDays).toBe(30);
   });
 });

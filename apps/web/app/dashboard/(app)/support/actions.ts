@@ -38,7 +38,7 @@ export async function updateDemoRequestStatusAction(
 
 type ActionResult = { success: true } | { success: false; error: string };
 
-/** Todo lo de planes de otras personas es solo para el equipo de AgroData. */
+/** Todo lo de planes de otras personas es solo para el equipo de Campia. */
 async function asStaff(run: () => Promise<void>): Promise<ActionResult> {
   const user = await requireUser();
   try {

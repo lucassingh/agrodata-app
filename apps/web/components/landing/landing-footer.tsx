@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ACCESS_CTA_LABEL, FOOTER } from "./content";
+import { CampiaLogo } from "@/components/brand/campia-logo";
 import { Container } from "./primitives";
 
 export function LandingFooter({ openSignup }: { openSignup: boolean }) {
@@ -18,7 +18,7 @@ export function LandingFooter({ openSignup }: { openSignup: boolean }) {
       <Container>
         <div className="grid gap-12 md:grid-cols-12">
           <div className="md:col-span-5">
-            <Image src="/brand/logo.png" alt="AgroData" width={635} height={121} className="h-auto w-[148px]" />
+            <CampiaLogo className="text-l-brand text-[26px]" />
             <p className="mt-5 max-w-[30ch] text-lg leading-relaxed text-l-ink-soft">{FOOTER.tagline}</p>
           </div>
           <nav aria-label="Pie de página" className="grid grid-cols-2 gap-8 md:col-span-7 md:grid-cols-3">
@@ -46,11 +46,11 @@ export function LandingFooter({ openSignup }: { openSignup: boolean }) {
           aria-hidden
           className="mt-20 font-heading text-[clamp(4.5rem,19vw,17rem)] leading-[0.8] font-bold tracking-[-0.04em] text-l-brand-tint select-none"
         >
-          AgroData
+          campIA
         </p>
 
         <div className="mt-8 flex flex-col gap-2 border-t border-l-line pt-6 text-sm text-l-ink-soft sm:flex-row sm:justify-between">
-          <p>© 2026 AgroData</p>
+          <p>© 2026 Campia</p>
           <p>Hecho en Argentina</p>
         </div>
       </Container>

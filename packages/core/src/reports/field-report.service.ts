@@ -1,7 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import { prisma } from "@repo/database";
-import { forbidden } from "../errors";
+import { badRequest, forbidden } from "../errors";
 import { FIELD_ROLE_LABEL, isPlatformStaff, isWebRole, type FieldRole } from "../auth/field-roles";
 import { getEconomyOverview } from "../economy/economy.service";
 import { getDairyOverview } from "../livestock/dairy.service";
@@ -10,6 +10,7 @@ import { LOW_STOCK_THRESHOLD } from "../supplies/stock-math";
 import { activitiesLabel, visibleModules } from "../tenants/tenant-labels";
 import { dateOnlyRangeFilter, dateRangeFilter } from "./date-range";
 import type { ReportPeriod } from "./report-period";
+import { detectLogoType, logoProblem } from "./report-logo";
 
 export const signatureSchema = z.object({
   profession: z.string().trim().max(80, "Hasta 80 caracteres"),
@@ -28,9 +29,32 @@ export async function updateSignature(userId: string, input: SignatureInput) {
 export async function getSignature(userId: string) {
   const user = await prisma.user.findUniqueOrThrow({
     where: { id: userId },
-    select: { name: true, lastname: true, profession: true, licenseNumber: true },
+    select: { name: true, lastname: true, profession: true, licenseNumber: true, reportLogo: { select: { updatedAt: true } } },
   });
-  return { fullName: `${user.name} ${user.lastname}`.trim(), profession: user.profession, licenseNumber: user.licenseNumber };
+  return {
+    fullName: `${user.name} ${user.lastname}`.trim(),
+    profession: user.profession,
+    licenseNumber: user.licenseNumber,
+    /** Cambia cada vez que se sube un logo (para no ver uno viejo en caché). Null: sin logo. */
+    logoVersion: user.reportLogo ? String(user.reportLogo.updatedAt.getTime()) : null,
+  };
+}
+
+/** Guarda o reemplaza el logo de los informes. */
+export async function saveReportLogo(userId: string, bytes: Uint8Array) {
+  const problem = logoProblem(bytes);
+  if (problem) badRequest(problem);
+  const mimeType = detectLogoType(bytes)!;
+  const data = Buffer.from(bytes);
+  await prisma.userReportLogo.upsert({ where: { userId }, create: { userId, data, mimeType }, update: { data, mimeType } });
+}
+
+export async function removeReportLogo(userId: string) {
+  await prisma.userReportLogo.deleteMany({ where: { userId } });
+}
+
+export async function getReportLogo(userId: string) {
+  return prisma.userReportLogo.findUnique({ where: { userId }, select: { data: true, mimeType: true } });
 }
 
 /** Todo lo que lleva el informe de un campo para un período, según sus

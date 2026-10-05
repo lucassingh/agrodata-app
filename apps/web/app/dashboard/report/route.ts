@@ -1,7 +1,7 @@
 import { renderToBuffer, type DocumentProps } from "@react-pdf/renderer";
 import { createElement, type ReactElement } from "react";
 import { z } from "zod";
-import { AppError, getFieldReport, reportPeriod } from "@repo/core";
+import { AppError, getFieldReport, getReportLogo, logoDataUri, reportPeriod } from "@repo/core";
 import { requireUser } from "@/lib/session";
 import { FieldReportDocument } from "@/lib/report-pdf";
 
@@ -37,10 +37,18 @@ export async function POST(request: Request) {
   if (!period) return Response.json({ error: "Elegí un período que no sea futuro." }, { status: 400 });
 
   try {
-    const report = await getFieldReport({ userId: user.id, email: user.email ?? null }, parsed.data.tenantId, period);
+    const [report, logo] = await Promise.all([
+      getFieldReport({ userId: user.id, email: user.email ?? null }, parsed.data.tenantId, period),
+      getReportLogo(user.id),
+    ]);
     const pdf = await renderToBuffer(
       // El componente devuelve un <Document>; el tipo de createElement no lo sabe.
-      createElement(FieldReportDocument, { report, comment: parsed.data.comment, issuedOn: today }) as ReactElement<DocumentProps>,
+      createElement(FieldReportDocument, {
+        report,
+        comment: parsed.data.comment,
+        issuedOn: today,
+        logo: logo ? logoDataUri(logo.data, logo.mimeType) : null,
+      }) as ReactElement<DocumentProps>,
     );
     const filename = `informe-${slug(report.field.name)}-${slug(period.label)}.pdf`;
     return new Response(new Uint8Array(pdf), {

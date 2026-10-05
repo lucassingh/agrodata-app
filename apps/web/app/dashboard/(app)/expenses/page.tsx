@@ -6,7 +6,7 @@ import { HeroBanner } from "@/components/hero-banner";
 import { ExpensesClient } from "./expenses-client";
 
 export const metadata: Metadata = {
-  title: "Gastos — AgroData",
+  title: "Gastos — Campia",
 };
 
 interface ExpensesPageProps {

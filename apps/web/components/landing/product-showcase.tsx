@@ -95,7 +95,7 @@ export function ProductShowcase() {
               <span className="size-2.5 rounded-full bg-l-line" aria-hidden />
               <span className="size-2.5 rounded-full bg-l-line" aria-hidden />
               <span className="size-2.5 rounded-full bg-l-line" aria-hidden />
-              <span className="ml-3 truncate text-[13px] text-l-ink-soft">AgroData · {active.label}</span>
+              <span className="ml-3 truncate text-[13px] text-l-ink-soft">Campia · {active.label}</span>
               <span aria-hidden className="ml-auto hidden truncate text-[13px] text-l-ink-soft md:block">{active.caption}</span>
             </div>
 
@@ -116,7 +116,7 @@ export function ProductShowcase() {
                 >
                   <Image
                     src={`/landing/dashboard/${active.id}.webp`}
-                    alt={`Pantalla ${active.label} de AgroData: ${active.caption}`}
+                    alt={`Pantalla ${active.label} de Campia: ${active.caption}`}
                     fill
                     sizes="(min-width: 1320px) 1240px, 100vw"
                     className="object-cover object-top"

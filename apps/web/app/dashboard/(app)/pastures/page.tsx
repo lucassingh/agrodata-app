@@ -5,7 +5,7 @@ import { HeroBanner } from "@/components/hero-banner";
 import { PasturesClient } from "./pastures-client";
 
 export const metadata: Metadata = {
-  title: "Potreros — AgroData",
+  title: "Potreros — Campia",
 };
 
 interface PasturesPageProps {

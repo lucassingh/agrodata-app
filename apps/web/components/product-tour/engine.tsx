@@ -9,7 +9,7 @@ import { tourIdForPath } from "./tour-ids";
 import { tourStorage } from "./tour-storage";
 import type { TourStartActions } from "./types";
 
-/** La única instancia del motor en AgroData. */
+/** La única instancia del motor en Campia. */
 const tourEngine = createTourEngine<TourContext>({ registry: tourRegistry, storage: tourStorage, dropMissingTargets: true });
 
 /** Hace clic en un elemento del tour: para mostrar una pestaña antes de su paso. */

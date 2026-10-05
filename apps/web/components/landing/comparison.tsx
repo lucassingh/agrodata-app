@@ -2,7 +2,7 @@ import { Check, Minus } from "lucide-react";
 import { COMPARISON } from "./content";
 import { Container, SectionTitle } from "./primitives";
 
-/** AgroData contra una app de registro por WhatsApp, sin nombrar a nadie. */
+/** Campia contra una app de registro por WhatsApp, sin nombrar a nadie. */
 export function Comparison() {
   return (
     <section id="comparativa" aria-labelledby="comparativa-title" className="scroll-mt-20 bg-l-surface py-28 lg:py-36">
