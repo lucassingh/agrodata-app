@@ -1,8 +1,8 @@
 import type { NextAuthConfig } from "next-auth";
 
 /**
- * Config compartida entre el runtime completo de Node (auth.ts) y el middleware
- * (edge runtime, no puede importar Prisma). Ver:
+ * Config compartida entre `auth.ts` (con Prisma) y `proxy.ts`, que protege el
+ * dashboard sin cargar Prisma. Ver:
  * https://authjs.dev/guides/edge-compatibility
  */
 export const authConfig = {
