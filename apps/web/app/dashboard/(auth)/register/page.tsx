@@ -13,7 +13,7 @@ import { signupMode } from "@/lib/signup-mode";
 import { RegisterForm } from "./register-form";
 
 export const metadata: Metadata = {
-  title: "Crear cuenta — Campia",
+  title: "Crear cuenta — campIA",
 };
 
 interface RegisterPageProps {

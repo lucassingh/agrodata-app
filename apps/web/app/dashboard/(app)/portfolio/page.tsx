@@ -5,7 +5,7 @@ import { HeroBanner } from "@/components/hero-banner";
 import { PortfolioClient } from "./portfolio-client";
 
 export const metadata: Metadata = {
-  title: "Cartera — Campia",
+  title: "Cartera — campIA",
 };
 
 export default async function PortfolioPage() {

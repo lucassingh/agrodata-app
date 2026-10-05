@@ -5,7 +5,7 @@ import { HeroBanner } from "@/components/hero-banner";
 import { DairyClient } from "./dairy-client";
 
 export const metadata: Metadata = {
-  title: "Tambo — Campia",
+  title: "Tambo — campIA",
 };
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/;

@@ -21,14 +21,17 @@ import { Profiles } from "@/components/landing/profiles";
 import { signupMode } from "@/lib/signup-mode";
 
 export const metadata: Metadata = {
-  title: "Campia | Todo tu campo, ordenado desde WhatsApp",
+  title: "campIA | Todo tu campo, ordenado desde WhatsApp",
   description:
-    "Un mensaje, un audio o la foto de una factura. Campia lo convierte en datos listos para consultar y exportar. Para agrónomos, veterinarios y productores.",
+    "Un mensaje, un audio o la foto de una factura. campIA lo convierte en datos listos para consultar y exportar. Para agrónomos, veterinarios y productores.",
+  alternates: { canonical: "/" },
   openGraph: {
-    title: "Campia | Todo tu campo, ordenado desde WhatsApp",
+    url: "/",
+    siteName: "campIA",
+    title: "campIA | Todo tu campo, ordenado desde WhatsApp",
     description:
       "Cargá siembra, animales, gastos y facturas desde WhatsApp. Consultá y exportá cuando lo necesites.",
-    images: [{ url: "/landing/og-image.jpg", width: 1200, height: 630, alt: "Campia: todo lo que pasa en tu campo, ordenado desde WhatsApp" }],
+    images: [{ url: "/landing/og-image.jpg", width: 1200, height: 630, alt: "campIA: todo lo que pasa en tu campo, ordenado desde WhatsApp" }],
     locale: "es_AR",
     type: "website",
   },
