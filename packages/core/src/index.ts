@@ -91,3 +91,4 @@ export * from "./access/access-invites.service";
 export * from "./billing/checkout";
 export * from "./billing/webhook-signature";
 export * from "./billing/payments.service";
+export * from "./reports/report-logo";

@@ -137,6 +137,51 @@ export function overdueTaskAlerts(tasks: PendingTaskInput[], today: string): Fie
     }));
 }
 
+// ── Lotes sin labores ──────────────────────────────────────
+
+export interface LotLabor {
+  /** YYYY-MM-DD */
+  day: string;
+  /** «pulverización», «aplicación de glifosato», «contratista»… */
+  label: string;
+}
+
+export interface IdleLotInput {
+  /** Id de la campaña en curso. */
+  id: string;
+  /** «Soja 26/27 en Norte» */
+  name: string;
+  /** Siembra (o alta de la campaña): el punto de partida si no hubo nada después. */
+  startDay: string;
+  /** Tareas completadas en el lote, consumos de stock aplicados ahí y gastos asignados a la campaña. */
+  labors: LotLabor[];
+}
+
+/** Un lote con cultivo en curso donde no se cargó nada en `idleDays` días o más:
+ *  para mirar; con el doble, requiere atención. No cuenta lo que es futuro. */
+export function idleLotAlerts(lots: IdleLotInput[], today: string, idleDays: number): FieldAlert[] {
+  const alerts: FieldAlert[] = [];
+  for (const lot of lots) {
+    if (lot.startDay > today) continue;
+    const last = lot.labors
+      .filter((l) => l.day >= lot.startDay && l.day <= today)
+      .reduce<LotLabor | null>((latest, l) => (latest === null || l.day > latest.day ? l : latest), null);
+    const since = last?.day ?? lot.startDay;
+    const days = daysBetween(since, today);
+    if (days < idleDays) continue;
+    alerts.push({
+      key: `idle-lot:${lot.id}`,
+      kind: "IDLE_LOT",
+      severity: days >= idleDays * 2 ? "warning" : "info",
+      title: `${lot.name}: ${days} días sin labores`,
+      detail: last
+        ? `La última que se cargó fue ${last.label}, el ${shortDay(last.day)}.`
+        : `Desde la siembra del ${shortDay(lot.startDay)} no se cargó ninguna labor, aplicación ni gasto del lote.`,
+    });
+  }
+  return alerts;
+}
+
 // ── Aumento de peso ────────────────────────────────────────
 
 export interface WeighingGroupInput {
@@ -269,6 +314,7 @@ export interface FieldAlertInput {
   supplies: StockInput[];
   sanitaryTasks: PendingTaskInput[];
   otherTasks: PendingTaskInput[];
+  idleLots: IdleLotInput[];
   weighingGroups: WeighingGroupInput[];
   milkDays: MilkDay[];
   monthlyExpenses: MonthlyExpenseInput[];
@@ -281,6 +327,7 @@ export function evaluateAlerts(input: FieldAlertInput, settings: AlertSettings):
     ...(on.STOCK ? stockAlerts(input.supplies, settings.stockCoverageDays) : []),
     ...(on.SANITARY ? sanitaryAlerts(input.sanitaryTasks, input.today, settings.sanitaryLeadDays) : []),
     ...(on.TASKS ? overdueTaskAlerts(input.otherTasks, input.today) : []),
+    ...(on.IDLE_LOT ? idleLotAlerts(input.idleLots, input.today, settings.idleLotDays) : []),
     ...(on.ADPV ? adpvAlerts(input.weighingGroups, input.today, settings.adpvDropPct) : []),
     ...(on.MILK ? milkAlerts(input.milkDays, input.today, settings.milkDropPct) : []),
     ...(on.EXPENSES ? expenseAlerts(input.monthlyExpenses, input.today.slice(0, 7), settings.expenseFactor) : []),

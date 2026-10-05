@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { FileText } from "lucide-react";
+import { FileText, ImageUp, Trash2 } from "lucide-react";
 import { seasonOf } from "@repo/core/economy/economy-math";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,12 +25,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { saveSignatureAction } from "@/app/dashboard/(app)/_lib/report-actions";
+import { removeReportLogoAction, saveSignatureAction, uploadReportLogoAction } from "@/app/dashboard/(app)/_lib/report-actions";
 
 export interface ReportSignature {
   fullName: string;
   profession: string | null;
   licenseNumber: string | null;
+  /** Cambia con cada logo subido; null si no tiene. */
+  logoVersion: string | null;
 }
 
 const argentinaDay = () =>
@@ -69,6 +71,32 @@ export function ReportButton({
   const [licenseNumber, setLicenseNumber] = useState(signature.licenseNumber ?? "");
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
+  const [logoVersion, setLogoVersion] = useState(signature.logoVersion);
+  const [logoPending, startLogo] = useTransition();
+  const fileInput = useRef<HTMLInputElement>(null);
+
+  const uploadLogo = (file: File) =>
+    startLogo(async () => {
+      const data = new FormData();
+      data.set("logo", file);
+      const result = await uploadReportLogoAction(data);
+      if (fileInput.current) fileInput.current.value = "";
+      if (!result.success) {
+        toast.error(result.error);
+        return;
+      }
+      setLogoVersion(String(Date.now()));
+      toast.success("Logo guardado: va en tus próximos informes.");
+      router.refresh();
+    });
+
+  const removeLogo = () =>
+    startLogo(async () => {
+      await removeReportLogoAction();
+      setLogoVersion(null);
+      toast.success("Logo quitado.");
+      router.refresh();
+    });
 
   const generate = () => {
     setError(null);
@@ -112,6 +140,7 @@ export function ReportButton({
   const openDialog = () => {
     setProfession(signature.profession ?? "");
     setLicenseNumber(signature.licenseNumber ?? "");
+    setLogoVersion(signature.logoVersion);
     setError(null);
     setOpen(true);
   };
@@ -211,7 +240,40 @@ export function ReportButton({
                   />
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground">Se guardan para tus próximos informes.</p>
+              <div className="flex flex-wrap items-center gap-3 pt-1">
+                {logoVersion ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- imagen chica de la sesión, sin optimizar
+                  <img
+                    src={`/dashboard/report/logo?v=${logoVersion}`}
+                    alt="Tu logo para los informes"
+                    className="h-10 max-w-32 rounded border border-border bg-white object-contain p-1"
+                  />
+                ) : null}
+                <input
+                  ref={fileInput}
+                  id="report-logo"
+                  type="file"
+                  accept="image/png,image/jpeg"
+                  className="sr-only"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) uploadLogo(file);
+                  }}
+                />
+                <Button type="button" variant="outline" size="sm" disabled={logoPending} onClick={() => fileInput.current?.click()}>
+                  <ImageUp size={14} aria-hidden />
+                  {logoPending ? "Guardando…" : logoVersion ? "Cambiar logo" : "Subir tu logo"}
+                </Button>
+                {logoVersion ? (
+                  <Button type="button" variant="ghost" size="sm" disabled={logoPending} onClick={removeLogo}>
+                    <Trash2 size={14} aria-hidden />
+                    Quitar
+                  </Button>
+                ) : null}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Se guardan para tus próximos informes. El logo va arriba a la derecha del PDF: PNG o JPG, hasta 500 KB.
+              </p>
             </fieldset>
 
             {error ? (

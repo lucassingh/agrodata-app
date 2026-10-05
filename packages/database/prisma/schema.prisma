@@ -179,6 +179,7 @@ model User {
   alertDeliveries       AlertDelivery[]
   subscription          Subscription?
   payments              Payment[]
+  reportLogo            UserReportLogo?
   toursSeen             TourSeen[]
 
   @@map("users")
@@ -1072,4 +1073,19 @@ model Payment {
 
   @@index([userId])
   @@map("payments")
+}
+
+// ─── Logo del asesor en el informe PDF ──────────────────────
+
+/// El logo que va arriba a la derecha de los informes PDF de quien los firma. Tabla
+/// aparte para que las consultas del usuario no carguen la imagen. PNG o JPG chico.
+model UserReportLogo {
+  userId    String   @id
+  data      Bytes
+  mimeType  String
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_report_logos")
 }
