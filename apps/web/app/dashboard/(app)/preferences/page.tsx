@@ -13,7 +13,7 @@ import { HeroBanner } from "@/components/hero-banner";
 import { PreferencesTabs } from "./preferences-tabs";
 
 export const metadata: Metadata = {
-  title: "Preferencias — Campia",
+  title: "Preferencias — campIA",
 };
 
 interface PreferencesPageProps {

@@ -10,7 +10,7 @@ import {
 import { VerifyForm } from "./verify-form";
 
 export const metadata: Metadata = {
-  title: "Verificar código — Campia",
+  title: "Verificar código — campIA",
 };
 
 interface VerifyPageProps {

@@ -8,7 +8,7 @@ el mismo PR que lo cambia.
 
 | Entorno | Rama de git | URL | Base (Neon) |
 |---|---|---|---|
-| **Producción** | `main` | https://agrodata-app-web.vercel.app | rama `production` |
+| **Producción** | `main` | https://campia.app (antes https://agrodata-app-web.vercel.app) | rama `production` |
 | **Prueba** | `develop` | https://agrodata-app-web-git-develop-lucas-singhs-projects.vercel.app (pide cuenta de Vercel) | rama `develop` |
 | **Local** | cualquiera | http://localhost:3000 (`pnpm dev`) | rama `develop` |
 
@@ -79,7 +79,7 @@ producción no le llega nada.
 3. Vercel deploya `main`: migraciones en la base de producción y después el build. Si el deploy
    falla, producción sigue con el anterior: revisá los Build Logs en Vercel.
 4. Si cambiaron las funciones de Inngest (nuevas, renombradas o con otro trigger), resincronizá:
-   `curl -X PUT https://agrodata-app-web.vercel.app/api/inngest` y verificá en Inngest Cloud
+   `curl -X PUT https://campia.app/api/inngest` y verificá en Inngest Cloud
    (Apps → agrodata-app) que estén todas.
 5. Mirá producción y listo. `develop` no se borra nunca.
 

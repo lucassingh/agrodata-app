@@ -25,7 +25,7 @@ import { DemoStatusSelect } from "./demo-status-select";
 import { SubscriptionDialog } from "./subscription-dialog";
 
 export const metadata: Metadata = {
-  title: "Soporte — Campia",
+  title: "Soporte — campIA",
 };
 
 const TABS = [

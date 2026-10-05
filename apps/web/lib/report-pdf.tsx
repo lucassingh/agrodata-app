@@ -98,7 +98,7 @@ export function FieldReportDocument({
   const signatureLine = [author.profession, author.licenseNumber].filter(Boolean).join(" · ");
 
   return (
-    <Document title={`Informe ${field.name} — ${period.label}`} author={author.fullName} creator="Campia">
+    <Document title={`Informe ${field.name} — ${period.label}`} author={author.fullName} creator="campIA">
       <Page size="A4" style={s.page}>
         <View style={s.header}>
           <View style={s.headerText}>
