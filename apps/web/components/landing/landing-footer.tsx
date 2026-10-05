@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ACCESS_CTA_LABEL, FOOTER } from "./content";
+import { ACCESS_CTA_LABEL, FOOTER, SUPPORT_EMAIL } from "./content";
 import { CampiaLogo } from "@/components/brand/campia-logo";
 import { Container } from "./primitives";
 
@@ -20,6 +20,12 @@ export function LandingFooter({ openSignup }: { openSignup: boolean }) {
           <div className="md:col-span-5">
             <CampiaLogo className="text-l-brand text-[26px]" />
             <p className="mt-5 max-w-[30ch] text-lg leading-relaxed text-l-ink-soft">{FOOTER.tagline}</p>
+            <a
+              href={`mailto:${SUPPORT_EMAIL}`}
+              className="mt-4 inline-block rounded-sm text-l-ink-soft underline-offset-4 transition-colors duration-200 outline-none hover:text-l-ink hover:underline focus-visible:ring-3 focus-visible:ring-l-brand-light/60"
+            >
+              {SUPPORT_EMAIL}
+            </a>
           </div>
           <nav aria-label="Pie de página" className="grid grid-cols-2 gap-8 md:col-span-7 md:grid-cols-3">
             {columns.map((column) => (
