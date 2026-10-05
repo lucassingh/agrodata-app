@@ -30,6 +30,7 @@ type NumberKey = Exclude<keyof AlertSettings, "enabled">;
 const THRESHOLD: Partial<Record<AlertKind, { key: NumberKey; before: string; after: string; step: string }>> = {
   STOCK: { key: "stockCoverageDays", before: "Avisar cuando alcance para menos de", after: "días", step: "1" },
   SANITARY: { key: "sanitaryLeadDays", before: "Avisar", after: "días antes del vencimiento", step: "1" },
+  IDLE_LOT: { key: "idleLotDays", before: "Avisar después de", after: "días sin labores", step: "1" },
   ADPV: { key: "adpvDropPct", before: "Avisar si el aumento diario cae", after: "% o más", step: "1" },
   MILK: { key: "milkDropPct", before: "Avisar si los litros por vaca caen", after: "% o más", step: "1" },
   EXPENSES: { key: "expenseFactor", before: "Avisar cuando gaste más de", after: "veces su promedio", step: "0.1" },
@@ -40,6 +41,7 @@ export function AlertsTab({ settings, canConfigure, whatsappAlerts, hasWhatsapp 
   const [values, setValues] = useState<Record<NumberKey, string>>({
     stockCoverageDays: String(settings.stockCoverageDays),
     sanitaryLeadDays: String(settings.sanitaryLeadDays),
+    idleLotDays: String(settings.idleLotDays),
     adpvDropPct: String(settings.adpvDropPct),
     milkDropPct: String(settings.milkDropPct),
     expenseFactor: String(settings.expenseFactor),
@@ -54,6 +56,7 @@ export function AlertsTab({ settings, canConfigure, whatsappAlerts, hasWhatsapp 
         enabled,
         stockCoverageDays: Number(values.stockCoverageDays),
         sanitaryLeadDays: Number(values.sanitaryLeadDays),
+        idleLotDays: Number(values.idleLotDays),
         adpvDropPct: Number(values.adpvDropPct),
         milkDropPct: Number(values.milkDropPct),
         expenseFactor: Number(values.expenseFactor),
@@ -71,6 +74,7 @@ export function AlertsTab({ settings, canConfigure, whatsappAlerts, hasWhatsapp 
     setValues({
       stockCoverageDays: String(DEFAULT_ALERT_SETTINGS.stockCoverageDays),
       sanitaryLeadDays: String(DEFAULT_ALERT_SETTINGS.sanitaryLeadDays),
+      idleLotDays: String(DEFAULT_ALERT_SETTINGS.idleLotDays),
       adpvDropPct: String(DEFAULT_ALERT_SETTINGS.adpvDropPct),
       milkDropPct: String(DEFAULT_ALERT_SETTINGS.milkDropPct),
       expenseFactor: String(DEFAULT_ALERT_SETTINGS.expenseFactor),

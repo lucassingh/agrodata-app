@@ -5,13 +5,14 @@
 
 import { z } from "zod";
 
-export const ALERT_KINDS = ["STOCK", "SANITARY", "TASKS", "ADPV", "MILK", "EXPENSES"] as const;
+export const ALERT_KINDS = ["STOCK", "SANITARY", "TASKS", "IDLE_LOT", "ADPV", "MILK", "EXPENSES"] as const;
 export type AlertKind = (typeof ALERT_KINDS)[number];
 
 export const ALERT_KIND_LABEL: Record<AlertKind, string> = {
   STOCK: "Stock que se acaba",
   SANITARY: "Sanidad por vencer o vencida",
   TASKS: "Tareas vencidas",
+  IDLE_LOT: "Lote sin labores",
   ADPV: "Aumento de peso en caída",
   MILK: "Litros por vaca en caída",
   EXPENSES: "Gasto fuera de lo normal",
@@ -21,6 +22,7 @@ export const ALERT_KIND_HINT: Record<AlertKind, string> = {
   STOCK: "Cuando un insumo alcanza para pocos días al ritmo de consumo del último mes, o queda debajo de su mínimo.",
   SANITARY: "Tratamientos pendientes que vencen pronto o ya vencieron.",
   TASKS: "Siembras, pulverizaciones y fertilizaciones pendientes con la fecha pasada.",
+  IDLE_LOT: "Un lote con cultivo en curso donde no se cargó ninguna labor, aplicación ni gasto en esa cantidad de días.",
   ADPV: "Un grupo que engorda bastante menos que en la pesada anterior, o que pierde peso. Necesita 3 pesadas.",
   MILK: "Los litros por vaca de la última semana contra la anterior. Necesita 5 días cargados en cada una.",
   EXPENSES: "Una categoría que gasta mucho más que su promedio de los 3 meses anteriores. Solo categorías con gastos todos los meses.",
@@ -34,6 +36,8 @@ export const alertSettingsSchema = z.object({
   stockCoverageDays: z.number().int().min(1).max(120),
   /** Días de anticipación para avisar un tratamiento sanitario. */
   sanitaryLeadDays: z.number().int().min(0).max(60),
+  /** Días sin labores en un lote con cultivo en curso. */
+  idleLotDays: z.number().int().min(7).max(120),
   /** Caída del aumento diario, en porcentaje, contra la pesada anterior. */
   adpvDropPct: z.number().min(5).max(90),
   /** Caída de los litros por vaca por día, en porcentaje, semana contra semana. */
@@ -44,9 +48,10 @@ export const alertSettingsSchema = z.object({
 export type AlertSettings = z.infer<typeof alertSettingsSchema>;
 
 export const DEFAULT_ALERT_SETTINGS: AlertSettings = {
-  enabled: { STOCK: true, SANITARY: true, TASKS: true, ADPV: true, MILK: true, EXPENSES: true },
+  enabled: { STOCK: true, SANITARY: true, TASKS: true, IDLE_LOT: true, ADPV: true, MILK: true, EXPENSES: true },
   stockCoverageDays: 14,
   sanitaryLeadDays: 7,
+  idleLotDays: 30,
   adpvDropPct: 30,
   milkDropPct: 10,
   expenseFactor: 1.5,
@@ -68,6 +73,7 @@ export function resolveAlertSettings(stored: unknown): AlertSettings {
     enabled,
     stockCoverageDays: pick("stockCoverageDays"),
     sanitaryLeadDays: pick("sanitaryLeadDays"),
+    idleLotDays: pick("idleLotDays"),
     adpvDropPct: pick("adpvDropPct"),
     milkDropPct: pick("milkDropPct"),
     expenseFactor: pick("expenseFactor"),
