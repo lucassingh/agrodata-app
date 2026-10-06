@@ -1,4 +1,3 @@
-import { signOut } from "@/auth";
 import { requireUser } from "@/lib/session";
 import { findUserTenants, getShellPlanInfo, listSeenTours } from "@repo/core";
 import { AppShell } from "@/components/app-shell";
@@ -24,11 +23,6 @@ export default async function DashboardShellLayout({
     listSeenTours(user.id),
   ]);
 
-  async function signOutAction() {
-    "use server";
-    await signOut({ redirectTo: "/dashboard/sign-in" });
-  }
-
   return (
     <SidebarProvider>
       <AppShell
@@ -51,7 +45,6 @@ export default async function DashboardShellLayout({
             activities: m.tenant.activities,
           },
         }))}
-        signOutAction={signOutAction}
         environmentLabel={environmentLabel()}
         readOnly={planInfo.readOnly}
         trialDaysLeft={planInfo.trialDaysLeft}

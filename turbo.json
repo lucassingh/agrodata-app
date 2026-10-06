@@ -10,8 +10,9 @@
       "env": [
         "DATABASE_URL",
         "DIRECT_URL",
-        "AUTH_SECRET",
-        "AUTH_URL",
+        "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
+        "CLERK_SECRET_KEY",
+        "VERCEL_PROJECT_PRODUCTION_URL",
         "WHATSAPP_ACCESS_TOKEN",
         "WHATSAPP_PHONE_NUMBER_ID",
         "WHATSAPP_BUSINESS_ACCOUNT_ID",

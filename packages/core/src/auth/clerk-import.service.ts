@@ -1,15 +1,8 @@
 import "server-only";
-import { createClerkClient } from "@clerk/backend";
 import { isClerkAPIResponseError } from "@clerk/backend/errors";
 import { prisma } from "@repo/database";
+import { clerkApi, verifiedEmailsOf } from "./clerk-api";
 import { canLinkClerkAccount, clerkNewUser } from "./clerk-import";
-
-/** Cliente de la API de Clerk. Se crea al usarlo: el build no necesita la clave. */
-function clerkApi() {
-  const secretKey = process.env.CLERK_SECRET_KEY;
-  if (!secretKey) throw new Error("Falta CLERK_SECRET_KEY: no se puede hablar con Clerk.");
-  return createClerkClient({ secretKey });
-}
 
 /** Quienes tienen cuenta web (tienen email) y todavía no están en Clerk, de la más vieja a la más nueva. */
 export async function usersPendingClerkImport(): Promise<string[]> {
@@ -26,6 +19,14 @@ export type ClerkImportResult = {
   detail?: string;
 };
 
+/** El `external_id` de una cuenta de Clerk solo cuenta si todavía es alguien de la base: al volver a
+ *  cargar la cuenta demo (`db:seed:demo`) las personas cambian de id y el viejo queda colgado. */
+export async function liveExternalId(externalId: string | null): Promise<string | null> {
+  if (!externalId) return null;
+  const owner = await prisma.user.findUnique({ where: { id: externalId }, select: { id: true } });
+  return owner ? externalId : null;
+}
+
 /** Pasa a una persona a Clerk y guarda su `clerkId`. Se puede repetir sin duplicar: si ya está en
  *  Clerk (el email es único allá), la vincula en vez de crearla. */
 export async function importUserToClerk(userId: string): Promise<ClerkImportResult> {
@@ -41,10 +42,8 @@ export async function importUserToClerk(userId: string): Promise<ClerkImportResu
   const { data: existing } = await clerk.users.getUserList({ emailAddress: [user.email], limit: 1 });
   const account = existing[0];
   if (account) {
-    const verifiedEmails = account.emailAddresses
-      .filter((address) => address.verification?.status === "verified")
-      .map((address) => address.emailAddress);
-    if (!canLinkClerkAccount({ id: user.id, email: user.email }, { externalId: account.externalId, verifiedEmails })) {
+    const externalId = await liveExternalId(account.externalId);
+    if (!canLinkClerkAccount({ id: user.id, email: user.email }, { externalId, verifiedEmails: verifiedEmailsOf(account) })) {
       return { outcome: "skipped", detail: "hay una cuenta de Clerk con ese email que no se puede vincular" };
     }
     if (account.externalId !== user.id) await clerk.users.updateUser(account.id, { externalId: user.id });

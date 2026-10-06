@@ -12,16 +12,15 @@ export const wNumberSchema = z
   .string()
   .regex(/^\+54\d{10}$/, "Formato: +54 seguido de 10 dígitos");
 
-export const registerSchema = z.object({
+/** Lo que completa quien entra por primera vez. El email y la contraseña los maneja Clerk. */
+export const onboardingSchema = z.object({
   name: z.string().trim().min(1, "Ingresá tu nombre").max(60),
   lastname: z.string().trim().min(1, "Ingresá tu apellido").max(60),
-  email: z.string().trim().toLowerCase().email("Email inválido"),
   wNumber: wNumberSchema,
-  password: z.string().min(8, "Mínimo 8 caracteres").max(64),
-  confirmPassword: z.string().min(8).max(64),
-  invitationCode: z.string().optional(),
-  acceptTerms: z.boolean(),
   profileType: profileTypeSchema.optional(),
+  acceptTerms: z.literal(true, {
+    errorMap: () => ({ message: "Tenés que aceptar los términos y la política de privacidad" }),
+  }),
 });
 
-export type RegisterInput = z.infer<typeof registerSchema>;
+export type OnboardingInput = z.infer<typeof onboardingSchema>;

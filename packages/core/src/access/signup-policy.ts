@@ -14,9 +14,9 @@ export function resolveSignupMode(env: { SIGNUP_MODE?: string; VERCEL_ENV?: stri
 }
 
 export const INVITE_REQUIRED_MESSAGE =
-  "Estamos en acceso anticipado: para crear una cuenta necesitás una invitación de AgroData o de tu equipo. Pedí acceso en la página de AgroData y te damos de alta.";
+  "Estamos en acceso anticipado: para usar Campia necesitás una invitación de Campia o de tu equipo, con este mismo email o WhatsApp. Pedí acceso en la página de Campia y te damos de alta.";
 
-/** Con invitación alcanza con una de las dos: la de AgroData (el link) o la de un equipo (por email o WhatsApp). */
+/** Con invitación alcanza con una de las dos: la de Campia (el link) o la de un equipo (por email o WhatsApp). */
 export function canRegister(input: { mode: SignupMode; hasAccessInvite: boolean; hasTeamInvite: boolean }): boolean {
   return input.mode === "open" || input.hasAccessInvite || input.hasTeamInvite;
 }
@@ -26,28 +26,28 @@ export const ACCESS_INVITE_DAYS = 30;
 
 const greetingFor = (name: string | null) => (name?.trim() ? `Hola ${name.trim().split(/\s+/)[0]}` : "Hola");
 
-/** Mail con el link de acceso. */
-export function accessInviteEmail(input: { name: string | null; link: string; code: string }): { subject: string; text: string } {
+/** Mail con el link de acceso (una invitación de Clerk: con ella se crea la cuenta aunque el
+ *  registro esté cerrado). */
+export function accessInviteEmail(input: { name: string | null; link: string }): { subject: string; text: string } {
   const greeting = `${greetingFor(input.name)}:`;
   return {
-    subject: "Tu acceso a AgroData",
+    subject: "Tu acceso a Campia",
     text: [
       greeting,
       "",
-      "Ya podés crear tu cuenta en AgroData. Arrancás con 14 días gratis de todo el plan Asesor, sin tarjeta.",
+      "Ya podés crear tu cuenta en Campia. Arrancás con 14 días gratis de todo el plan Asesor, sin tarjeta.",
       "",
       `Creá tu cuenta acá: ${input.link}`,
-      `(Si te lo pide, tu código de acceso es ${input.code}.)`,
       "",
       `El link es personal y vence en ${ACCESS_INVITE_DAYS} días. Cuando entres, una guía en cada pantalla te muestra cómo se usa.`,
       "",
       "Cualquier duda, respondé este mail.",
-      "El equipo de AgroData",
+      "El equipo de Campia",
     ].join("\n"),
   };
 }
 
 /** El mismo aviso, corto, para mandarlo por WhatsApp desde Soporte. */
-export function accessInviteWhatsAppText(input: { name: string | null; link: string; code: string }): string {
-  return `${greetingFor(input.name)}, ya podés crear tu cuenta en AgroData, con 14 días gratis: ${input.link} (tu código de acceso es ${input.code}; vence en ${ACCESS_INVITE_DAYS} días).`;
+export function accessInviteWhatsAppText(input: { name: string | null; link: string }): string {
+  return `${greetingFor(input.name)}, ya podés crear tu cuenta en Campia, con 14 días gratis: ${input.link} (el link vence en ${ACCESS_INVITE_DAYS} días).`;
 }

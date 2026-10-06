@@ -82,6 +82,9 @@ export function InviteWizardDialog({
   const [role, setRole] = useState<FieldRole | null>(null);
   const [selectedTenantIds, setSelectedTenantIds] = useState<string[]>([]);
   const [identifier, setIdentifier] = useState("");
+  const [name, setName] = useState("");
+  /** Link de la invitación para crear la cuenta (invitado por email, sin cuenta todavía). */
+  const [inviteLink, setInviteLink] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -91,6 +94,8 @@ export function InviteWizardDialog({
       setRole(null);
       setSelectedTenantIds([]);
       setIdentifier("");
+      setName("");
+      setInviteLink(null);
       setError(null);
     }
   }, [open]);
@@ -140,36 +145,31 @@ export function InviteWizardDialog({
     }
     setError(null);
     startTransition(async () => {
-      let anyPending = false;
+      let link: string | null = null;
       for (const tenantId of selectedTenantIds) {
         const result = await inviteMemberAction({
           identifier: identifier.trim(),
           tenantId,
           role: role!,
+          name: name.trim() || undefined,
         });
         if (!result.success) {
           setError(result.error);
           return;
         }
-        if (!result.data.linked) anyPending = true;
+        link ??= result.data.link;
       }
-      toast.success(
-        anyPending
-          ? "Invitación guardada: cuando esa persona se registre con el mismo correo o WhatsApp quedará en el campo. Compartí también el enlace de registro si querés."
-          : "Invitación enviada al usuario ya registrado.",
-      );
+      setInviteLink(link);
+      toast.success(link ? "Invitación guardada" : "Listo: ya está en el equipo");
       setStep("link");
     });
   };
 
   const shareTenantId = selectedTenantIds[0];
-  const shareLink =
-    typeof window !== "undefined" && shareTenantId
-      ? `${window.location.origin}/dashboard/register`
-      : "";
 
   const copyLink = () => {
-    void navigator.clipboard.writeText(shareLink);
+    if (!inviteLink) return;
+    void navigator.clipboard.writeText(inviteLink);
     toast.success("Enlace copiado");
   };
 
@@ -243,19 +243,37 @@ export function InviteWizardDialog({
         {step === "contact" ? (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Si la persona ya está registrada, queda vinculada al toque. Si no, guardamos
-              la invitación para cuando se registre.
+              {role === "USER_GENERAL"
+                ? "Con su WhatsApp queda en el equipo al toque y ya puede escribirle al asistente. No necesita cuenta en la web."
+                : "Si ya usa Campia, queda en el campo al toque. Si no, te damos un link para que cree su cuenta con ese email."}
             </p>
             <div className="space-y-2">
-              <Label htmlFor="invite-identifier">Email o WhatsApp</Label>
+              <Label htmlFor="invite-identifier">{role === "USER_GENERAL" ? "WhatsApp" : "Email"}</Label>
               <Input
                 id="invite-identifier"
                 autoFocus
-                placeholder="correo@ejemplo.com o +549…"
+                inputMode={role === "USER_GENERAL" ? "tel" : "email"}
+                placeholder={role === "USER_GENERAL" ? "+54 9 261 123 4567" : "correo@ejemplo.com"}
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
               />
             </div>
+            {role === "USER_GENERAL" ? (
+              <div className="space-y-2">
+                <Label htmlFor="invite-name">Nombre y apellido</Label>
+                <Input
+                  id="invite-name"
+                  autoComplete="off"
+                  placeholder="Ramón Gómez"
+                  aria-describedby="invite-name-hint"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+                <p id="invite-name-hint" className="text-xs text-muted-foreground">
+                  Así lo ves en el equipo y en lo que carga.
+                </p>
+              </div>
+            ) : null}
             <p className="text-xs text-muted-foreground">
               Campo{selectedTenantIds.length > 1 ? "s" : ""}:{" "}
               {selectedTenantIds.map(tenantName).join(", ")}
@@ -277,16 +295,31 @@ export function InviteWizardDialog({
         ) : null}
 
         {step === "link" ? (
-          <div className="space-y-4">
+          <div className="min-w-0 space-y-4">
             <p className="text-sm text-muted-foreground">
-              Campo: <span className="font-medium text-foreground">{tenantName(shareTenantId ?? "")}</span>
+              Campo{selectedTenantIds.length > 1 ? "s" : ""}:{" "}
+              <span className="font-medium text-foreground">{selectedTenantIds.map(tenantName).join(", ") || tenantName(shareTenantId ?? "")}</span>
             </p>
-            <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2">
-              <code className="flex-1 truncate text-xs">{shareLink}</code>
-              <Button type="button" variant="ghost" size="icon" onClick={copyLink}>
-                <Copy size={14} />
-              </Button>
-            </div>
+            {inviteLink ? (
+              <>
+                <p className="text-sm">
+                  Mandale este link para que cree su cuenta con <span className="font-medium">{identifier.trim()}</span>. Al
+                  entrar, ya queda en el campo.
+                </p>
+                <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2">
+                  <code className="min-w-0 flex-1 truncate text-xs">{inviteLink}</code>
+                  <Button type="button" variant="ghost" size="icon" onClick={copyLink} aria-label="Copiar link">
+                    <Copy size={14} />
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <p className="text-sm">
+                {role === "USER_GENERAL"
+                  ? "Listo: ya está en el equipo y puede escribirle al asistente desde ese WhatsApp."
+                  : "Listo: ya está en el campo."}
+              </p>
+            )}
             <DialogFooter>
               <Button onClick={onClose}>Listo</Button>
             </DialogFooter>

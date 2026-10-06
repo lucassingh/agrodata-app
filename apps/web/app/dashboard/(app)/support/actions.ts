@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
+import { requestOrigin } from "@/lib/request-origin";
 import {
   activatePlan,
   AppError,
@@ -70,17 +70,16 @@ export async function setSubscriptionNoteAction(userId: string, note: string): P
 }
 
 export type GrantAccessResult =
-  | { success: true; code: string; link: string; emailed: boolean; whatsappText: string }
+  | { success: true; link: string; emailed: boolean; whatsappText: string }
   | { success: false; error: string };
 
-/** Acceso anticipado: crea (o renueva) el código de una persona y le manda el mail.
+/** Acceso anticipado: crea (o renueva) la invitación de una persona y le manda el mail.
  *  El link sale del dominio desde el que se usa Soporte (producción, develop o local). */
 export async function grantAccessAction(input: { email: string; name: string; demoRequestId: string | null }): Promise<GrantAccessResult> {
   const user = await requireUser();
   try {
     assertPlatformStaff(user.email);
-    const requestHeaders = await headers();
-    const baseUrl = requestHeaders.get("origin") ?? process.env.AUTH_URL ?? "http://localhost:3000";
+    const baseUrl = await requestOrigin();
     const result = await createAccessInvite({
       email: input.email,
       name: input.name,
