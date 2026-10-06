@@ -5,6 +5,7 @@ import { canRegister, INVITE_REQUIRED_MESSAGE, type SignupMode } from "../access
 import { TRIAL_DAYS } from "../billing/plans";
 import { conflict, forbidden } from "../errors";
 import { redeemPendingInvitesForNewUser } from "../memberships/memberships.service";
+import { isPlatformStaff } from "./field-roles";
 import type { OnboardingInput } from "./onboarding.schema";
 
 /**
@@ -27,7 +28,7 @@ export async function completeOnboarding(
     hasOpenAccessInvite(email),
     hasPendingTeamInvite(email, input.wNumber),
   ]);
-  if (!canRegister({ mode: options.signupMode, hasAccessInvite, hasTeamInvite })) {
+  if (!canRegister({ mode: options.signupMode, hasAccessInvite, hasTeamInvite, isStaff: isPlatformStaff(email) })) {
     forbidden(INVITE_REQUIRED_MESSAGE);
   }
 

@@ -16,9 +16,15 @@ export function resolveSignupMode(env: { SIGNUP_MODE?: string; VERCEL_ENV?: stri
 export const INVITE_REQUIRED_MESSAGE =
   "Estamos en acceso anticipado: para usar Campia necesitás una invitación de Campia o de tu equipo, con este mismo email o WhatsApp. Pedí acceso en la página de Campia y te damos de alta.";
 
-/** Con invitación alcanza con una de las dos: la de Campia (el link) o la de un equipo (por email o WhatsApp). */
-export function canRegister(input: { mode: SignupMode; hasAccessInvite: boolean; hasTeamInvite: boolean }): boolean {
-  return input.mode === "open" || input.hasAccessInvite || input.hasTeamInvite;
+/** Con invitación alcanza con una de las dos: la de Campia (el link) o la de un equipo (por email o WhatsApp).
+ *  El equipo de Campia (`SUPER_ADMIN_EMAILS`) siempre puede: es quien da los accesos. */
+export function canRegister(input: {
+  mode: SignupMode;
+  hasAccessInvite: boolean;
+  hasTeamInvite: boolean;
+  isStaff: boolean;
+}): boolean {
+  return input.mode === "open" || input.isStaff || input.hasAccessInvite || input.hasTeamInvite;
 }
 
 /** Días que dura el link de acceso. */
