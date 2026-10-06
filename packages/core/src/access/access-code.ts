@@ -1,4 +1,5 @@
-/** Código de acceso anticipado: va en el link y también se puede tipear (llega por WhatsApp). Puro. */
+/** Id interno de cada acceso anticipado (`AccessInvite.token`). Desde el paso a Clerk ya no se
+ *  tipea ni va en el link: el link es la invitación de Clerk. Puro. */
 
 // Sin 0/O ni 1/I/L: se dicta y se copia sin confundirse.
 const ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
@@ -12,10 +13,3 @@ export function formatAccessCode(bytes: Uint8Array): string {
 }
 
 export const ACCESS_CODE_BYTES = GROUPS * GROUP_LENGTH;
-
-/** Como lo tipee la persona (minúsculas, espacios, sin guiones) → como se guarda. Null si no es un código. */
-export function normalizeAccessCode(raw: string | null | undefined): string | null {
-  const clean = (raw ?? "").toUpperCase().replace(/[^0-9A-Z]/g, "");
-  if (clean.length !== GROUPS * GROUP_LENGTH || [...clean].some((c) => !ALPHABET.includes(c))) return null;
-  return Array.from({ length: GROUPS }, (_, g) => clean.slice(g * GROUP_LENGTH, (g + 1) * GROUP_LENGTH)).join("-");
-}

@@ -81,7 +81,9 @@ export async function deliverFieldAlerts(
     },
     select: { userId: true, alertKey: true, sentAt: true },
   });
-  const summaryUrl = process.env.AUTH_URL ? `${process.env.AUTH_URL.replace(/\/$/, "")}/dashboard/summary` : undefined;
+  // Dominio de producción que pone Vercel (campia.app). En local no hay: el aviso sale sin link.
+  const productionHost = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  const summaryUrl = productionHost ? `https://${productionHost}/dashboard/summary` : undefined;
 
   const results: { userId: string; result: AlertDeliveryResult; alerts: number }[] = [];
   for (const recipient of target.recipients) {

@@ -2,9 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/session";
+import { requestOrigin } from "@/lib/request-origin";
 import type { SystemRole } from "@repo/database";
 import {
   AppError,
+  clerkInvitationLink,
   inviteMemberSchema,
   inviteMember,
   updateMembershipRoleSchema,
@@ -31,11 +33,14 @@ async function inviterContext() {
   return { userId: user.id, email: user.email ?? null };
 }
 
+/** `link`: con email y sin cuenta, la invitación para crearla (sirve aunque el registro esté
+ *  cerrado). Un operario por WhatsApp queda dado de alta en el momento, sin link. */
 export async function inviteMemberAction(input: {
   identifier: string;
   tenantId: string;
   role: SystemRole;
-}): Promise<ActionResult<{ linked: boolean }>> {
+  name?: string;
+}): Promise<ActionResult<{ linked: boolean; link: string | null }>> {
   const parsed = inviteMemberSchema.safeParse(input);
   if (!parsed.success) {
     return fail(parsed.error.issues[0]?.message ?? "Datos inválidos.");
@@ -43,8 +48,9 @@ export async function inviteMemberAction(input: {
   try {
     const inviter = await inviterContext();
     const result = await inviteMember(inviter, parsed.data);
+    const link = result.email ? await clerkInvitationLink(result.email, await requestOrigin()) : null;
     revalidatePath("/dashboard/team");
-    return ok({ linked: result.linked });
+    return ok({ linked: result.linked, link });
   } catch (error) {
     if (error instanceof AppError) return fail(error.message);
     throw error;

@@ -13,6 +13,7 @@ import {
   type FieldRole,
 } from "../auth/field-roles";
 import { normalizeArgWNumber, parseInviteIdentifier } from "./invite-identifier.util";
+import { splitFullName } from "./person-name";
 
 export interface MembershipInviterContext {
   userId: string;
@@ -35,11 +36,11 @@ async function actorInField(actor: MembershipInviterContext, tenantId: string) {
  */
 export async function redeemPendingInvitesForNewUser(
   userId: string,
-  email: string,
+  email: string | null,
   wNumber: string,
 ): Promise<Array<{ tenantId: string; role: SystemRole }>> {
   const invites = await prisma.tenantPendingInvite.findMany({
-    where: { consumedAt: null, OR: [{ email }, { wNumber }] },
+    where: { consumedAt: null, OR: email ? [{ email }, { wNumber }] : [{ wNumber }] },
   });
 
   const redeemed: Array<{ tenantId: string; role: SystemRole }> = [];
@@ -80,7 +81,7 @@ export async function redeemPendingInvitesForNewUser(
  */
 export async function inviteMember(
   inviter: MembershipInviterContext,
-  input: { identifier: string; tenantId: string; role: SystemRole },
+  input: { identifier: string; tenantId: string; role: SystemRole; name?: string },
 ) {
   const actor = await actorInField(inviter, input.tenantId);
   const allowed = assignableRoles(actor.role, actor.isStaff);
@@ -104,6 +105,28 @@ export async function inviteMember(
 
   if (!existingUser) {
     const parsed = parseInviteIdentifier(rawId);
+
+    // Un operario invitado por WhatsApp no tiene cuenta web: queda dado de alta en el momento,
+    // con su número, y el bot ya lo reconoce. Los demás roles crean su cuenta con la invitación.
+    if (parsed.wNumber && input.role === "USER_GENERAL") {
+      const fullName = splitFullName(input.name ?? "");
+      if (!fullName) badRequest("Escribí el nombre y apellido del operario.");
+      const operator = await prisma.user.create({
+        data: { ...fullName, wNumber: parsed.wNumber },
+        select: { id: true },
+      });
+      await prisma.userTenantMembership.create({
+        data: { userId: operator.id, tenantId: input.tenantId, role: "USER_GENERAL", status: "ACTIVE", acceptedAt: new Date() },
+      });
+      // Si tenía invitaciones de antes a otros campos, también quedan hechas.
+      await redeemPendingInvitesForNewUser(operator.id, null, parsed.wNumber);
+      return { linked: true as const, email: null };
+    }
+    // La cuenta web se crea con un email: sin él no hay a quién mandarle la invitación.
+    if (!parsed.email) {
+      badRequest("A un encargado, asesor o dueño que todavía no usa Campia invitalo con su email: con él crea su cuenta.");
+    }
+
     const duplicateConditions: Array<{ email: string } | { wNumber: string }> = [];
     if (parsed.email) duplicateConditions.push({ email: parsed.email });
     if (parsed.wNumber) duplicateConditions.push({ wNumber: parsed.wNumber });
@@ -129,6 +152,8 @@ export async function inviteMember(
       pendingInviteId: invite.id,
       tenantId: input.tenantId,
       role: input.role,
+      /** Con email, la app le arma el link de invitación para crear su cuenta. */
+      email: parsed.email ?? null,
     };
   }
 
@@ -148,7 +173,7 @@ export async function inviteMember(
       acceptedAt: new Date(),
     },
   });
-  return { linked: true as const, membership };
+  return { linked: true as const, membership, email: null };
 }
 
 export async function updateMembershipRole(

@@ -184,7 +184,6 @@ async function AccessInvites() {
         </div>
       ),
     },
-    { key: "code", label: "Código", className: "whitespace-nowrap font-mono text-xs", render: (i) => i.token },
     { key: "origin", label: "Origen", className: "whitespace-nowrap", render: (i) => (i.demoRequestId ? "Pedido de demo" : "A mano") },
     { key: "status", label: "Estado", className: "whitespace-nowrap", render: (i) => <AccessStatus invite={i} now={now} /> },
   ];
@@ -194,9 +193,10 @@ async function AccessInvites() {
         <p className="max-w-[70ch] text-sm text-muted-foreground">
           <strong className="font-medium text-foreground">Registro {open ? "abierto" : "por invitación"}</strong> en este entorno.{" "}
           {open
-            ? "Cualquiera puede crear una cuenta; un código igual queda marcado como usado."
-            : "Solo se registra quien tiene un código de acceso o una invitación de un equipo."}{" "}
-          Se cambia con <code className="font-mono text-xs">SIGNUP_MODE</code> en Vercel (y un deploy nuevo).
+            ? "Cualquiera puede crear una cuenta; una invitación igual queda marcada como usada."
+            : "Solo entra quien tiene una invitación de Campia o de un equipo."}{" "}
+          Se cambia con <code className="font-mono text-xs">SIGNUP_MODE</code> en Vercel (y un deploy nuevo) y, en Clerk, con el
+          modo de registro (Restricted o Public) de la instancia: los dos tienen que coincidir.
         </p>
         <AccessDialog label="Invitar a alguien" />
       </div>

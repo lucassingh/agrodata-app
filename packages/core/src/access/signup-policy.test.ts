@@ -20,7 +20,7 @@ describe("quién puede registrarse", () => {
     expect(canRegister({ mode: "open", hasAccessInvite: false, hasTeamInvite: false })).toBe(true);
   });
 
-  it("con invitación: el link de AgroData o la invitación de un equipo", () => {
+  it("con invitación: el link de Campia o la invitación de un equipo", () => {
     expect(canRegister({ mode: "invite", hasAccessInvite: false, hasTeamInvite: false })).toBe(false);
     expect(canRegister({ mode: "invite", hasAccessInvite: true, hasTeamInvite: false })).toBe(true);
     expect(canRegister({ mode: "invite", hasAccessInvite: false, hasTeamInvite: true })).toBe(true);
@@ -28,25 +28,27 @@ describe("quién puede registrarse", () => {
 });
 
 describe("mail de acceso", () => {
+  const LINK = "https://accounts.campia.app/v1/tickets/accept?ticket=abc123";
+
   it("saluda por el nombre y lleva el link", () => {
-    const mail = accessInviteEmail({ name: "Martín Sosa", link: "https://agrodata.app/dashboard/register?acceso=K3MQ-9XTA-7B2C", code: "K3MQ-9XTA-7B2C" });
-    expect(mail.subject).toBe("Tu acceso a AgroData");
+    const mail = accessInviteEmail({ name: "Martín Sosa", link: LINK });
+    expect(mail.subject).toBe("Tu acceso a Campia");
     expect(mail.text).toContain("Hola Martín:");
-    expect(mail.text).toContain("https://agrodata.app/dashboard/register?acceso=K3MQ-9XTA-7B2C");
-    expect(mail.text).toContain("tu código de acceso es K3MQ-9XTA-7B2C");
+    expect(mail.text).toContain(LINK);
+    expect(mail.text).not.toContain("código");
   });
 
   it("sin nombre, saludo genérico", () => {
-    expect(accessInviteEmail({ name: null, link: "x", code: "c" }).text.startsWith("Hola:")).toBe(true);
-    expect(accessInviteEmail({ name: "  ", link: "x", code: "c" }).text.startsWith("Hola:")).toBe(true);
+    expect(accessInviteEmail({ name: null, link: "x" }).text.startsWith("Hola:")).toBe(true);
+    expect(accessInviteEmail({ name: "  ", link: "x" }).text.startsWith("Hola:")).toBe(true);
   });
 });
 
 describe("aviso por WhatsApp", () => {
-  it("una línea con el link y el código", () => {
-    const text = accessInviteWhatsAppText({ name: "Ana", link: "https://x/r?acceso=K3MQ-9XTA-7B2C", code: "K3MQ-9XTA-7B2C" });
-    expect(text.startsWith("Hola Ana, ya podés crear tu cuenta")).toBe(true);
-    expect(text).toContain("https://x/r?acceso=K3MQ-9XTA-7B2C");
+  it("una línea con el link", () => {
+    const text = accessInviteWhatsAppText({ name: "Ana", link: "https://x/r?ticket=abc123" });
+    expect(text.startsWith("Hola Ana, ya podés crear tu cuenta en Campia")).toBe(true);
+    expect(text).toContain("https://x/r?ticket=abc123");
     expect(text).not.toContain("\n");
   });
 });

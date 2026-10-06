@@ -19,8 +19,8 @@ jobs:
     env:
       DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
       DIRECT_URL: postgresql://ci:ci@localhost:5432/ci
-      AUTH_SECRET: ci-only-not-a-secret
-      AUTH_URL: http://localhost:3000
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_Y2kuY2xlcmsuYWNjb3VudHMuZGV2JA==
+      CLERK_SECRET_KEY: sk_test_ci-only-not-a-secret
       WHATSAPP_ACCESS_TOKEN: ci
       WHATSAPP_PHONE_NUMBER_ID: ci
       WHATSAPP_BUSINESS_ACCOUNT_ID: ci

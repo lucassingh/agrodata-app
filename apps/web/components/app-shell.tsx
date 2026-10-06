@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useClerk } from "@clerk/nextjs";
 import { CampiaLogo } from "@/components/brand/campia-logo";
 import {
   BookOpen,
@@ -29,6 +30,7 @@ import {
   Plus,
   Briefcase,
   Settings,
+  UserCog,
   Users,
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -87,7 +89,6 @@ interface AppShellProps {
   user: AppShellUser;
   memberships: Membership[];
   children: ReactNode;
-  signOutAction: () => Promise<void>;
   /** Entorno que no es producción («Prueba», «Local»), para no confundirlos. */
   environmentLabel: string | null;
   /** El campo activo está en modo lectura (venció la prueba o el plan). */
@@ -118,12 +119,12 @@ export function AppShell({
   user,
   memberships,
   children,
-  signOutAction,
   environmentLabel,
   readOnly,
   trialDaysLeft,
   seenTours,
 }: AppShellProps) {
+  const { signOut } = useClerk();
   const { collapsed: collapsedSetting, setCollapsed, mobileOpen, setMobileOpen } = useSidebar();
   const isDesktop = useIsDesktop();
   // En celular el menú va siempre completo: se abre encima del contenido.
@@ -465,6 +466,11 @@ export function AppShell({
                     <CreditCard size={16} />
                     Mi plan
                   </DropdownMenuItem>
+
+                  <DropdownMenuItem onClick={() => router.push("/dashboard/account")}>
+                    <UserCog size={16} />
+                    Mi cuenta
+                  </DropdownMenuItem>
                 </DropdownMenuGroup>
 
                 <DropdownMenuSeparator />
@@ -472,7 +478,7 @@ export function AppShell({
                   <DropdownMenuItem
                     variant="destructive"
                     onClick={() => {
-                      void signOutAction();
+                      void signOut({ redirectUrl: "/dashboard/sign-in" });
                     }}
                   >
                     <LogOut size={16} />
