@@ -314,7 +314,8 @@ function MethodCard({
   return (
     <Card className="relative rounded-2xl shadow-soft">
       {badge ? (
-        <span className="absolute -top-2 right-3 rounded-full bg-warning px-2 py-0.5 text-[10px] font-semibold text-warning-foreground">
+        // Adentro de la tarjeta: afuera del borde la cortaba (la tarjeta recorta lo que sobresale).
+        <span className="absolute top-3 right-3 rounded-full bg-warning px-2 py-0.5 text-[11px] font-semibold text-warning-foreground">
           {badge}
         </span>
       ) : null}
