@@ -17,13 +17,17 @@ describe("modo de registro", () => {
 
 describe("quién puede registrarse", () => {
   it("abierto: cualquiera", () => {
-    expect(canRegister({ mode: "open", hasAccessInvite: false, hasTeamInvite: false })).toBe(true);
+    expect(canRegister({ mode: "open", hasAccessInvite: false, hasTeamInvite: false, isStaff: false })).toBe(true);
   });
 
   it("con invitación: el link de Campia o la invitación de un equipo", () => {
-    expect(canRegister({ mode: "invite", hasAccessInvite: false, hasTeamInvite: false })).toBe(false);
-    expect(canRegister({ mode: "invite", hasAccessInvite: true, hasTeamInvite: false })).toBe(true);
-    expect(canRegister({ mode: "invite", hasAccessInvite: false, hasTeamInvite: true })).toBe(true);
+    expect(canRegister({ mode: "invite", hasAccessInvite: false, hasTeamInvite: false, isStaff: false })).toBe(false);
+    expect(canRegister({ mode: "invite", hasAccessInvite: true, hasTeamInvite: false, isStaff: false })).toBe(true);
+    expect(canRegister({ mode: "invite", hasAccessInvite: false, hasTeamInvite: true, isStaff: false })).toBe(true);
+  });
+
+  it("el equipo de Campia entra sin invitación: es quien da los accesos", () => {
+    expect(canRegister({ mode: "invite", hasAccessInvite: false, hasTeamInvite: false, isStaff: true })).toBe(true);
   });
 });
 
