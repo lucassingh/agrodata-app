@@ -1,12 +1,24 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import { esUY } from "@clerk/localizations";
 
+/** Los textos de Clerk dicen el nombre de la app tal como figura en Clerk («campia»); acá va la
+ *  marca escrita como corresponde, sin depender del panel de Clerk. */
+function withAppName<T>(value: T, name: string): T {
+  if (typeof value === "string") return value.replaceAll("{{applicationName}}", name) as T;
+  if (value && typeof value === "object") {
+    return Object.fromEntries(Object.entries(value).map(([key, inner]) => [key, withAppName(inner, name)])) as T;
+  }
+  return value;
+}
+
+const localization = withAppName(esUY, "campIA");
+
 /** Clerk (el login) solo en el dashboard: la landing no carga su JavaScript.
  *  `esUY` es la traducción de Clerk con voseo, como el resto de campIA. */
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <ClerkProvider
-      localization={esUY}
+      localization={localization}
       signInUrl="/dashboard/sign-in"
       signUpUrl="/dashboard/register"
       signInFallbackRedirectUrl="/dashboard"
