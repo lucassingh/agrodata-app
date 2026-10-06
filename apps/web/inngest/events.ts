@@ -35,3 +35,9 @@ export const alertsRequested = eventType("agrodata/alerts.requested", {
 export const weeklySummaryRequested = eventType("agrodata/weekly-summary.requested", {
   schema: z.object({}),
 });
+
+/** Copia a Clerk a quienes ya tenían cuenta (migración del login). Se dispara a mano, una vez por
+ *  entorno: desde Inngest local para develop y desde Inngest Cloud para producción. */
+export const clerkImportRequested = eventType("agrodata/clerk.import-users.requested", {
+  schema: z.object({}),
+});

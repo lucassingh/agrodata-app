@@ -4,6 +4,8 @@ export * from "./auth/field-roles";
 export * from "./auth/types";
 export * from "./auth/register.schema";
 export * from "./auth/auth.service";
+export * from "./auth/clerk-import";
+export * from "./auth/clerk-import.service";
 export * from "./memberships/memberships.service";
 export * from "./memberships/memberships.schema";
 export * from "./users/users.service";

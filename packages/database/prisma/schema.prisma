@@ -159,6 +159,8 @@ model User {
   email          String?              @unique
   wNumber        String?              @unique
   passwordHash   String?
+  /// Id del usuario en Clerk (el login). Vacío en quien no tiene cuenta web (operarios por WhatsApp).
+  clerkId        String?              @unique
   profileType    ProfileType          @default(OTRO)
   /// Acceso global a la plataforma (configuración, soporte, etc.)
   isSuperAdmin   Boolean              @default(false)
