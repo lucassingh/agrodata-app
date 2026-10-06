@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
+import { requestOrigin } from "@/lib/request-origin";
 import { AppError, PLAN_TYPES, refreshMyPayment, requestPlan, startCheckout, type PlanType } from "@repo/core";
 import { requireUser } from "@/lib/session";
 import { paymentsEnabled } from "@/lib/payments";
@@ -28,8 +28,7 @@ export async function startCheckoutAction(plan: PlanType, months: number): Promi
   if (!paymentsEnabled()) return { success: false, error: "Los pagos con Mercado Pago todavía no están habilitados." };
   if (!PLAN_TYPES.includes(plan)) return { success: false, error: "Plan inválido." };
   try {
-    const requestHeaders = await headers();
-    const baseUrl = requestHeaders.get("origin") ?? process.env.AUTH_URL ?? "http://localhost:3000";
+    const baseUrl = await requestOrigin();
     const { checkoutUrl } = await startCheckout({ userId: user.id, plan, months, baseUrl });
     return { success: true, url: checkoutUrl };
   } catch (error) {

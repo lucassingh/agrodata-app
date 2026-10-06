@@ -22,7 +22,7 @@ interface AccessDialogProps {
   whatsapp?: string;
 }
 
-/** Acceso anticipado: da (o renueva) el código de una persona y deja el link a mano
+/** Acceso anticipado: da (o renueva) la invitación de una persona y deja el link a mano
  *  para copiarlo o mandarlo por WhatsApp, por si el mail no sale. */
 export function AccessDialog({ label, demoRequestId, email: initialEmail = "", name: initialName = "", whatsapp }: AccessDialogProps) {
   const [open, setOpen] = useState(false);
@@ -77,8 +77,8 @@ export function AccessDialog({ label, demoRequestId, email: initialEmail = "", n
                 {granted
                   ? granted.emailed
                     ? `Le mandamos el mail a ${email.trim()}. El link también queda acá.`
-                    : "El mail no salió (sin dominio verificado, Resend solo le escribe al email de la cuenta). Mandale el link por WhatsApp o copialo."
-                  : "Un código personal, de un solo uso, que vence en 30 días. Con él se registra aunque el registro esté cerrado."}
+                    : "El mail no salió. Mandale el link por WhatsApp o copialo."
+                  : "Una invitación personal, para ese email, que vence en 30 días. Con ella crea su cuenta aunque el registro esté cerrado."}
               </DialogDescription>
             </DialogHeader>
 
@@ -92,9 +92,7 @@ export function AccessDialog({ label, demoRequestId, email: initialEmail = "", n
                       {copied ? <Check className="size-4" aria-hidden /> : <Copy className="size-4" aria-hidden />}
                     </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Código: <span className="font-mono font-semibold text-foreground">{granted.code}</span>
-                  </p>
+                  <p className="text-xs text-muted-foreground">Tiene que crear la cuenta con este mismo email.</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {whatsappDigits ? (

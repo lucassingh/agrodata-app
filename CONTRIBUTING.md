@@ -180,3 +180,30 @@ Meta manda los mensajes reales solo a producción (una URL de webhook por app). 
 en local: `pnpm dev`, más `npx inngest-cli dev -u http://localhost:3000/api/inngest --no-discovery`,
 más un webhook simulado firmado con `WHATSAPP_APP_SECRET` contra `/api/whatsapp/webhook`. Todo
 queda en la base `develop`.
+
+## 11. El login (Clerk)
+
+Clerk solo dice **quién** es la persona. Sus campos, roles, plan y prueba siguen en nuestra base
+(`User.clerkId` la une con su cuenta de Clerk) y la única puerta es `requireUser()`
+(`apps/web/lib/session.ts`).
+
+- **Una app de Clerk, «campIA», con dos instancias**: Development (local y develop, claves
+  `pk_test_` y `sk_test_`) y Production (campia.app, claves `pk_live_` y `sk_live_`, solo en
+  Vercel Production).
+- **Configuración de cada instancia**: nombre de la aplicación «campIA» (es el que muestra la
+  pantalla de ingreso), Organizations apagado (los campos son nuestros), email + contraseña y
+  Google, nombre y apellido. En el token de sesión, `{ "email": "{{user.primary_email_address}}" }`
+  (Sessions → Customize session token): así un cambio de email en Clerk llega a nuestra base.
+- **Registro**: `SIGNUP_MODE` (textos de la landing y control al completar los datos) y el modo de
+  registro de la instancia (Public o Restricted) tienen que coincidir.
+- **Primer ingreso**: quien ya tenía cuenta se vincula por su email **verificado**; quien es nuevo
+  completa sus datos en `/dashboard/onboarding` (WhatsApp y términos) y arranca la prueba.
+- **Invitaciones**: Soporte (dar acceso) y Equipo (invitar por email) arman una invitación de
+  Clerk (`clerkInvitationLink`), que sirve aunque el registro esté cerrado. Los operarios se dan
+  de alta solo con su WhatsApp, sin cuenta web.
+- **Personas que ya existen en la base y no en Clerk** (por ejemplo, después de `db:seed` o
+  `db:seed:demo`): se copian con su misma contraseña mandando el evento
+  `agrodata/clerk.import-users.requested` (Inngest local o Inngest Cloud). Se puede repetir.
+- **Entrar en local con las cuentas del seed** (owner@agrodata.dev, demo@agrodata.dev): sus
+  casillas no existen, así que en la instancia Development tiene que estar apagado «Client Trust»
+  (el código por email al entrar desde un dispositivo nuevo). En Production queda prendido.

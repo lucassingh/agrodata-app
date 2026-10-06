@@ -7,6 +7,8 @@ export const inviteMemberSchema = z.object({
   identifier: z.string().trim().min(1, "Ingresá un correo o número de WhatsApp."),
   tenantId: z.string().min(1, "Seleccioná un campo activo."),
   role: systemRoleSchema,
+  /** Nombre y apellido: hace falta para dar de alta a un operario por WhatsApp. */
+  name: z.string().trim().max(120).optional(),
 });
 export type InviteMemberInput = z.infer<typeof inviteMemberSchema>;
 
