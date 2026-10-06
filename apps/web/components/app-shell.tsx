@@ -411,7 +411,13 @@ export function AppShell({
                 <div className="hidden text-left leading-tight sm:block">
                   <p className="text-xs font-semibold text-foreground">{user.name}</p>
                   <p className="text-[11px] font-semibold text-primary">
-                    {PLATFORM_ROLE_LABEL[user.platformRole]}
+                    {/* El rol es por campo: sin campo activo no hay rol (decía «Operario»). El equipo de
+                        Campia tiene los permisos de un dueño en todos los campos: se aclara. */}
+                    {user.isStaff
+                      ? "Equipo Campia"
+                      : user.activeTenantId
+                        ? PLATFORM_ROLE_LABEL[user.platformRole]
+                        : "Sin campo todavía"}
                   </p>
                 </div>
               </DropdownMenuTrigger>
