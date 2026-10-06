@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { CampiaLogo } from "@/components/brand/campia-logo";
+import { SUPPORT_EMAIL } from "@/components/landing/content";
 
 export default function AuthLayout({
   children,
@@ -35,9 +36,21 @@ export default function AuthLayout({
         </div>
       </div>
 
-      <div className="flex flex-col items-center justify-center gap-6 p-6 sm:p-10">
+      {/* 16 px a los costados en celular: la tarjeta de Clerk mide el ancho de la pantalla menos 40 px. */}
+      <div className="flex flex-col items-center justify-center gap-6 px-4 py-6 sm:p-10">
         <CampiaLogo className="text-primary text-[34px]" />
         {children}
+        {/* Siempre visible: si algo del ingreso (de Clerk) no carga, nadie queda en una pantalla sin salida. */}
+        <p className="max-w-[490px] text-center text-sm text-muted-foreground">
+          ¿No podés entrar o la pantalla quedó en blanco? Recargá la página o escribinos a{" "}
+          <a
+            href={`mailto:${SUPPORT_EMAIL}`}
+            className="rounded-sm font-medium text-primary underline-offset-2 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
+          >
+            {SUPPORT_EMAIL}
+          </a>
+          .
+        </p>
       </div>
     </div>
   );
