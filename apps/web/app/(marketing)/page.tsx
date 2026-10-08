@@ -17,6 +17,7 @@ import { MultiField } from "@/components/landing/multi-field";
 import { Pricing } from "@/components/landing/pricing";
 import { Problem } from "@/components/landing/problem";
 import { ProductShowcase } from "@/components/landing/product-showcase";
+import { SiteLoader } from "@/components/landing/site-loader";
 import { Profiles } from "@/components/landing/profiles";
 import { signupMode } from "@/lib/signup-mode";
 
@@ -46,34 +47,36 @@ export default function MarketingHomePage() {
   const openSignup = signupMode() === "open";
   return (
     <LandingMotion>
-      <div className="landing min-h-dvh font-sans">
-        <a
-          href="#contenido"
-          className="sr-only z-50 rounded-full bg-l-ink px-4 py-2 text-white focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
-        >
-          Saltar al contenido
-        </a>
-        <LandingNav openSignup={openSignup} />
-        <main id="contenido">
-          <Hero openSignup={openSignup} />
-          <ActivitiesMarquee />
-          <Problem />
-          <HowItWorks />
-          <FeaturesBento />
-          <LotMargin />
-          <LivestockDairy />
-          <AlertsSection />
-          <MultiField />
-          <AdvisorSection />
-          <ProductShowcase />
-          <Comparison />
-          <Profiles />
-          <Pricing openSignup={openSignup} />
-          <Faq openSignup={openSignup} />
-          <DemoCta openSignup={openSignup} />
-        </main>
-        <LandingFooter openSignup={openSignup} />
-      </div>
+      <SiteLoader>
+        <div className="landing min-h-dvh font-sans">
+          <a
+            href="#contenido"
+            className="sr-only z-50 rounded-full bg-l-ink px-4 py-2 text-white focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+          >
+            Saltar al contenido
+          </a>
+          <LandingNav openSignup={openSignup} />
+          <main id="contenido">
+            <Hero openSignup={openSignup} />
+            <ActivitiesMarquee />
+            <Problem />
+            <HowItWorks />
+            <FeaturesBento />
+            <LotMargin />
+            <LivestockDairy />
+            <AlertsSection />
+            <MultiField />
+            <AdvisorSection />
+            <ProductShowcase />
+            <Comparison />
+            <Profiles />
+            <Pricing openSignup={openSignup} />
+            <Faq openSignup={openSignup} />
+            <DemoCta openSignup={openSignup} />
+          </main>
+          <LandingFooter openSignup={openSignup} />
+        </div>
+      </SiteLoader>
     </LandingMotion>
   );
 }

@@ -18,11 +18,13 @@ import {
   Video,
   Wifi,
 } from "lucide-react";
-import { useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { ThinkingShimmer } from "@/components/agents/loading-states/thinking-shimmer";
 import { cn } from "@/lib/utils";
 import { HERO_SCENES } from "./content";
+import { useMediaQuery } from "@/lib/use-media-query";
 import { usePrefersReducedMotion } from "@/lib/use-prefers-reduced-motion";
+import { useSiteReady } from "./site-loader";
 
 type Scene = (typeof HERO_SCENES)[number];
 type Point = [number, number];
@@ -103,24 +105,14 @@ const EASE = [0.16, 1, 0.3, 1] as const;
 const BRAND_LINE = "#52B788";
 const BRAND_DARK = "#2D6A4F";
 
-function useIsLg() {
-  return useSyncExternalStore(
-    (onChange) => {
-      const media = window.matchMedia("(min-width: 1024px)");
-      media.addEventListener("change", onChange);
-      return () => media.removeEventListener("change", onChange);
-    },
-    () => window.matchMedia("(min-width: 1024px)").matches,
-    () => true,
-  );
-}
-
 export function HeroScene() {
   const reduceMotion = Boolean(usePrefersReducedMotion());
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const inView = useInView(rootRef, { amount: 0.25 });
-  const isLg = useIsLg();
+  const isLg = useMediaQuery("(min-width: 1024px)", true);
+  // Con el loader de entrada, la primera escena arranca cuando ya se ve.
+  const ready = useSiteReady();
   const uid = useId().replace(/:/g, "");
 
   const [cycle, setCycle] = useState(0);
@@ -146,7 +138,7 @@ export function HeroScene() {
   const scene = HERO_SCENES[current] ?? HERO_SCENES[0]!;
 
   useEffect(() => {
-    if (reduceMotion || !inView) return;
+    if (reduceMotion || !inView || !ready) return;
     setPhase("typing");
     setTyped(0);
     const isLast = sceneIndex === lastIndex;
@@ -166,7 +158,7 @@ export function HeroScene() {
       ),
     ];
     return () => timers.forEach(clearTimeout);
-  }, [sceneIndex, inView, reduceMotion, lastIndex]);
+  }, [sceneIndex, inView, ready, reduceMotion, lastIndex]);
 
   // El mensaje se escribe letra por letra en la caja de texto, antes de enviarse.
   useEffect(() => {
@@ -186,7 +178,8 @@ export function HeroScene() {
     <div ref={rootRef} className="relative">
       <div
         ref={panelRef}
-        className="relative aspect-[2000/1116] overflow-hidden rounded-[16px] bg-l-surface-2 shadow-l-lg lg:aspect-auto lg:h-[clamp(480px,62vh,660px)]"
+        // En celular la foto va más alta (4:3) para que los lotes se vean grandes.
+        className="relative aspect-[4/3] overflow-hidden rounded-[16px] bg-l-surface-2 shadow-l-lg sm:aspect-[2000/1116] lg:aspect-auto lg:h-[clamp(480px,62vh,660px)]"
       >
         <Image
           src="/landing/hero-aerea.jpg"
@@ -317,9 +310,31 @@ export function HeroScene() {
             </AnimatePresence>
           </>
         ) : null}
+
+        {/* En celular no entran la línea ni la tarjeta: el registro se resume en una etiqueta sobre la foto. */}
+        <AnimatePresence>
+          {cardScenes.map((s) => {
+            const lot = LOTS.find((l) => l.id === s.fieldId)!;
+            return (
+              <motion.p
+                key={`${cycle}-${s.id}-tag`}
+                initial={reduceMotion ? false : { opacity: 0, y: -8, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, transition: { duration: 0.25 } }}
+                transition={{ type: "spring", stiffness: 340, damping: 28, delay: reduceMotion ? 0 : 0.6 }}
+                className="absolute top-3 left-3 flex max-w-[calc(100%-24px)] items-center gap-2 rounded-full bg-white/95 py-1.5 pr-3.5 pl-2.5 text-[13px] text-l-ink shadow-l backdrop-blur-sm lg:hidden"
+              >
+                <span className="size-2.5 shrink-0 rounded-full ring-2 ring-white" style={{ backgroundColor: lot.color }} aria-hidden />
+                <span className="font-semibold">{s.record.type}</span>
+                <span className="truncate text-l-ink-soft">{s.record.summary}</span>
+              </motion.p>
+            );
+          })}
+        </AnimatePresence>
       </div>
 
-      <div className="relative z-10 mx-auto -mt-8 w-[260px] sm:-mt-24 lg:absolute lg:top-[-96px] lg:right-10 lg:mt-0 lg:w-[290px]">
+      {/* Escritorio: el iPhone arriba a la derecha, superpuesto al panel. */}
+      <div className="absolute top-[-96px] right-10 z-10 hidden w-[290px] lg:block">
         <PhoneChat
           key={cycle}
           current={current}
@@ -328,6 +343,16 @@ export function HeroScene() {
           reduceMotion={reduceMotion}
         />
       </div>
+
+      {/* Celular y tablet: el mismo chat en una tarjeta compacta, montada sobre el borde de la foto. */}
+      <ChatCard
+        key={`card-${cycle}`}
+        current={current}
+        phase={currentPhase}
+        typed={reduceMotion ? scene.message.length : typed}
+        reduceMotion={reduceMotion}
+        className="relative z-10 mx-3 -mt-10 sm:mx-auto sm:-mt-16 sm:max-w-[440px] lg:hidden"
+      />
     </div>
   );
 }
@@ -458,9 +483,8 @@ const bubbleMotion = (reduceMotion: boolean) => ({
  * mensaje de la escena se carga en la caja de abajo antes de enviarse: se
  * escribe, se graba el audio o se adjunta la foto.
  */
-function PhoneChat({ current, phase, typed, reduceMotion }: { current: number; phase: Phase; typed: number; reduceMotion: boolean }) {
+function PhoneChat({ current, phase, typed, reduceMotion }: ChatProps) {
   const scene = HERO_SCENES[current] ?? HERO_SCENES[0]!;
-  const motionProps = bubbleMotion(reduceMotion);
 
   return (
     <div
@@ -503,39 +527,7 @@ function PhoneChat({ current, phase, typed, reduceMotion }: { current: number; p
           <Image src="/landing/bg-whatsapp.png" alt="" fill sizes="300px" className="object-cover" />
           <p className="relative mx-auto mb-auto rounded-md bg-white/90 px-2 py-0.5 text-[10px] text-black/55 shadow-sm">Hoy</p>
 
-          <AnimatePresence mode="popLayout" initial={false}>
-            {HERO_SCENES.slice(0, current + 1).flatMap((s, i) => {
-              const isCurrent = i === current;
-              const items = [];
-              if (!isCurrent || phase !== "typing") {
-                items.push(
-                  <motion.div key={`${s.id}-out`} layout {...motionProps} className="relative ml-auto max-w-[86%]">
-                    <OutgoingBubble scene={s} time={`10:${41 + i * 2}`} />
-                  </motion.div>,
-                );
-              }
-              if (isCurrent && phase === "thinking") {
-                items.push(
-                  <motion.div key={`${s.id}-thinking`} layout {...motionProps} className="relative max-w-[80%]">
-                    <div className="rounded-[10px] rounded-tl-sm bg-white px-3 py-2 text-[13px] shadow-sm">
-                      <ThinkingShimmer className="text-l-ink-soft">Procesando el mensaje…</ThinkingShimmer>
-                    </div>
-                  </motion.div>,
-                );
-              }
-              if (!isCurrent || phase === "done") {
-                items.push(
-                  <motion.div key={`${s.id}-reply`} layout {...motionProps} className="relative max-w-[86%]">
-                    <div className="rounded-[10px] rounded-tl-sm bg-white px-3 py-2 text-[13px] leading-snug text-l-ink shadow-sm">
-                      {s.reply}
-                      <span className="mt-1 block text-right text-[10px] text-l-ink-soft">10:{42 + i * 2}</span>
-                    </div>
-                  </motion.div>,
-                );
-              }
-              return items;
-            })}
-          </AnimatePresence>
+          <ChatThread current={current} phase={phase} reduceMotion={reduceMotion} />
         </div>
 
         <Composer scene={scene} typing={phase === "typing"} typed={typed} />
@@ -547,8 +539,88 @@ function PhoneChat({ current, phase, typed, reduceMotion }: { current: number; p
   );
 }
 
+type ChatProps = { current: number; phase: Phase; typed: number; reduceMotion: boolean };
+
+/** La conversación del hero: se acumula y los mensajes anteriores suben (teléfono y tarjeta). */
+function ChatThread({ current, phase, reduceMotion }: Omit<ChatProps, "typed">) {
+  const motionProps = bubbleMotion(reduceMotion);
+  return (
+    <AnimatePresence mode="popLayout" initial={false}>
+      {HERO_SCENES.slice(0, current + 1).flatMap((s, i) => {
+        const isCurrent = i === current;
+        const items = [];
+        if (!isCurrent || phase !== "typing") {
+          items.push(
+            <motion.div key={`${s.id}-out`} layout {...motionProps} className="relative ml-auto max-w-[86%]">
+              <OutgoingBubble scene={s} time={`10:${41 + i * 2}`} />
+            </motion.div>,
+          );
+        }
+        if (isCurrent && phase === "thinking") {
+          items.push(
+            <motion.div key={`${s.id}-thinking`} layout {...motionProps} className="relative max-w-[80%]">
+              <div className="rounded-[10px] rounded-tl-sm bg-white px-3 py-2 text-[13px] shadow-sm">
+                <ThinkingShimmer className="text-l-ink-soft">Procesando el mensaje…</ThinkingShimmer>
+              </div>
+            </motion.div>,
+          );
+        }
+        if (!isCurrent || phase === "done") {
+          items.push(
+            <motion.div key={`${s.id}-reply`} layout {...motionProps} className="relative max-w-[86%]">
+              <div className="rounded-[10px] rounded-tl-sm bg-white px-3 py-2 text-[13px] leading-snug text-l-ink shadow-sm">
+                {s.reply}
+                <span className="mt-1 block text-right text-[10px] text-l-ink-soft">10:{42 + i * 2}</span>
+              </div>
+            </motion.div>,
+          );
+        }
+        return items;
+      })}
+    </AnimatePresence>
+  );
+}
+
+/**
+ * El chat del hero en celular y tablet: la misma conversación, sin el marco del
+ * teléfono, que en una pantalla angosta ocupaba toda la altura y quedaba vacío.
+ */
+function ChatCard({ current, phase, typed, reduceMotion, className }: ChatProps & { className?: string }) {
+  const scene = HERO_SCENES[current] ?? HERO_SCENES[0]!;
+  return (
+    <div
+      role="img"
+      aria-label={`Chat de WhatsApp con Campia. Mensaje: "${scene.message}". Respuesta: "${scene.reply}"`}
+      className={cn("overflow-hidden rounded-[16px] bg-[#f6f5f3] shadow-l-lg ring-1 ring-black/5", className)}
+    >
+      <div aria-hidden className="flex items-center gap-2.5 border-b border-black/5 bg-white px-3.5 py-2.5">
+        <div className="flex size-8 items-center justify-center rounded-full bg-white shadow-[0_0_0_1px_rgb(0_0_0/0.06)]">
+          <CampiaLogo variant="mark" className="text-primary text-[20px]" />
+        </div>
+        <div className="min-w-0 flex-1 leading-tight">
+          <p className="text-[14px] font-semibold text-black">Campia</p>
+          <p className="text-[11px] text-black/55">{phase === "thinking" ? "escribiendo…" : "en línea"}</p>
+        </div>
+        <span className="flex items-center gap-1.5 text-[12px] text-l-ink-soft">
+          <span className="size-2 rounded-full bg-[#25d366]" />
+          WhatsApp
+        </span>
+      </div>
+      {/* Alto fijo: la página no salta cuando entra un mensaje; los de arriba se van con un fundido. */}
+      <div
+        aria-hidden
+        className="relative flex h-[212px] flex-col justify-end gap-2 overflow-hidden px-3 py-3 [mask-image:linear-gradient(to_bottom,transparent,black_32px)]"
+      >
+        <Image src="/landing/bg-whatsapp.png" alt="" fill sizes="440px" className="object-cover" />
+        <ChatThread current={current} phase={phase} reduceMotion={reduceMotion} />
+      </div>
+      <Composer scene={scene} typing={phase === "typing"} typed={typed} className="pb-3" />
+    </div>
+  );
+}
+
 /** La caja de abajo del chat: vacía, o con el mensaje que se está cargando. */
-function Composer({ scene, typing, typed }: { scene: Scene; typing: boolean; typed: number }) {
+function Composer({ scene, typing, typed, className }: { scene: Scene; typing: boolean; typed: number; className?: string }) {
   const body = !typing ? (
     <span className="flex h-7 flex-1 items-center rounded-full border border-black/10 bg-white px-3 text-[11px] text-black/35">Mensaje</span>
   ) : scene.kind === "audio" ? (
@@ -568,7 +640,7 @@ function Composer({ scene, typing, typed }: { scene: Scene; typing: boolean; typ
   );
 
   return (
-    <div className="flex shrink-0 items-center gap-2 bg-[#f6f5f3] px-3 pt-2 pb-5">
+    <div className={cn("flex shrink-0 items-center gap-2 bg-[#f6f5f3] px-3 pt-2 pb-5", className)}>
       <Plus className="size-5 shrink-0 text-[#007aff]" />
       {body}
       {typing && scene.kind !== "audio" ? (
