@@ -24,11 +24,7 @@ const LOTS = [
 /** El nodo de IA calado en el tercer lote: de ahí se abre la pantalla. */
 const NODE = { cx: 31, cy: 33, r: 3.2 };
 
-/** Mínimo de la ola de los lotes, contado desde que empezó a cargar la página (ms). */
-const CHASE_MS = 1300;
-/** Después de hidratar, la ola se ve al menos esto, aunque la página haya tardado. */
-const MIN_AFTER_HYDRATION_MS = 450;
-/** Si la página no terminó de cargar a esta altura, se sigue igual. */
+/** Si la página no terminó de cargar a esta altura, se sigue igual (ms desde que empezó a cargar). */
 const LOAD_CAP_MS = 3200;
 const EXPAND_MS = 1000;
 const REVEAL_MS = 550;
@@ -52,38 +48,32 @@ let playedThisLoad = false;
 export function SiteLoader({ children }: { children: ReactNode }) {
   const reduceMotion = usePrefersReducedMotion();
   const [phase, setPhase] = useState<Phase>(() => (playedThisLoad ? "done" : "chase"));
-  const [percent, setPercent] = useState<number | null>(null);
   const [origin, setOrigin] = useState<{ x: number; y: number; from: number; to: number } | null>(null);
   const markRef = useRef<SVGSVGElement>(null);
+  const percentRef = useRef<HTMLSpanElement>(null);
 
-  // Ola: dura lo que tarde la página en cargar, entre un mínimo y un tope.
+  // La pantalla se abre cuando el contador llegó a 100 (es CSS: arranca con el primer
+  // cuadro, antes de hidratar) y la página terminó de cargar, o pasó el tope.
   useEffect(() => {
     if (phase !== "chase") return;
     if (reduceMotion) {
       setPhase("done");
       return;
     }
-    const chaseEnd = Math.max(CHASE_MS, performance.now() + MIN_AFTER_HYDRATION_MS);
-    let loaded = document.readyState === "complete";
-    const onLoad = () => (loaded = true);
-    window.addEventListener("load", onLoad);
-
-    let raf = 0;
-    const tick = () => {
-      const now = performance.now();
-      const done = now >= chaseEnd && (loaded || now >= LOAD_CAP_MS);
-      setPercent(done ? 100 : Math.min(99, Math.round((now / chaseEnd) * 100)));
-      if (done) {
-        setOrigin(nodeOrigin(markRef.current));
-        setPhase("expand");
-        return;
-      }
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
+    let cancelled = false;
+    const counted = percentRef.current?.getAnimations()[0]?.finished ?? Promise.resolve();
+    const loaded = new Promise<void>((resolve) => {
+      if (document.readyState === "complete") resolve();
+      else window.addEventListener("load", () => resolve(), { once: true });
+    });
+    const cap = new Promise<void>((resolve) => setTimeout(resolve, Math.max(0, LOAD_CAP_MS - performance.now())));
+    Promise.all([counted.catch(() => undefined), Promise.race([loaded, cap])]).then(() => {
+      if (cancelled) return;
+      setOrigin(nodeOrigin(markRef.current));
+      setPhase("expand");
+    });
     return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("load", onLoad);
+      cancelled = true;
     };
   }, [phase, reduceMotion]);
 
@@ -152,8 +142,9 @@ export function SiteLoader({ children }: { children: ReactNode }) {
               )}
             >
               Cargando
-              {/* Ancho fijo: que el número no empuje al isologo cuando cambia de cifras. */}
-              <span className="min-w-[4ch] tabular-nums opacity-70">{percent === null ? "" : `${percent}%`}</span>
+              {/* El número lo escribe CSS (campia-loader-percent en globals.css), así aparece junto
+                  con «Cargando». Ancho fijo: que no empuje al isologo cuando cambia de cifras. */}
+              <span ref={percentRef} className="campia-loader-percent min-w-[4ch] tabular-nums opacity-70" />
             </span>
           </div>
 

@@ -309,7 +309,33 @@
 }
 
 .campia-loader-label {
-  animation: campia-label-in 400ms ease-out 360ms backwards;
+  animation: campia-label-in 400ms ease-out 150ms backwards;
+}
+
+/* El «NN%» del loader lo cuenta CSS desde el primer cuadro, junto con «Cargando»;
+   la pantalla se abre cuando termina (site-loader.tsx espera esta animación). */
+@property --campia-percent {
+  syntax: "<integer>";
+  inherits: true;
+  initial-value: 0;
+}
+
+@keyframes campia-percent {
+  from {
+    --campia-percent: 0;
+  }
+  to {
+    --campia-percent: 100;
+  }
+}
+
+.campia-loader-percent {
+  counter-reset: campia-percent var(--campia-percent);
+  animation: campia-percent 1700ms cubic-bezier(0.4, 0.1, 0.3, 1) 150ms both;
+}
+
+.campia-loader-percent::after {
+  content: counter(campia-percent) "%";
 }
 
 @media (prefers-reduced-motion: reduce) {
