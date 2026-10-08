@@ -33,13 +33,13 @@ export function Profiles() {
           {PROFILES.title}
         </SectionTitle>
 
-        <div className="mt-14 grid gap-8 lg:grid-cols-12 lg:gap-12">
+        <div className="mt-14 grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-12">
           <div
             role="tablist"
             aria-label="Perfiles"
             aria-orientation="vertical"
             onKeyDown={onKeyDown}
-            className="flex gap-2 overflow-x-auto lg:col-span-3 lg:flex-col lg:overflow-visible"
+            className="flex flex-wrap gap-2 lg:col-span-3 lg:flex-col lg:flex-nowrap"
           >
             {PROFILES.items.map((item) => {
               const selected = item.id === activeId;
@@ -54,7 +54,7 @@ export function Profiles() {
                   tabIndex={selected ? 0 : -1}
                   onClick={() => setActiveId(item.id)}
                   className={cn(
-                    "shrink-0 rounded-full px-5 py-3 text-left font-heading text-lg font-semibold transition-colors duration-200 outline-none focus-visible:ring-3 focus-visible:ring-l-brand-light/60 lg:rounded-[16px] lg:px-6 lg:py-5 lg:text-2xl",
+                    "shrink-0 rounded-full px-4 py-2.5 text-left font-heading text-base font-semibold transition-colors sm:px-5 sm:py-3 sm:text-lg duration-200 outline-none focus-visible:ring-3 focus-visible:ring-l-brand-light/60 lg:rounded-[16px] lg:px-6 lg:py-5 lg:text-2xl",
                     selected ? "bg-l-brand text-white" : "text-l-ink-soft hover:bg-l-surface hover:text-l-ink",
                   )}
                 >
@@ -72,7 +72,7 @@ export function Profiles() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                className="grid gap-8 md:grid-cols-2 md:gap-10"
+                className="grid grid-cols-1 gap-8 md:grid-cols-2 md:gap-10"
               >
                 <div className="relative aspect-[4/5] overflow-hidden rounded-[16px] bg-l-surface-2 md:aspect-auto md:min-h-[480px]">
                   <Image

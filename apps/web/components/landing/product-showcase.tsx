@@ -52,7 +52,7 @@ export function ProductShowcase() {
         </SectionTitle>
         <p className="mt-4 max-w-[52ch] text-lg text-l-ink-soft">{SHOWCASE.subtitle}</p>
 
-        <div role="tablist" aria-label="Módulos del dashboard" onKeyDown={onTabKeyDown} className="mt-10 flex gap-1 overflow-x-auto pb-2 [scrollbar-width:none]">
+        <div role="tablist" aria-label="Módulos del dashboard" onKeyDown={onTabKeyDown} className="-mx-4 mt-10 flex gap-1 overflow-x-auto px-4 pb-2 [mask-image:linear-gradient(90deg,transparent,black_16px,black_calc(100%-40px),transparent)] [scrollbar-width:none] sm:mx-0 sm:px-0 sm:[mask-image:none]">
           {SHOWCASE.tabs.map((tab) => {
             const Icon = TAB_ICONS[tab.id] ?? PieChart;
             const selected = tab.id === activeId;

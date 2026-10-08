@@ -16,7 +16,7 @@ export function LandingFooter({ openSignup }: { openSignup: boolean }) {
   return (
     <footer className="relative overflow-hidden pt-24 pb-10">
       <Container>
-        <div className="grid gap-12 md:grid-cols-12">
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-12">
           <div className="md:col-span-5">
             <CampiaLogo className="text-l-brand text-[26px]" />
             <p className="mt-5 max-w-[30ch] text-lg leading-relaxed text-l-ink-soft">{FOOTER.tagline}</p>
