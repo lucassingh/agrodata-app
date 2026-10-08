@@ -67,7 +67,7 @@ export function Pricing({ openSignup }: { openSignup: boolean }) {
           </div>
         </div>
 
-        <ul className="mt-14 grid gap-4 lg:grid-cols-3 lg:items-stretch">
+        <ul className="mt-14 grid grid-cols-1 gap-4 lg:grid-cols-3 lg:items-stretch">
           {PRICING.plans.map((plan) => (
             <li
               key={plan.id}

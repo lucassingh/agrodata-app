@@ -29,7 +29,7 @@ export function Faq({ openSignup }: { openSignup: boolean }) {
     <section id="preguntas" aria-labelledby="preguntas-title" className="scroll-mt-20 py-28 lg:py-36">
       <Container>
         <SectionTitle id="preguntas-title">{FAQ.title}</SectionTitle>
-        <div className="mt-12 grid gap-3 lg:grid-cols-2 lg:gap-4">
+        <div className="mt-12 grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
           {columns(openSignup).map((items, index) => (
             <BouncyAccordion key={index} items={items} collapsible classNames={CLASS_NAMES} />
           ))}

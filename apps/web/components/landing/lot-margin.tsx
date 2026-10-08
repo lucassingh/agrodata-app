@@ -12,7 +12,7 @@ export function LotMargin() {
   return (
     <section id="economia" aria-labelledby="economia-title" className="scroll-mt-20 py-28 lg:py-36">
       <Container>
-        <div className="grid gap-12 lg:grid-cols-12 lg:items-center lg:gap-16">
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:items-center lg:gap-16">
           <div className="landing-reveal lg:col-span-5">
             <p className="text-sm font-semibold tracking-wide text-l-brand uppercase">{LOT_MARGIN.eyebrow}</p>
             <SectionTitle id="economia-title" className="mt-3 max-w-[18ch]">
@@ -67,11 +67,15 @@ export function LotMargin() {
             </ul>
 
             <p className="mt-6 text-sm font-medium text-l-ink-soft">{example.statsTitle}</p>
-            <dl className="mt-2 grid grid-cols-3 gap-3">
+            {/* En celular, una fila por dato: en tres columnas no entraban. */}
+            <dl className="mt-2 grid grid-cols-1 gap-2 min-[480px]:grid-cols-3 min-[480px]:gap-3">
               {example.stats.map((stat) => (
-                <div key={stat.label} className="rounded-[14px] bg-white px-4 py-3">
+                <div
+                  key={stat.label}
+                  className="flex items-baseline justify-between gap-3 rounded-[14px] bg-white px-4 py-3 min-[480px]:block"
+                >
                   <dt className="text-xs text-l-ink-soft">{stat.label}</dt>
-                  <dd className="mt-1 font-heading text-sm font-semibold text-l-ink sm:text-base">{stat.value}</dd>
+                  <dd className="font-heading text-sm font-semibold text-l-ink min-[480px]:mt-1 sm:text-base">{stat.value}</dd>
                 </div>
               ))}
             </dl>

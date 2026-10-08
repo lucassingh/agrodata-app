@@ -21,7 +21,7 @@ export function DemoCta({ openSignup }: { openSignup: boolean }) {
   return (
     <section id="demo" aria-labelledby="demo-title" className="scroll-mt-20 py-6 lg:py-10">
       <Container>
-        <div className="grid gap-12 overflow-hidden rounded-[16px] bg-l-brand-dark px-6 py-14 text-white sm:px-10 lg:grid-cols-12 lg:gap-16 lg:px-16 lg:py-20">
+        <div className="grid grid-cols-1 gap-12 overflow-hidden rounded-[16px] bg-l-brand-dark px-6 py-14 text-white sm:px-10 lg:grid-cols-12 lg:gap-16 lg:px-16 lg:py-20">
           <div className="lg:col-span-5">
             <h2 id="demo-title" className="font-heading text-[clamp(2.2rem,4vw,3.75rem)] leading-[1.05] font-bold tracking-[-0.03em]">
               <span className="sr-only">Ordená tu campo desde esta semana</span>
@@ -32,7 +32,7 @@ export function DemoCta({ openSignup }: { openSignup: boolean }) {
                   rotationInterval={2200}
                   auto={!reduceMotion}
                   staggerDuration={0.02}
-                  mainClassName="inline-flex overflow-hidden rounded-[10px] bg-l-accent px-3 pb-1 text-l-ink"
+                  mainClassName="inline-flex overflow-hidden rounded-[10px] bg-l-accent px-3 pt-0.5 pb-1 leading-[1.2] text-l-ink"
                   splitLevelClassName="overflow-hidden"
                 />
                 <span className="block">{CTA.titleEnd}</span>
@@ -84,7 +84,7 @@ function DemoForm({ onSent, submitLabel }: { onSent: (name: string) => void; sub
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate className="grid gap-5 sm:grid-cols-2">
+    <form onSubmit={handleSubmit(onSubmit)} noValidate className="grid grid-cols-1 gap-5 sm:grid-cols-2">
       {/* Anti-robots: invisible para las personas y fuera del orden de tabulación. */}
       <div aria-hidden className="absolute -left-[9999px] h-px w-px overflow-hidden">
         <label>

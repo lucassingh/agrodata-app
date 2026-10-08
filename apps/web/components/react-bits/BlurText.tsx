@@ -20,6 +20,8 @@ type BlurTextProps = {
   easing?: Easing | Easing[];
   onAnimationComplete?: () => void;
   stepDuration?: number;
+  /** Mientras sea true no arranca, aunque ya esté en pantalla (ej. tapado por el loader). */
+  paused?: boolean;
 };
 
 const buildKeyframes = (
@@ -48,6 +50,7 @@ const BlurText = ({
   easing = (t: number) => t,
   onAnimationComplete,
   stepDuration = 0.35,
+  paused = false,
   as: Tag = 'p'
 }: BlurTextProps) => {
   const elements = animateBy === 'words' ? text.split(' ') : text.split('');
@@ -115,7 +118,7 @@ const BlurText = ({
             initial={reduceMotion ? false : fromSnapshot}
             // Con movimiento reducido va directo al estado final: al hidratar la palabra
             // arranca oculta (el servidor no sabe la preferencia) y sin esto quedaba invisible.
-            animate={reduceMotion ? toSnapshots[toSnapshots.length - 1] : inView ? animateKeyframes : fromSnapshot}
+            animate={reduceMotion ? toSnapshots[toSnapshots.length - 1] : inView && !paused ? animateKeyframes : fromSnapshot}
             transition={reduceMotion ? { duration: 0 } : spanTransition}
             onAnimationComplete={index === elements.length - 1 ? onAnimationComplete : undefined}
             style={{
