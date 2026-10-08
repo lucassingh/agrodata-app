@@ -80,7 +80,7 @@ function Cell({
     <SpotlightCard
       spotlightColor={brand ? "rgba(255, 255, 255, 0.12)" : "rgba(82, 183, 136, 0.14)"}
       className={cn(
-        "landing-reveal flex flex-col rounded-[16px] p-6 sm:p-7",
+        "landing-reveal flex min-w-0 flex-col rounded-[16px] p-5 sm:p-7",
         brand ? "bg-l-brand-dark text-white" : "bg-l-surface text-l-ink",
         className,
       )}
@@ -117,7 +117,7 @@ const RECENT = [
 
 function SummaryPreview() {
   return (
-    <div className="rounded-[12px] bg-white p-5 shadow-l">
+    <div className="rounded-[12px] bg-white p-4 shadow-l sm:p-5">
       <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {KPIS.map((kpi) => (
           <div key={kpi.label}>
@@ -132,16 +132,16 @@ function SummaryPreview() {
 
       <div className="mt-7 border-t border-l-line pt-5">
         <p className="text-sm font-medium text-l-ink">Últimos datos</p>
-        <ul className="mt-3 grid gap-2.5 text-sm">
+        <ul className="mt-3 grid grid-cols-1 gap-2.5 text-sm">
           {RECENT.map((item) => (
-            <li key={item.text} className="flex items-center gap-3">
+            <li key={item.text} className="flex min-w-0 items-center gap-3">
               <span
                 className="flex size-8 shrink-0 items-center justify-center rounded-full"
                 style={{ background: item.bg, color: item.color }}
               >
                 <item.icon className="size-4" aria-hidden />
               </span>
-              <span className="min-w-0 flex-1 truncate text-l-ink">{item.text}</span>
+              <span className="min-w-0 flex-1 leading-snug text-l-ink sm:truncate">{item.text}</span>
               <span className="hidden shrink-0 text-l-ink-soft sm:inline">{item.when}</span>
             </li>
           ))}
@@ -155,12 +155,12 @@ function SummaryPreview() {
             <span key={item.label} className="h-full rounded-full" style={{ width: `${item.share}%`, background: item.color }} />
           ))}
         </div>
-        <ul className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-4">
+        <ul className="mt-4 grid grid-cols-1 gap-x-6 gap-y-2 text-sm min-[420px]:grid-cols-2 md:grid-cols-4">
           {EXPENSES.map((item) => (
             <li key={item.label} className="flex items-center gap-2">
               <span className="size-2.5 shrink-0 rounded-full" style={{ background: item.color }} aria-hidden />
               <span className="text-l-ink-soft">{item.label}</span>
-              <span className="ml-auto font-medium text-l-ink tabular-nums">{item.share}%</span>
+              <span className="ml-auto shrink-0 font-medium text-l-ink tabular-nums">{item.share}%</span>
             </li>
           ))}
         </ul>
@@ -208,15 +208,16 @@ function TasksPreview() {
   );
 }
 
+/** En celular la foto queda arriba y los datos abajo, a todo el ancho: al lado no entraban. */
 function InvoicePreview() {
   return (
-    <div className="flex items-stretch gap-3">
-      <div className="flex w-20 shrink-0 flex-col items-center justify-center gap-2 rounded-[12px] bg-white p-3 shadow-l">
-        <Receipt className="size-8 text-l-brand" strokeWidth={1.5} aria-hidden />
+    <div className="flex flex-col items-stretch gap-2 min-[420px]:flex-row min-[420px]:gap-3">
+      <div className="flex shrink-0 items-center gap-2.5 self-start rounded-[12px] bg-white px-3 py-2 shadow-l min-[420px]:w-20 min-[420px]:flex-col min-[420px]:justify-center min-[420px]:self-stretch min-[420px]:p-3">
+        <Receipt className="size-6 text-l-brand min-[420px]:size-8" strokeWidth={1.5} aria-hidden />
         <span className="text-[11px] text-l-ink-soft">foto.jpg</span>
       </div>
-      <ArrowRight className="size-5 shrink-0 self-center text-l-ink-soft" aria-hidden />
-      <dl className="grid flex-1 gap-1.5 rounded-[12px] bg-white p-3 text-[13px] shadow-l">
+      <ArrowRight className="ml-6 size-5 shrink-0 rotate-90 text-l-ink-soft min-[420px]:ml-0 min-[420px]:rotate-0 min-[420px]:self-center" aria-hidden />
+      <dl className="grid min-w-0 flex-1 grid-cols-1 gap-1.5 rounded-[12px] bg-white p-3 text-[13px] shadow-l">
         {[
           ["Proveedor", "Semillero El Trébol"],
           ["Monto", "USD 4.320"],

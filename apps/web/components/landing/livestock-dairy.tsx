@@ -17,7 +17,7 @@ export function LivestockDairy() {
           <p className="mt-6 text-lg leading-relaxed text-l-ink-soft">{LIVESTOCK_DAIRY.body}</p>
         </div>
 
-        <ul className="mt-14 grid gap-4 md:grid-cols-3">
+        <ul className="mt-14 grid grid-cols-1 gap-4 md:grid-cols-3">
           {LIVESTOCK_DAIRY.cards.map((card) => {
             const Icon = ICONS[card.id as keyof typeof ICONS];
             return (

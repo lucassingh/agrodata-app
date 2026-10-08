@@ -21,7 +21,7 @@ export function HowItWorks() {
   return (
     <section id="como-funciona" aria-labelledby="como-funciona-title" className="scroll-mt-20 bg-l-surface py-28 lg:py-36">
       <Container>
-        <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-16">
           <div className="lg:col-span-5">
             <div className="lg:sticky lg:top-32">
               <SectionTitle id="como-funciona-title" className="max-w-[16ch]">
@@ -52,7 +52,7 @@ export function HowItWorks() {
             </div>
           </div>
 
-          <div className="grid gap-10 lg:col-span-7 lg:gap-0">
+          <div className="grid grid-cols-1 gap-10 lg:col-span-7 lg:gap-0">
             {HOW_IT_WORKS.steps.map((step, index) => (
               <StepBlock key={step.title} index={index} onActive={setActive}>
                 <div className="mb-6 flex gap-4 lg:hidden">
@@ -123,18 +123,19 @@ function Bubble({ children, delay = 0 }: { children: ReactNode; delay?: number }
 
 function SendVisual() {
   return (
-    <VisualFrame className="grid gap-3">
+    <VisualFrame className="grid grid-cols-1 gap-3">
       <Bubble>Se rompió la bomba del molino de La Loma, mañana viene el técnico</Bubble>
       <Bubble delay={0.12}>
         <div className="flex items-center gap-3">
-          <Play className="size-4 fill-l-ink-soft text-l-ink-soft" aria-hidden />
-          <span className="flex h-6 w-40 items-center gap-[3px]" aria-hidden>
+          <Play className="size-4 shrink-0 fill-l-ink-soft text-l-ink-soft" aria-hidden />
+          {/* La onda se achica en pantallas angostas: con un ancho fijo estiraba la burbuja. */}
+          <span className="flex h-6 w-40 min-w-0 shrink items-center gap-[3px] overflow-hidden" aria-hidden>
             {[8, 14, 10, 20, 12, 22, 9, 17, 11, 19, 13, 8, 15, 10, 18, 7, 13, 9].map((h, i) => (
-              <span key={i} className="w-[3px] rounded-full bg-l-ink-soft/60" style={{ height: h }} />
+              <span key={i} className="w-[3px] shrink-0 rounded-full bg-l-ink-soft/60" style={{ height: h }} />
             ))}
           </span>
-          <span className="text-sm text-l-ink-soft">0:23</span>
-          <Mic className="size-4 text-l-brand" aria-hidden />
+          <span className="shrink-0 text-sm text-l-ink-soft">0:23</span>
+          <Mic className="size-4 shrink-0 text-l-brand" aria-hidden />
         </div>
         <span className="sr-only">Audio de 23 segundos</span>
       </Bubble>
@@ -156,11 +157,11 @@ function SendVisual() {
 
 function ConfirmVisual() {
   return (
-    <VisualFrame className="grid gap-3">
+    <VisualFrame className="grid grid-cols-1 gap-3">
       <Bubble>Sembramos 60 ha de maíz ayer</Bubble>
       <div className="w-fit max-w-[92%] rounded-[12px] rounded-tl-sm bg-white px-4 py-3 text-[15px] leading-snug text-l-ink shadow-sm">
         <p className="flex items-center gap-2 font-medium">
-          <MessageCircleQuestion className="size-4 text-l-accent-strong" aria-hidden />
+          <MessageCircleQuestion className="size-4 shrink-0 text-l-accent-strong" aria-hidden />
           Detecté una siembra. ¿En qué potrero?
         </p>
         <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1 text-sm">
@@ -188,11 +189,15 @@ function ConfirmVisual() {
         ))}
       </div>
       <div className="w-fit max-w-[92%] rounded-[12px] rounded-tl-sm bg-white px-4 py-3 text-[15px] shadow-sm">
-        <p className="flex items-center gap-2">
-          <Check className="size-4 text-l-brand" aria-hidden />
-          Guardado en Potrero Norte.
-          <Pencil className="ml-2 size-3.5 text-l-ink-soft" aria-hidden />
-          <span className="text-sm text-l-ink-soft">Corregir</span>
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span className="flex items-center gap-2">
+            <Check className="size-4 shrink-0 text-l-brand" aria-hidden />
+            Guardado en Potrero Norte.
+          </span>
+          <span className="flex items-center gap-1.5 text-sm text-l-ink-soft">
+            <Pencil className="size-3.5 shrink-0" aria-hidden />
+            Corregir
+          </span>
         </p>
       </div>
     </VisualFrame>

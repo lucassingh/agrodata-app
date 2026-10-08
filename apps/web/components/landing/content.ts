@@ -49,6 +49,7 @@ export const HERO_SCENES = [
     fieldId: "norte",
     record: {
       type: "Siembra",
+      summary: "Potrero Norte · 100 ha",
       lines: [
         ["Potrero", "Norte"],
         ["Cultivo", "Soja"],
@@ -66,6 +67,7 @@ export const HERO_SCENES = [
     fieldId: "bajo",
     record: {
       type: "Sanidad",
+      summary: "El Bajo · 45 terneros",
       lines: [
         ["Potrero", "El Bajo"],
         ["Animales", "45 terneros"],
@@ -82,6 +84,7 @@ export const HERO_SCENES = [
     fieldId: "oeste",
     record: {
       type: "Gasto",
+      summary: "Lote Oeste · $ 1.284.500",
       lines: [
         ["Proveedor", "Agro Pampa SRL"],
         ["Categoría", "Fertilizantes"],
@@ -208,6 +211,15 @@ export const ALERTS = {
   ],
   imageAlt:
     "Panel de avisos de Campia: gasoil para 6 días, urea debajo del mínimo, vacunación aftosa por vencer, una pulverización vencida y dos categorías de gasto fuera de lo normal.",
+  /** Los mismos avisos de la captura, para el panel que se arma en celular (datos de ejemplo). */
+  sample: [
+    { title: "Gasoil para 6 días", detail: "Consumiste 3.400 L en los últimos 30 días; quedan 700 L.", severity: "warning" },
+    { title: "Urea granulada debajo del mínimo", detail: "Quedan 2.400 kg. El mínimo es 3.000 kg.", severity: "warning" },
+    { title: "Vacunación aftosa: vence el 03/10", detail: "Tratamiento sanitario pendiente en el Bajo, en 4 días.", severity: "warning" },
+    { title: "Pulverización en Lote 4: venció el 27/09", detail: "Tarea pendiente desde hace 2 días.", severity: "warning" },
+    { title: "Combustible: 1,5 veces lo normal", detail: "$ 1.720.000 en septiembre, contra un promedio de $ 1.123.333.", severity: "info" },
+    { title: "Reparaciones: 5,4 veces lo normal", detail: "$ 1.470.000 en septiembre, contra un promedio de $ 270.000.", severity: "info" },
+  ] as const,
 };
 
 export const ADVISOR = {
@@ -220,6 +232,27 @@ export const ADVISOR = {
     "Cada cliente sigue siendo dueño de sus datos.",
   ],
   portfolioAlt: "La Cartera de Campia con tres campos de un asesor: ganancia diaria, litros por vaca, gastos del mes y avisos.",
+  /** Los campos de la captura de la Cartera, para la lista que se arma en celular (datos de ejemplo). */
+  portfolioSample: [
+    {
+      name: "Estancia La Esperanza",
+      detail: "Agricultura, ganadería y tambo · Dueño: Ricardo Gómez",
+      metrics: ["0,97 kg/día", "23,8 L/vaca/día"],
+      alerts: "4 avisos",
+    },
+    {
+      name: "Tambo Los Álamos",
+      detail: "Ganadería y tambo · Dueña: Ana Beltrán",
+      metrics: ["0,75 kg/día", "25,5 L/vaca/día"],
+      alerts: null,
+    },
+    {
+      name: "Campo Don Julio",
+      detail: "Agricultura · Dueño: Julio Ferreyra",
+      metrics: ["Última carga: 20/09"],
+      alerts: null,
+    },
+  ],
   reportAlt: "Primera página de un informe de campo en PDF: gastos por categoría, pesadas y tambo del mes, preparado por el asesor.",
 };
 

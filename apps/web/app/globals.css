@@ -232,3 +232,114 @@
     }
   }
 }
+
+/* Loader de entrada de la landing (components/landing/site-loader.tsx). Las
+   animaciones de la ola son CSS para que corran antes de hidratar. */
+@keyframes campia-lot-in {
+  from {
+    opacity: 0;
+    transform: var(--lot-from);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Ola: cada lote se apaga y se vuelve a encender, uno detrás del otro. */
+@keyframes campia-lot-chase {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  40%,
+  70% {
+    opacity: 0.3;
+  }
+}
+
+@keyframes campia-node-ping {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  12% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(4.2);
+  }
+}
+
+/* Si algo falla y nadie lo saca, a los 9 segundos se va solo. */
+@keyframes campia-loader-failsafe {
+  to {
+    visibility: hidden;
+    opacity: 0;
+  }
+}
+
+.campia-loader {
+  animation: campia-loader-failsafe 0.01s linear 9s forwards;
+}
+
+.campia-loader-lot {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation:
+    campia-lot-in 520ms cubic-bezier(0.16, 1, 0.3, 1) calc(var(--lot-index) * 80ms) both,
+    campia-lot-chase 900ms cubic-bezier(0.77, 0, 0.175, 1) calc(520ms + var(--lot-index) * 150ms) infinite;
+}
+
+/* Cuando se abre el nodo, los tres lotes quedan encendidos. */
+.campia-loader-lot-still {
+  animation: none;
+}
+
+.campia-loader-ping {
+  transform: translate(-50%, -50%);
+  animation: campia-node-ping 1.4s cubic-bezier(0.16, 1, 0.3, 1) 600ms infinite both;
+}
+
+@keyframes campia-label-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.campia-loader-label {
+  animation: campia-label-in 400ms ease-out 150ms backwards;
+}
+
+/* El «NN%» del loader lo cuenta CSS desde el primer cuadro, junto con «Cargando»;
+   la pantalla se abre cuando termina (site-loader.tsx espera esta animación). */
+@property --campia-percent {
+  syntax: "<integer>";
+  inherits: true;
+  initial-value: 0;
+}
+
+@keyframes campia-percent {
+  from {
+    --campia-percent: 0;
+  }
+  to {
+    --campia-percent: 100;
+  }
+}
+
+.campia-loader-percent {
+  counter-reset: campia-percent var(--campia-percent);
+  animation: campia-percent 1700ms cubic-bezier(0.4, 0.1, 0.3, 1) 150ms both;
+}
+
+.campia-loader-percent::after {
+  content: counter(campia-percent) "%";
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .campia-loader {
+    display: none;
+  }
+}
