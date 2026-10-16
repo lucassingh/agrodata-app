@@ -56,7 +56,15 @@ export function LandingFooter({ openSignup }: { openSignup: boolean }) {
         </p>
 
         <div className="mt-8 flex flex-col gap-2 border-t border-l-line pt-6 text-sm text-l-ink-soft sm:flex-row sm:justify-between">
-          <p>© 2026 Campia</p>
+          <p>
+            © 2026 Campia, un producto de{" "}
+            <a
+              href="https://masuno.io"
+              className="rounded-sm underline underline-offset-4 transition-colors duration-200 outline-none hover:text-l-ink focus-visible:ring-3 focus-visible:ring-l-brand-light/60"
+            >
+              más uno
+            </a>
+          </p>
           <p>Hecho en Argentina</p>
         </div>
       </Container>
