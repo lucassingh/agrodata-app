@@ -462,15 +462,15 @@ export const FOOTER = {
   ],
 };
 
-/** Datos del responsable que aparecen en Términos y Privacidad. Completar antes
- *  de publicar (los pide Meta para verificar la app de WhatsApp). */
 /** La casilla de soporte (Hostinger): contacto de la landing, de los legales y
  *  remitente de los mails de la app. */
 export const SUPPORT_EMAIL = "soporte@campia.app";
 
+/** Datos del responsable que aparecen en Términos y Privacidad. Meta los cruza con
+ *  la verificación del negocio: el nombre tiene que ser el de la constancia de ARCA. */
 export const LEGAL = {
-  updatedAt: "25 de septiembre de 2026",
-  responsible: "[Nombre o razón social del titular, CUIT]",
+  updatedAt: "16 de octubre de 2026",
+  responsible: "Lucas Miguel Singh (CUIT 20-31223903-6, nombre comercial más uno)",
   contactEmail: SUPPORT_EMAIL,
 };
 
